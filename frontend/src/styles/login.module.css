@@ -1,0 +1,299 @@
+/* ---------- RESET & BASE ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0f1115;
+}
+
+/* ---------- MAIN CONTAINER ---------- */
+.login-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: #0f1115;
+  color: #fff;
+}
+
+/* ---------- BACKGROUND CIRCLES ---------- */
+.login-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+}
+
+.circle-1 {
+  width: 600px;
+  height: 600px;
+  background: #3b82f6;
+  top: -200px;
+  left: -200px;
+}
+
+.circle-2 {
+  width: 500px;
+  height: 500px;
+  background: #f59e0b;
+  top: 50%;
+  right: -200px;
+}
+
+.circle-3 {
+  width: 400px;
+  height: 400px;
+  background: #8b5cf6;
+  bottom: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ---------- BACK TO SITE LINK ---------- */
+.back-to-site {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #808696;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.back-to-site svg {
+  width: 16px;
+  height: 16px;
+}
+
+.back-to-site:hover {
+  color: #61afef;
+}
+
+/* ---------- LOGIN CARD ---------- */
+.login-card {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 440px;
+  padding: 2.5rem 2.5rem 2rem;
+  background: rgba(30, 32, 40, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- HEADER ---------- */
+.login-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* “SECURE ACCESS” badge */
+.secure-access-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: rgba(97, 175, 239, 0.1);
+  border: 1px solid rgba(97, 175, 239, 0.25);
+  border-radius: 100px;
+  color: #61afef;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.login-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  background: linear-gradient(135deg, #fff 0%, #b4b4b4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-header h2 {
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #a0a3b2;
+  margin: 0;
+}
+
+/* ---------- WELCOME TEXT ---------- */
+.welcome-message {
+  font-size: 0.875rem;
+  color: #808696;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* ---------- FORM ---------- */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #808696;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.9rem 1rem 0.9rem 3rem;
+  background: rgba(20, 22, 28, 0.95);
+  border: 1px solid rgba(128, 128, 128, 0.12);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input::placeholder {
+  color: #4f5360;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #61afef;
+  box-shadow: 0 0 0 3px rgba(97, 175, 239, 0.15);
+}
+
+.input-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4f5360;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.form-input:focus ~ .input-icon,
+.form-input:focus + .input-icon {
+  color: #61afef;
+}
+
+/* ---------- PASSWORD TOGGLE ---------- */
+.password-toggle {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #4f5360;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.password-toggle:hover {
+  color: #61afef;
+}
+
+/* ---------- SUBMIT BUTTON ---------- */
+.login-button {
+  width: 100%;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #61afef, #4a96f8);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.login-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(97, 175, 239, 0.35);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+/* ---------- FOOTER ---------- */
+.login-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.security-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #4f5360;
+  letter-spacing: 0.5px;
+}
+
+.security-info svg {
+  width: 16px;
+  height: 16px;
+  color: #61afef;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .back-to-site {
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .login-header h1 {
+    font-size: 1.5rem;
+  }
+}

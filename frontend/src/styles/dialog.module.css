@@ -1,0 +1,187 @@
+/* ---------- DIALOG OVERLAY ---------- */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.dialog-card {
+  background: rgba(30, 32, 40, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+.dialog-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #fff 0%, #b4b4b4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-field label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #808696;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-field input,
+.group-select {
+  padding: 0.85rem 1rem;
+  background: rgba(20, 22, 28, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-field input:focus,
+.group-select:focus {
+  border-color: #61afef;
+}
+
+.group-select {
+  cursor: pointer;
+}
+
+/* Multi-select tags (edit mode) */
+.multi-select {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(97, 175, 239, 0.15);
+  color: #61afef;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: #61afef;
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 0.2rem;
+}
+
+.tag-remove:hover {
+  color: #f87171;
+}
+
+.add-group-row select {
+  width: 100%;
+}
+
+/* Role buttons */
+.role-options {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.role-btn {
+  flex: 1;
+  padding: 0.7rem 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #808696;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.role-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.role-btn.active {
+  background: rgba(97, 175, 239, 0.15);
+  border-color: #61afef;
+  color: #61afef;
+}
+
+/* Action buttons */
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.cancel-btn,
+.submit-btn {
+  padding: 0.75rem 1.75rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cancel-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #808696;
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #61afef, #4a96f8);
+  border: none;
+  color: #fff;
+}
+
+.submit-btn:hover {
+  box-shadow: 0 8px 20px rgba(97, 175, 239, 0.35);
+  transform: translateY(-1px);
+}

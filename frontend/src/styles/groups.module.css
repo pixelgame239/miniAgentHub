@@ -1,0 +1,264 @@
+.groupsPage {
+  padding: 48px;
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(59, 130, 246, 0.08),
+      transparent 32%
+    ),
+    #050b11;
+  color: #f3f4f6;
+}
+
+/* HERO */
+
+.heroSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 42px;
+}
+
+.pageTitle {
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  margin: 0 0 18px;
+  color: #f8fafc;
+}
+
+.pageDescription {
+  max-width: 760px;
+  font-size: 18px;
+  line-height: 1.7;
+  color: #b6beca;
+  margin: 0;
+}
+
+/* CREATE BUTTON */
+
+.createButton {
+  height: 72px;
+  min-width: 270px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    #dce7ff 0%,
+    #bfd0ff 100%
+  );
+  color: #122044;
+  font-size: 24px;
+  font-weight: 600;
+  padding: 0 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  cursor: pointer;
+  box-shadow:
+    0 14px 34px rgba(59, 130, 246, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.createButton:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 18px 40px rgba(59, 130, 246, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* TABLE CARD */
+
+.tableCard {
+  background: linear-gradient(
+    180deg,
+    rgba(18, 24, 31, 0.96),
+    rgba(11, 16, 22, 0.96)
+  );
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* TABLE HEADER */
+
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 32px;
+}
+
+.tableTitle {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.totalBadge {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #d1d5db;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+/* TABLE */
+
+.table {
+  width: 100%;
+}
+
+.tableHead,
+.tableRow {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 220px;
+  align-items: center;
+}
+
+.tableHead {
+  height: 68px;
+  padding: 0 32px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: #7d8793;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.tableRow {
+  min-height: 92px;
+  padding: 0 32px;
+  transition: background 0.2s ease;
+}
+
+.tableRow:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tableRow:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* CELLS */
+
+.groupName {
+  font-size: 17px;
+  font-weight: 600;
+  color: #d9e5ff;
+}
+
+.memberCount {
+  font-size: 16px;
+  color: #e5e7eb;
+}
+
+.actionsColumn {
+  text-align: right;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+/* ICON BUTTONS */
+
+.iconButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: #c8d0dc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.iconButton:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.iconButton:active {
+  transform: scale(0.96);
+}
+
+.deleteButton:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1200px) {
+  .heroSection {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .createButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .groupsPage {
+    padding: 28px;
+  }
+
+  .pageTitle {
+    font-size: 44px;
+  }
+
+  .tableHead,
+  .tableRow {
+    grid-template-columns: 1.5fr 1fr 180px;
+  }
+}
+
+@media (max-width: 700px) {
+  .tableHead {
+    display: none;
+  }
+
+  .tableRow {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 24px;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
+
+  .pageTitle {
+    font-size: 36px;
+  }
+
+  .pageDescription {
+    font-size: 15px;
+  }
+}

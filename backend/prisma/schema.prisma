@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id            Int    @id @default(autoincrement())
+  email         String @unique
+  userPassword String @map("user_password")
+  fullname          String
+  userRole         String @default("USER") @map("user_role")
+  role  Role @relation(fields: [userRole], references: [roleId], onDelete: Cascade)
+  conversations Conversation[]
+  groups      Group[]
+  permission  String[]
+  active    Boolean @default(false)
+}
+model Role{
+  roleId    String @id 
+  permission String[]
+  users User[]
+}
+model Group {
+  id            Int    @id @default(autoincrement())
+  groupName           String @unique @map("group_name")
+  users    User[]
+  conversations Conversation[]
+}
+model Conversation{
+  id     Int @id @default(autoincrement())
+  title   String
+  userId   Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+  AIModel   String?
+  groupId   Int?
+  group Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+}
+model Message{
+  id Int @id @default(autoincrement())
+  content String
+  conversationId  Int
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}

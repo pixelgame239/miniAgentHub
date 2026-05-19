@@ -1,0 +1,440 @@
+/* =========================================================
+   USER PAGE
+========================================================= */
+
+.userContent {
+  flex: 1;
+  padding: 2.5rem 3rem;
+  overflow-y: auto;
+  color: var(--text-primary, #e4e6f0);
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.userHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.userHeader h1 {
+  margin: 0 0 0.75rem;
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1.1;
+
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #b4b4b4 100%
+  );
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.userDescription {
+  max-width: 720px;
+  margin: 0;
+
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text-secondary, #8b8fa8);
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.addUserBtn {
+  height: 52px;
+  padding: 0 1.4rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+
+  border: none;
+  border-radius: 14px;
+
+  background: var(--accent, #2563eb);
+  color: white;
+
+  font-size: 0.92rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  white-space: nowrap;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.addUserBtn:hover {
+  background: #3b82f6;
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 10px 24px rgba(37, 99, 235, 0.25);
+}
+
+/* =========================================================
+   TABLE WRAPPER
+========================================================= */
+
+.tableWrapper {
+  overflow-x: auto;
+
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.06);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20, 24, 34, 0.96),
+      rgba(12, 16, 24, 0.96)
+    );
+
+  backdrop-filter: blur(12px);
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.userTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.userTable thead {
+  background: rgba(255,255,255,0.025);
+}
+
+.userTable th {
+  padding: 1.1rem 1.4rem;
+
+  text-align: left;
+  vertical-align: middle;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+
+  color: var(--text-secondary, #8b8fa8);
+
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.userTable td {
+  padding: 1.2rem 1.4rem;
+  vertical-align: middle;
+
+  font-size: 0.92rem;
+  color: var(--text-primary, #e4e6f0);
+
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.userTable tbody tr {
+  transition: background 0.15s ease;
+}
+
+.userTable tbody tr:hover {
+  background: rgba(255,255,255,0.025);
+}
+
+.userTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.selectedRow {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+/* =========================================================
+   COLUMN SIZING
+========================================================= */
+
+.checkboxCol {
+  width: 52px;
+}
+
+.actionsCol {
+  width: 150px;
+  text-align: right !important;
+}
+
+/* =========================================================
+   CHECKBOX
+========================================================= */
+
+.checkboxCol input[type="checkbox"],
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+
+  accent-color: var(--accent, #2563eb);
+  cursor: pointer;
+}
+
+/* =========================================================
+   USER CELL
+========================================================= */
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.userAvatar {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(37, 99, 235, 0.14);
+  border: 1px solid rgba(59, 130, 246, 0.24);
+
+  color: #93c5fd;
+
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+/* =========================================================
+   ROLE BADGE
+========================================================= */
+
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 34px;
+  padding: 0 0.9rem;
+
+  border-radius: 999px;
+
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+
+  color: #93c5fd;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   GROUPS
+========================================================= */
+
+.groupList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.groupBadge {
+  display: inline-flex;
+  align-items: center;
+
+  height: 32px;
+  padding: 0 0.8rem;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.06);
+
+  color: #cbd5e1;
+
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.actionBtn {
+  height: 36px;
+  min-width: 36px;
+  padding: 0 0.9rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  background: rgba(255,255,255,0.04);
+  color: white;
+
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.actionBtn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.14);
+
+  transform: translateY(-1px);
+}
+
+.deleteBtn {
+  color: #f87171;
+}
+
+.deleteBtn:hover {
+  background: rgba(248,113,113,0.12);
+  border-color: rgba(248,113,113,0.24);
+}
+
+/* =========================================================
+   EMPTY STATES / HELPERS
+========================================================= */
+
+.emptyState {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-secondary, #8b8fa8);
+}
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.pagination {
+  margin-top: 1.5rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  color: var(--text-secondary, #8b8fa8);
+  font-size: 0.85rem;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.pageBtn {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  border: 1px solid rgba(255,255,255,0.06);
+
+  background: rgba(255,255,255,0.03);
+  color: var(--text-secondary, #8b8fa8);
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.pageBtn:hover:not(:disabled):not(.activePageBtn) {
+  background: rgba(255,255,255,0.06);
+  color: white;
+}
+
+.activePageBtn {
+  background: var(--accent, #2563eb);
+  border-color: var(--accent, #2563eb);
+  color: white;
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1024px) {
+  .userContent {
+    padding: 2rem;
+  }
+
+  .userHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .addUserBtn {
+    width: fit-content;
+  }
+}
+
+@media (max-width: 768px) {
+  .userContent {
+    padding: 1.25rem;
+  }
+
+  .userHeader h1 {
+    font-size: 2rem;
+  }
+
+  .userDescription {
+    font-size: 0.9rem;
+  }
+
+  .pagination {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .userTable {
+    min-width: 760px;
+  }
+}
