@@ -19,6 +19,7 @@ export const updateUser = async(req:Request, res: Response, next:NextFunction)=>
             if(isNaN(userId)) throw new MyError("Forbidden", 403);
             const response =await userService.updateUser(userId, req.body);
             res.status(201).json(response);
+            return;
         }
         throw new MyError("Unauthorized", 401);
     }catch(error){

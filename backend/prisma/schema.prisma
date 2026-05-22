@@ -49,4 +49,5 @@ model Message{
   content String
   conversationId  Int
   conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  type String @default("prompt")
 }

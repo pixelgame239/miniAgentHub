@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
-import { fetchAllConversations } from '../controller/conversation.controller';
+import { fetchAllConversations, fetchConversationDetail } from '../controller/conversation.controller';
 
 export const conversationRouter:Router = express.Router();
 
-conversationRouter.get("/", fetchAllConversations);
+conversationRouter.get("/:groupId", fetchAllConversations);
+conversationRouter.get("/detail/:convId", fetchConversationDetail);

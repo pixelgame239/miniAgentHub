@@ -7,6 +7,7 @@ import { jwtVerify } from "./middleware/jwt.middleware";
 import { conversationRouter } from "./routes/conversation.route";
 import { userRouter } from "./routes/user.route";
 import { AIRouter } from "./routes/ai.route";
+import { messageRouter } from "./routes/message.route";
 
 const app = express();
 app.use(cors({
@@ -21,6 +22,7 @@ app.use("/api/groups", groupRouter);
 app.use("/api/conversations", conversationRouter);
 app.use("/api/users", userRouter);
 app.use("/api/ai", AIRouter);
+app.use("/api/messages", messageRouter);
 // app.use("/api/users", userRouter);
 app.use(errorHandler);
 export default app;

@@ -5,18 +5,41 @@ import { useAuth } from "../hooks/authHook";
 import styles from "../styles/sidebar.module.css";
 import type { Group } from "../loader/groupLoader";
 import { useChat } from "../hooks/chatHook";
+import { getConversationDetail, getConversations } from "../api/conversationApi";
+import type { Conversation } from "../context/ChatContext";
 
 const Sidebar = ({}) => {
   const userGroups = useRouteLoaderData("group-conversations") as Group[];
-  const { setUserGroups } = useChat();
+  const { setUserGroups, currentConversation, setCurrentConversation } = useChat();
+  const [groupConversations, setGroupConversations] = useState<Conversation[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<number|null>(null);
+  const openConversation = async(convId:number) =>{
+    try{
+      const response = await getConversationDetail(convId);
+      if(response&&response.data){
+        setCurrentConversation(response.data);
+      }
+    } catch(err){
+      console.error(err);
+    }
+  }
+  const openGroup = async(groupId:number) =>{
+    try{
+      setSelectedGroup(groupId);
+      const response = await getConversations(groupId);
+      if(response&&response.data){
+        setGroupConversations(response.data);
+      }
+    } catch(err){
+      console.error(err);
+    }
+  }
   useEffect(() => {
     if (userGroups) {
       setUserGroups(userGroups);
     }
   }, [userGroups, setUserGroups]);
   const { user } = useAuth();
-
-  const [selectedGroup, setSelectedGroup] = useState<number | null>(null);
 
   const navItems = [
     {
@@ -158,7 +181,9 @@ const Sidebar = ({}) => {
             <div className={styles.groupList}>
               <button
                 className={styles.privateButton}
-                onClick={() => setSelectedGroup(null)}
+                onClick={async() => {
+                  await openGroup(-1);
+                }}
               >
                 <svg
                   width="16"
@@ -179,7 +204,7 @@ const Sidebar = ({}) => {
                   <button
                     key={group.id}
                     className={styles.groupItem}
-                    onClick={() => setSelectedGroup(group.id)}
+                    onClick={async() => await openGroup(group.id)}
                   >
                     <svg
                       width="16"
@@ -235,33 +260,27 @@ const Sidebar = ({}) => {
                 New Chat
               </button>
             </div>
-
-            <h3 className={styles.selectedGroupTitle}>
-              {selectedGroup}
-            </h3>
-
             {/* CHATS */}
-            <div className={styles.chatList}>
-              {/* {filteredChats.map((chat) => (
+            {groupConversations.length>0?
+              <div className={styles.chatList}>
+              {currentConversation&&currentConversation.messages&& currentConversation.messages.map((chat) => (
                 <button
                   key={chat.id}
                   className={`${styles.chatItem} ${
-                    activeChatId === chat.id
+                    currentConversation.id === chat.id
                       ? styles.chatItemActive
                       : ""
                   }`}
-                  onClick={() => onChatSelect(chat.id)}
+                  onClick={async() => await openConversation(chat.id)}
                 >
                   <span className={styles.chatItemTitle}>
-                    {chat.title}
-                  </span>
-
-                  <span className={styles.chatItemPreview}>
-                    {chat.preview}
+                    {currentConversation.title}
                   </span>
                 </button>
-              ))} */}
+              ))}
             </div>
+            :<h3>No conversations</h3>
+            }
           </>
         )}
       </div>

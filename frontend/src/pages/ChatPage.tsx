@@ -2,83 +2,27 @@ import { useState } from "react";
 import styles from "../styles/chat.module.css";
 import { useLoaderData } from "react-router";
 import type { AIModels } from "../loader/aiLoader";
-
-interface Message {
-  id: number;
-  sender: string;
-  text: string;
-  timestamp: string;
-  isUser: boolean;
-  modelName?: string;
-  responseTime?: string;
-}
-
-const initialMessages: Message[] = [
-  {
-    id: 1,
-    sender: "You",
-    text: "Could you summarize the recent findings from our 'Project Orion' neural architecture research? Focus on the latency improvements in low-power environments.",
-    timestamp: "11:42 AM",
-    isUser: true,
-  },
-  {
-    id: 2,
-    sender: "Agent Hub",
-    text: "I've analyzed the 'Project Orion' data. The most significant finding is a **24% reduction in inference latency** for ARM-based processors.\n\n* Implementing adaptive weight pruning.\n* Optimizing memory footprint.\n* Hybrid quantization scheme.",
-    timestamp: "11:42 AM",
-    isUser: false,
-    modelName: "GROQ-LLAMA3-70B",
-    responseTime: "1.2s",
-  },
-];
+import { useChat } from "../hooks/chatHook";
+import { createConversation } from "../api/conversationApi";
 
 const ChatPage = () => {
   const aiModels = useLoaderData() as AIModels[];
   const [inputText, setInputText] = useState("");
   const [selectedModel, setSelectedModel] =useState(aiModels[0]||"Not found");
-  const [messages, setMessages] =
-    useState<Message[]>(initialMessages);
+  const { currentConversation, setCurrentConversation } = useChat();
 
-  const sendMessage = () => {
+  const sendMessage = async() => {
     if (!inputText.trim()) return;
-
-    const newUserMessage: Message = {
-      id: Date.now(),
-      sender: "You",
-      text: inputText,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      isUser: true,
-    };
-
-    setMessages((prev) => [
-      ...prev,
-      newUserMessage,
-    ]);
-
-    setInputText("");
-
-    setTimeout(() => {
-      const botResponse: Message = {
-        id: Date.now() + 1,
-        sender: "Agent Hub",
-        text: "This is a placeholder response to **your query**.",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        isUser: false,
-        modelName: selectedModel.id,
-        responseTime: "0.8s",
-      };
-
-      setMessages((prev) => [
-        ...prev,
-        botResponse,
-      ]);
-    }, 1000);
+    try{
+      if(!currentConversation){
+        const createResponse = await createConversation(inputText);
+        if(createResponse.status===201){
+          
+        }
+      }
+    }catch(err){
+      console.error(err);
+    }
   };
 
   const handleKeyDown = (
@@ -182,40 +126,25 @@ const ChatPage = () => {
 
       {/* MESSAGES */}
       <div className={styles.chatMessages}>
-        {messages.map((msg) => (
+        {currentConversation&&currentConversation.messages&&currentConversation.messages.map((msg) => (
           <div
             key={msg.id}
             className={`${styles.messageRow} ${
-              msg.isUser
+              msg.type==="prompt"
                 ? styles.userRow
                 : styles.modelRow
             }`}
           >
             <div className={styles.messageBubble}>
               <div className={styles.messageSender}>
-                {msg.sender}
+                {msg.type==="prompt"?"You":"AI Response"}
               </div>
 
               <div className={styles.messageText}>
-                {msg.isUser
-                  ? msg.text
-                  : formatMessageText(msg.text)}
+                {msg.type==="prompt"
+                  ? msg.content
+                  : formatMessageText(msg.content)}
               </div>
-
-              {!msg.isUser && msg.modelName && (
-                <div className={styles.modelMeta}>
-                  <span>{msg.modelName}</span>
-
-                  <span>
-                    · Response time:{" "}
-                    {msg.responseTime}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className={styles.messageTime}>
-              {msg.timestamp}
             </div>
           </div>
         ))}
@@ -227,7 +156,6 @@ const ChatPage = () => {
           <button className={styles.attachBtn}>
             +
           </button>
-
           <input
             type="text"
             value={inputText}
