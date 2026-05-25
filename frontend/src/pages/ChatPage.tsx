@@ -1,33 +1,112 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "../styles/chat.module.css";
-import { useLoaderData } from "react-router";
+import {  useRouteLoaderData } from "react-router";
 import type { AIModels } from "../loader/aiLoader";
 import { useChat } from "../hooks/chatHook";
 import { createConversation } from "../api/conversationApi";
+import { useStream } from "@hyper-fetch/react";
+import { type ChatRequest, sendPromptRequest } from "../api/messageApi";
+import type { Message } from "../context/ChatContext";
+import type { Group } from "../loader/groupLoader";
 
 const ChatPage = () => {
-  const aiModels = useLoaderData() as AIModels[];
+  const { AIModels } = useRouteLoaderData("layout-data-loader") as {userGroups: Group[], AIModels: AIModels[]};
   const [inputText, setInputText] = useState("");
-  const [selectedModel, setSelectedModel] =useState(aiModels[0]||"Not found");
-  const { currentConversation, setCurrentConversation } = useChat();
+  const [selectedModel, setSelectedModel] = useState<AIModels | null>(AIModels[0] ?? null);
+  const { currentConversation } = useChat();
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  const [liveText, setLiveText] = useState("");
+  const [streamPayload, setStreamPayload] = useState<ChatRequest>({
+    conversationId: undefined,
+    content: "",
+    model: ""
+  });
 
-  const sendMessage = async() => {
-    if (!inputText.trim()) return;
-    try{
-      if(!currentConversation){
-        const createResponse = await createConversation(inputText);
-        if(createResponse.status===201){
-          
+  const shouldStartRef = useRef(false);
+
+  const { text, streaming, done, start, abort } = useStream(
+    sendPromptRequest.setPayload(streamPayload)
+  );
+
+  useEffect(() => {
+    if (currentConversation) {
+      setSelectedModel({ id: currentConversation.AIModel });
+      setChatMessages(currentConversation.messages || []);
+    }
+  }, [currentConversation]);
+
+  useEffect(() => {
+    if (!streaming) return;
+    const cleaned = text.replace(/\[DONE\]\s*$/g, "");
+    setLiveText(cleaned);
+  }, [text, streaming]);
+
+  useEffect(() => {
+    if (done) {
+      const finalText = text.replace(/\[DONE\]\s*$/g, "").trim();
+      if (!finalText) return;
+
+      setChatMessages((prev) => [
+        ...prev,
+        { content: finalText, type: "response" } as Message
+      ]);
+      setLiveText("");
+    }
+  }, [done, text]);
+
+  useEffect(() => {
+    const hasPayload =
+      !!streamPayload.conversationId &&
+      !!streamPayload.content &&
+      !!streamPayload.model;
+
+    if (hasPayload && shouldStartRef.current && !streaming) {
+      shouldStartRef.current = false;
+      start();
+    }
+  }, [
+    streamPayload.conversationId,
+    streamPayload.content,
+    streamPayload.model,
+    streaming,
+    start
+  ]);
+
+  const sendMessage = async () => {
+    if (!inputText.trim() || !selectedModel) return;
+
+    const content = inputText;
+    setInputText("");
+
+    try {
+      let conversation = currentConversation;
+
+      if (!conversation) {
+        const response = await createConversation(content, selectedModel.id, -1);
+        if(response.data){
+            conversation = response.data;
         }
       }
-    }catch(err){
+
+      if (!conversation?.id) return;
+      setChatMessages((prev) => [
+        ...prev,
+        { content, type: "prompt", conversationId:conversation.id }
+      ])
+      const payload: ChatRequest = {
+        conversationId: conversation.id,
+        content,
+        model: conversation.AIModel
+      };
+
+      setStreamPayload(payload);
+      shouldStartRef.current = true;
+    } catch (err) {
       console.error(err);
     }
   };
 
-  const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -40,10 +119,7 @@ const ChatPage = () => {
     return lines.map((line, i) => {
       if (line.startsWith("* ")) {
         return (
-          <li
-            key={i}
-            className={styles.messageBullet}
-          >
+          <li key={i} className={styles.messageBullet}>
             {formatInline(line.substring(2))}
           </li>
         );
@@ -54,10 +130,7 @@ const ChatPage = () => {
       }
 
       return (
-        <p
-          key={i}
-          className={styles.messageParagraph}
-        >
+        <p key={i} className={styles.messageParagraph}>
           {formatInline(line)}
         </p>
       );
@@ -68,55 +141,37 @@ const ChatPage = () => {
     const parts = text.split(/(\*\*.*?\*\*)/g);
 
     return parts.map((part, index) => {
-      if (
-        part.startsWith("**") &&
-        part.endsWith("**")
-      ) {
-        return (
-          <strong key={index}>
-            {part.slice(2, -2)}
-          </strong>
-        );
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={index}>{part.slice(2, -2)}</strong>;
       }
-
       return part;
     });
   };
 
   return (
     <div className={styles.chatPage}>
-      {/* HEADER */}
       <header className={styles.chatHeader}>
         <div className={styles.headerLeft}>
           <div className={styles.logoDot} />
-
           <div>
-            <h2 className={styles.chatTitle}>
-              Agent Hub
-            </h2>
-
-            <p className={styles.chatSubtitle}>
-              AI Collaboration Workspace
-            </p>
+            <h2 className={styles.chatTitle}>Agent Hub</h2>
+            <p className={styles.chatSubtitle}>AI Collaboration Workspace</p>
           </div>
         </div>
 
-        {/* MODEL SELECT */}
         <div className={styles.modelSelector}>
           <label>Model</label>
-
           <select
-            value={selectedModel.id}
-            onChange={(e) =>
-              setSelectedModel({id: e.target.value})
-            }
+            value={selectedModel?.id || ""}
+            onChange={(e) => {
+              const model = AIModels.find((m) => m.id === e.target.value) || null;
+              setSelectedModel(model);
+            }}
             className={styles.modelDropdown}
+            disabled={currentConversation !== null && currentConversation !== undefined}
           >
-            {aiModels.map((model) => (
-              <option
-                key={model.id}
-                value={model.id}
-              >
+            {AIModels.map((model) => (
+              <option key={model.id} value={model.id}>
                 {model.id}
               </option>
             ))}
@@ -124,55 +179,60 @@ const ChatPage = () => {
         </div>
       </header>
 
-      {/* MESSAGES */}
       <div className={styles.chatMessages}>
-        {currentConversation&&currentConversation.messages&&currentConversation.messages.map((msg) => (
+        {currentConversation && chatMessages.map((msg, index) => (
           <div
-            key={msg.id}
+            key={index}
             className={`${styles.messageRow} ${
-              msg.type==="prompt"
-                ? styles.userRow
-                : styles.modelRow
+              msg.type === "prompt" ? styles.userRow : styles.modelRow
             }`}
           >
             <div className={styles.messageBubble}>
               <div className={styles.messageSender}>
-                {msg.type==="prompt"?"You":"AI Response"}
+                {msg.type === "prompt" ? "You" : "AI Response"}
               </div>
 
               <div className={styles.messageText}>
-                {msg.type==="prompt"
-                  ? msg.content
-                  : formatMessageText(msg.content)}
+                {msg.type === "prompt" ? msg.content : formatMessageText(msg.content)}
               </div>
             </div>
           </div>
         ))}
+
+        {(streaming || liveText) && (
+          <div className={styles.messageRow}>
+            <div className={styles.messageBubble}>
+              <div className={styles.messageSender}>AI Response</div>
+              <div className={styles.messageText}>
+                {formatMessageText(liveText)}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* INPUT */}
       <div className={styles.chatInputWrapper}>
         <div className={styles.chatInputContainer}>
-          <button className={styles.attachBtn}>
-            +
-          </button>
+          <button className={styles.attachBtn}>+</button>
+
           <input
             type="text"
             value={inputText}
-            onChange={(e) =>
-              setInputText(e.target.value)
-            }
+            onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
             className={styles.chatInput}
             placeholder="Enter a prompt here..."
           />
 
-          <button
-            className={styles.sendBtn}
-            onClick={sendMessage}
-          >
-            →
-          </button>
+          {streaming ? (
+            <button className={styles.sendBtn} onClick={abort}>
+              Stop
+            </button>
+          ) : (
+            <button className={styles.sendBtn} onClick={sendMessage}>
+              Send
+            </button>
+          )}
         </div>
       </div>
     </div>

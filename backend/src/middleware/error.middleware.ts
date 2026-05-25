@@ -4,6 +4,9 @@
         console.error("Error:", err.message||err)
         const errStatus = err.status || 500;
         const errMessage = err.message || "Internal server error";
+        if (res.headersSent) {
+            return next(err);
+        }
         res.status(errStatus).json({
             success: false,
             errStatus,

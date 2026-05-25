@@ -411,3 +411,162 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 9999;
+  backdrop-filter: blur(6px);
+}
+
+.modal {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+
+  background: #0f1722;
+  border: 1px solid rgba(255,255,255,0.08);
+
+  border-radius: 24px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 20px 80px rgba(0,0,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 22px 24px;
+
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 20px;
+  color: white;
+}
+
+.modalCloseBtn {
+  width: 36px;
+  height: 36px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: rgba(255,255,255,0.05);
+  color: #9ca3af;
+
+  cursor: pointer;
+
+  font-size: 22px;
+  transition: 0.2s ease;
+}
+
+.modalCloseBtn:hover {
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+
+.modalBody {
+  padding: 24px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.formInput,
+.formSelect {
+  height: 48px;
+
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+
+  background: rgba(255,255,255,0.04);
+
+  color: white;
+
+  padding: 0 16px;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 0.2s ease;
+}
+
+.formInput:focus,
+.formSelect:focus {
+  border-color: rgba(59,130,246,0.6);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+
+.formSelect option {
+  background: #111827;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+
+  padding: 20px 24px;
+
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.cancelBtn {
+  height: 44px;
+  padding: 0 18px;
+
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+
+  background: rgba(255,255,255,0.04);
+  color: #d1d5db;
+
+  cursor: pointer;
+}
+
+.cancelBtn:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.createBtn {
+  height: 44px;
+  padding: 0 20px;
+
+  border: none;
+  border-radius: 12px;
+
+  background: #2563eb;
+  color: white;
+
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.createBtn:hover {
+  background: #3b82f6;
+}

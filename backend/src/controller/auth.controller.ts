@@ -45,7 +45,7 @@ export const getMe = async(req:Request, res: Response, next:NextFunction) =>{
 export const changePassword = async(req:Request, res: Response, next:NextFunction)=>{
   try{
       if(req.user){
-      const response = await authService.authChangePassword({id: req.user.id, currentPassword: req.body.currentPassword, newPassword: req.body.newPassword});
+      const response = await authService.authChangePassword({id: req.user.id, currentPassword: req.body.currentPassword? req.body.currentPassword : null, newPassword: req.body.newPassword});
       if(response){
         res.status(201).json(response);
       } else{

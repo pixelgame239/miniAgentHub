@@ -9,8 +9,7 @@ import SettingsPage from "./pages/SettingsPage";
 import GroupsPage from "./pages/GroupsPage";
 import AdminRoute from "./component/AdminRoute";
 import { userLoader } from "./loader/userLoader";
-import { groupLoader, userGroupLoader } from "./loader/groupLoader";
-import { aiLoader } from "./loader/aiLoader";
+import { groupLoader, layoutLoader } from "./loader/groupLoader";
 
 export const router = createBrowserRouter([
   {
@@ -26,13 +25,12 @@ export const router = createBrowserRouter([
         children: [
           {
             element: <Layout></Layout>,
-            loader: userGroupLoader,
-            id: "group-conversations",
+            loader: layoutLoader,
+            id: "layout-data-loader",
             children:[
               {
                 path: "chat", 
                 element: <ChatPage></ChatPage>,
-                loader: aiLoader
               },
               {
                 element:<AdminRoute></AdminRoute>,

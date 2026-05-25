@@ -3,10 +3,11 @@ import { getMe } from "../api/authApi";
 import { getToken, removeToken } from "../api/apiClient";
 
 interface UserType{
-    id:number;
-    email: string; 
-    userRole: string;
-    fullname: string;
+    id?:number;
+    email?: string; 
+    userRole?: string;
+    fullname?: string;
+    active?: boolean;
 }
 interface AuthContextType{
     user: UserType|null;

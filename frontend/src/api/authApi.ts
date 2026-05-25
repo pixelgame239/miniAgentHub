@@ -21,10 +21,11 @@ type UserData = {
     id: number,
     fullname: string,
     email: string,
-    userRole: string
+    userRole: string,
+    active: boolean
 }
 type ChangePasswordData ={
-    currentPassword: string,
+    currentPassword?: string,
     newPassword: string
 }
 const loginRequest = client.createRequest<{response: LoginResponse, payload: LoginRequest}>()(

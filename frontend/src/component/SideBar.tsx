@@ -5,14 +5,18 @@ import { useAuth } from "../hooks/authHook";
 import styles from "../styles/sidebar.module.css";
 import type { Group } from "../loader/groupLoader";
 import { useChat } from "../hooks/chatHook";
-import { getConversationDetail, getConversations } from "../api/conversationApi";
+import { createConversation, getConversationDetail, getConversations } from "../api/conversationApi";
 import type { Conversation } from "../context/ChatContext";
+import type { AIModels } from "../loader/aiLoader";
 
 const Sidebar = ({}) => {
-  const userGroups = useRouteLoaderData("group-conversations") as Group[];
+  const { userGroups, AIModels } = useRouteLoaderData("layout-data-loader") as {userGroups: Group[], AIModels: AIModels[]};
   const { setUserGroups, currentConversation, setCurrentConversation } = useChat();
   const [groupConversations, setGroupConversations] = useState<Conversation[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<number|null>(null);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [newChatTitle, setNewChatTitle] = useState("");
+  const [selectedModel, setSelectedModel] = useState<AIModels | null>(AIModels[0] ?? null);
   const openConversation = async(convId:number) =>{
     try{
       const response = await getConversationDetail(convId);
@@ -27,11 +31,23 @@ const Sidebar = ({}) => {
     try{
       setSelectedGroup(groupId);
       const response = await getConversations(groupId);
+      console.log(response);
       if(response&&response.data){
         setGroupConversations(response.data);
       }
     } catch(err){
       console.error(err);
+    }
+  }
+  const handleCreateNewChat=async()=>{
+    try{
+      if(!selectedModel||!newChatTitle ||!selectedGroup) return;
+      await createConversation(newChatTitle, selectedModel?.id, selectedGroup);
+      setShowNewChatModal(false);
+      setNewChatTitle("");
+      setSelectedModel(AIModels[0]);
+    }catch(error){
+      console.error(error);
     }
   }
   useEffect(() => {
@@ -244,7 +260,7 @@ const Sidebar = ({}) => {
                 Back
               </button>
 
-              <button className={styles.newConversationBtn}>
+              <button className={styles.newConversationBtn} onClick={() => setShowNewChatModal(true)}>
                 <svg
                   width="16"
                   height="16"
@@ -263,18 +279,18 @@ const Sidebar = ({}) => {
             {/* CHATS */}
             {groupConversations.length>0?
               <div className={styles.chatList}>
-              {currentConversation&&currentConversation.messages&& currentConversation.messages.map((chat) => (
+              {groupConversations.map((chat) => (
                 <button
                   key={chat.id}
                   className={`${styles.chatItem} ${
-                    currentConversation.id === chat.id
+                    currentConversation&&currentConversation.id === chat.id
                       ? styles.chatItemActive
                       : ""
                   }`}
                   onClick={async() => await openConversation(chat.id)}
                 >
                   <span className={styles.chatItemTitle}>
-                    {currentConversation.title}
+                    {chat.title}
                   </span>
                 </button>
               ))}
@@ -284,7 +300,74 @@ const Sidebar = ({}) => {
           </>
         )}
       </div>
+        {showNewChatModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowNewChatModal(false)}
+        >
+          <div
+            className={styles.modal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h2>New Conversation</h2>
 
+              <button
+                className={styles.modalCloseBtn}
+                onClick={() => setShowNewChatModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div className={styles.formGroup}>
+                <label>Conversation Title</label>
+
+                <input
+                  type="text"
+                  placeholder="Enter conversation title..."
+                  value={newChatTitle}
+                  onChange={(e) => setNewChatTitle(e.target.value)}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>AI Model</label>
+
+                <select
+                  value={selectedModel?.id}
+                  onChange={(e) => setSelectedModel({id: e.target.value})}
+                  className={styles.formSelect}
+                >
+                  {AIModels.map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                className={styles.cancelBtn}
+                onClick={() => setShowNewChatModal(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className={styles.createBtn}
+                onClick={handleCreateNewChat}
+              >
+                Create Chat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* FOOTER */}
       <div className={styles.sidebarFooter}>
         <div className={styles.userProfile}>

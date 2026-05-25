@@ -7,7 +7,6 @@ const conversationService = new ConversationService();
 export const fetchAllConversations = async(req: Request, res:Response, next: NextFunction)=>{
     try{
         if(req.user){
-            console.log("In here")
             const groupId = parseInt(req.params.groupId as string, 10);
             const response = await conversationService.getConversations(req.user?.id, groupId);
             res.status(200).json(response);
@@ -15,6 +14,7 @@ export const fetchAllConversations = async(req: Request, res:Response, next: Nex
         }
         throw new MyError("Unauthorized", 401);
     } catch(error){
+        console.log(error);
         next(error);
     }
 }
@@ -27,6 +27,25 @@ export const fetchConversationDetail = async(req: Request, res: Response, next: 
             return;
         }
         console.log(req);
+        throw new MyError("Unauthorized", 401);
+    } catch(error){
+        next(error);
+    }
+}
+export const createNewConversation = async(req: Request, res: Response, next: NextFunction)=>{
+    try{
+        if(req.user){
+            let groupId= null
+            if(req.params.groupId){
+                groupId = parseInt(req.params.groupId as string, 10);
+                if(groupId===-1){
+                    groupId= null;
+                }
+            }
+            const response = await conversationService.createNewConversation(req.user.id, req.body.title, req.body.model, groupId);
+            res.status(201).json(response);
+            return;
+        }
         throw new MyError("Unauthorized", 401);
     } catch(error){
         next(error);

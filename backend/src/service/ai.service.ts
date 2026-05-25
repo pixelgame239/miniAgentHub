@@ -27,24 +27,27 @@ export class AIService{
             throw new MyError("Unexpected Error",500);
         }
     }
-    public async promptStream(content: string, model: string){
-        try{
-            const response = await axios.post(flowiseAPI, {
+    public async promptStream(content: string, model: string) {
+        const response = await axios.post(
+            flowiseAPI,
+            {
                 question: content,
-                overrideConfig:{
-                    modelName:model,
-                    streaming: true
-                }                
-            },{
-                responseType:"stream",
-                headers:{
-                    "Content-Type":"application/json"
+                streaming: true,
+                overrideConfig: {
+                    modelName: model,
                 }
-            });
-            return response.data;
-        } catch(error){
-            console.error(error);
-            throw new MyError("Unexpected Error",500);
-        }
+            },
+            {
+                responseType: "stream",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "text/event-stream"
+                },
+                httpsAgent: proxyAgent,
+                proxy: false
+            }
+        );
+
+        return response.data;
     }
 }

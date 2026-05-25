@@ -54,20 +54,28 @@ export class AuthService{
         }
     }
     public async authLogin(userData: any){
-        const existingUser = await prisma.user.findUnique({where: {email:userData.email}});
+        const existingUser = await prisma.user.findUnique({where: {email:userData.email}, include:{
+            role:{
+                select:{
+                    permission:true
+                }                
+            }
+        }});
         if(!existingUser){
             throw new MyError("Email or password is incorrect", 404);
         }
         const passwordCorrect = await comparePassword(userData.userPassword, existingUser.userPassword);
         if(passwordCorrect){
+            const userPermissions = existingUser.role?.permission;
             return{
                 message: "Logged in!",
-                token: generateAccessToken(existingUser.id, existingUser.email, existingUser.userRole, existingUser.fullname),
+                token: generateAccessToken(existingUser.id, existingUser.email, existingUser.userRole, existingUser.fullname, existingUser.active, userPermissions),
                 userData: {
                     id: existingUser.id,
                     fullname: existingUser.fullname,
                     email: existingUser.email,
-                    userRole: existingUser.userRole
+                    userRole: existingUser.userRole,
+                    active: existingUser.active
                 }
             }
         }
@@ -77,15 +85,18 @@ export class AuthService{
         if(!currentUser){
             throw new MyError("Not found", 404);
         }
-        const comparedPassword = await comparePassword(formData.currentPassword, currentUser.userPassword);
-        if(!comparedPassword){
-            throw new MyError("Current password is incorrect", 400);
+        if(formData.currentPassword){
+            const comparedPassword = await comparePassword(formData.currentPassword, currentUser.userPassword);
+            if(!comparedPassword){
+                throw new MyError("Current password is incorrect", 400);
+            }
+
         }
         if(formData.newPassword.length<6){
             throw new MyError("New password cannot be less than 6 characters", 403);
         }
         const hashedPassword = await hashPassword(formData.newPassword);
-        const updatedUser = await prisma.user.update({where:{id:formData.id}, data:{userPassword:hashedPassword}});
+        const updatedUser = await prisma.user.update({where:{id:formData.id}, data:{userPassword:hashedPassword, active:true}});
         return { message: "Password is successfully updated"};
     }
 }

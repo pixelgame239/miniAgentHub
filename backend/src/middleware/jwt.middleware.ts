@@ -9,7 +9,9 @@ declare global{
                 id: number,
                 email: string,
                 fullname: string,
-                userRole: string
+                userRole: string,
+                active: boolean,
+                permissions: string[]
             }
         }
     }

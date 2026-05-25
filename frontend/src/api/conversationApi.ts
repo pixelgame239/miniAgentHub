@@ -15,10 +15,10 @@ const getCOnversationDetailRequest = client.createRequest<{response:Conversation
         auth: true
     }
 )
-const createConversationRequest = client.createRequest<{payload:{title:string}}>()(
+const createConversationRequest = client.createRequest<{payload:{title:string, model: string}, params:{groupId:number}}>()(
     {
         method:"POST",
-        endpoint: "/conversations/create",
+        endpoint: "/conversations/create/:groupId",
         auth:true
     }
 )
@@ -28,6 +28,6 @@ export const getConversations = async(groupId:number)=>{
 export const getConversationDetail= async(convId: number)=>{
     return await getCOnversationDetailRequest.send({params:{convId}});
 }
-export const createConversation = async(title:string)=>{
-    return await createConversationRequest.send({payload:{title}});
+export const createConversation = async(title:string, model:string, groupId:number)=>{
+    return await createConversationRequest.send({payload:{title,model}, params:{groupId}});
 }

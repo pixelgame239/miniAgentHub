@@ -4,8 +4,8 @@ interface UserGroup{
     id:number;
     groupName: string; 
 }
-interface Message{
-    id: number,
+export interface Message{
+    id?: number,
     content: string,
     conversationId: number,
     type: string

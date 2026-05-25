@@ -1,14 +1,15 @@
 import { client } from "./apiClient";
 export type ChatRequest={
-    conversationId: number;
-    content: string;
+    conversationId?: number;
+    content?: string;
     model?: string;
 }
-const sendPromptRequest = client.createRequest<{payload:ChatRequest}>()({
+export const sendPromptRequest = client.createRequest<{payload:ChatRequest}>()({
     method:"POST",
     endpoint:"/messages/sendPrompt",
-    auth:true
+    auth:true,
+    options: {streaming: true}
 });
 export const sendPrompt = async(data:ChatRequest)=>{
-    return await sendPromptRequest.send({payload:data});
+    await sendPromptRequest.send({payload:data});
 }
