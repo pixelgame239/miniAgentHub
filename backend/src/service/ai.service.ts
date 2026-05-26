@@ -7,6 +7,7 @@ const groqAPIKey = process.env.GROQ_API_KEY;
 const proxyUri = process.env.HTTP_PROXY || "";
 const proxyAgent = new HttpsProxyAgent(proxyUri);
 const flowiseAPI = process.env.FLOWISE_API||"";
+// const flowiseAPI = process.env.FLOWISE_BACKUP_API || "";
 export class AIService{
     public async getGroqModels(){
         try{
@@ -27,7 +28,8 @@ export class AIService{
             throw new MyError("Unexpected Error",500);
         }
     }
-    public async promptStream(content: string, model: string) {
+    public async promptStream(content: string, model: string, convId: any) {
+        const sessionId = convId.toString();
         const response = await axios.post(
             flowiseAPI,
             {
@@ -35,6 +37,7 @@ export class AIService{
                 streaming: true,
                 overrideConfig: {
                     modelName: model,
+                    sessionId: sessionId
                 }
             },
             {

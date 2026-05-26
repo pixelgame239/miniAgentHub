@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "../styles/chat.module.css";
-import {  useRouteLoaderData } from "react-router";
+import { useRouteLoaderData } from "react-router";
 import type { AIModels } from "../loader/aiLoader";
 import { useChat } from "../hooks/chatHook";
 import { createConversation } from "../api/conversationApi";
@@ -8,20 +8,32 @@ import { useStream } from "@hyper-fetch/react";
 import { type ChatRequest, sendPromptRequest } from "../api/messageApi";
 import type { Message } from "../context/ChatContext";
 import type { Group } from "../loader/groupLoader";
+import { useTranslation } from "react-i18next";
 
 const ChatPage = () => {
-  const { AIModels } = useRouteLoaderData("layout-data-loader") as {userGroups: Group[], AIModels: AIModels[]};
+  const { AIModels } = useRouteLoaderData("layout-data-loader") as {
+    userGroups: Group[];
+    AIModels: AIModels[];
+  };
   const [inputText, setInputText] = useState("");
-  const [selectedModel, setSelectedModel] = useState<AIModels | null>(AIModels[0] ?? null);
-  const { currentConversation } = useChat();
+  const [selectedModel, setSelectedModel] = useState<AIModels | null>(
+    AIModels[0] ?? null
+  );
+  const { currentConversation, groupConversations, setGroupConversations } =
+    useChat();
+
+  // ✅ FIX 1: Local ref to track the active conversation, including newly
+  // created ones that haven't propagated back through context yet.
+  const activeConversationRef = useRef(currentConversation);
+
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [liveText, setLiveText] = useState("");
   const [streamPayload, setStreamPayload] = useState<ChatRequest>({
     conversationId: undefined,
     content: "",
-    model: ""
+    model: "",
   });
-
+  const { t } = useTranslation();
   const shouldStartRef = useRef(false);
 
   const { text, streaming, done, start, abort } = useStream(
@@ -29,6 +41,7 @@ const ChatPage = () => {
   );
 
   useEffect(() => {
+    activeConversationRef.current = currentConversation;
     if (currentConversation) {
       setSelectedModel({ id: currentConversation.AIModel });
       setChatMessages(currentConversation.messages || []);
@@ -48,7 +61,7 @@ const ChatPage = () => {
 
       setChatMessages((prev) => [
         ...prev,
-        { content: finalText, type: "response" } as Message
+        { content: finalText, type: "response" } as Message,
       ]);
       setLiveText("");
     }
@@ -69,7 +82,7 @@ const ChatPage = () => {
     streamPayload.content,
     streamPayload.model,
     streaming,
-    start
+    start,
   ]);
 
   const sendMessage = async () => {
@@ -79,24 +92,32 @@ const ChatPage = () => {
     setInputText("");
 
     try {
-      let conversation = currentConversation;
+      let conversation = activeConversationRef.current;
 
       if (!conversation) {
-        const response = await createConversation(content, selectedModel.id, -1);
-        if(response.data){
-            conversation = response.data;
+        const response = await createConversation(
+          content,
+          selectedModel.id,
+          -1
+        );
+        if (response.data) {
+          conversation = response.data;
+          activeConversationRef.current = conversation;
+          setGroupConversations([conversation, ...groupConversations]);
         }
       }
 
       if (!conversation?.id) return;
+
       setChatMessages((prev) => [
         ...prev,
-        { content, type: "prompt", conversationId:conversation.id }
-      ])
+        { content, type: "prompt", conversationId: conversation.id },
+      ]);
+
       const payload: ChatRequest = {
         conversationId: conversation.id,
         content,
-        model: conversation.AIModel
+        model: conversation.AIModel,
       };
 
       setStreamPayload(payload);
@@ -148,6 +169,28 @@ const ChatPage = () => {
     });
   };
 
+  const isModelLocked =
+    !!activeConversationRef.current ||
+    chatMessages.length > 0;
+    const messagesEndRef = useRef<HTMLDivElement>(null); 
+
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+  useEffect(()=>{
+    scrollToBottom();
+  },[])
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages]);
+
+  useEffect(() => {
+    if (streaming || liveText) {
+      scrollToBottom();
+    }
+  }, [liveText, streaming]);
+
   return (
     <div className={styles.chatPage}>
       <header className={styles.chatHeader}>
@@ -155,20 +198,23 @@ const ChatPage = () => {
           <div className={styles.logoDot} />
           <div>
             <h2 className={styles.chatTitle}>Agent Hub</h2>
-            <p className={styles.chatSubtitle}>AI Collaboration Workspace</p>
+            <p className={styles.chatSubtitle}>{t("chat.subtitle")}</p>
           </div>
         </div>
 
         <div className={styles.modelSelector}>
-          <label>Model</label>
+          <label>{t("chat.model")}</label>
           <select
             value={selectedModel?.id || ""}
             onChange={(e) => {
-              const model = AIModels.find((m) => m.id === e.target.value) || null;
+              const model =
+                AIModels.find((m) => m.id === e.target.value) || null;
               setSelectedModel(model);
             }}
             className={styles.modelDropdown}
-            disabled={currentConversation !== null && currentConversation !== undefined}
+            // ✅ FIX 3: Lock the dropdown once any message exists, not just
+            // when currentConversation is set (which lags behind on first send)
+            disabled={isModelLocked}
           >
             {AIModels.map((model) => (
               <option key={model.id} value={model.id}>
@@ -180,7 +226,9 @@ const ChatPage = () => {
       </header>
 
       <div className={styles.chatMessages}>
-        {currentConversation && chatMessages.map((msg, index) => (
+        {/* ✅ FIX 4: Removed `currentConversation &&` guard — messages should
+            display as soon as they exist, regardless of context state */}
+        {chatMessages.map((msg, index) => (
           <div
             key={index}
             className={`${styles.messageRow} ${
@@ -189,11 +237,13 @@ const ChatPage = () => {
           >
             <div className={styles.messageBubble}>
               <div className={styles.messageSender}>
-                {msg.type === "prompt" ? "You" : "AI Response"}
+                {msg.type === "prompt" ? t("chat.you") : t("chat.aiResponse")}
               </div>
 
               <div className={styles.messageText}>
-                {msg.type === "prompt" ? msg.content : formatMessageText(msg.content)}
+                {msg.type === "prompt"
+                  ? msg.content
+                  : formatMessageText(msg.content)}
               </div>
             </div>
           </div>
@@ -202,13 +252,16 @@ const ChatPage = () => {
         {(streaming || liveText) && (
           <div className={styles.messageRow}>
             <div className={styles.messageBubble}>
-              <div className={styles.messageSender}>AI Response</div>
+              <div className={styles.messageSender}>
+                {t("chat.aiResponse")}
+              </div>
               <div className={styles.messageText}>
                 {formatMessageText(liveText)}
               </div>
             </div>
           </div>
         )}
+         <div ref={messagesEndRef} />
       </div>
 
       <div className={styles.chatInputWrapper}>
@@ -221,16 +274,16 @@ const ChatPage = () => {
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
             className={styles.chatInput}
-            placeholder="Enter a prompt here..."
+            placeholder={t("chat.promptPlaceholder")}
           />
 
           {streaming ? (
             <button className={styles.sendBtn} onClick={abort}>
-              Stop
+              {t("common.stop")}
             </button>
           ) : (
             <button className={styles.sendBtn} onClick={sendMessage}>
-              Send
+              {t("common.send")}
             </button>
           )}
         </div>

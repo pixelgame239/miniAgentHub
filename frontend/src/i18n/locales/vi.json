@@ -1,0 +1,115 @@
+{
+  "common": {
+    "cancel": "Hủy",
+    "create": "Tạo",
+    "update": "Cập nhật",
+    "delete": "Xóa",
+    "save": "Lưu",
+    "back": "Quay lại",
+    "send": "Gửi",
+    "stop": "Dừng",
+    "loading": "Đang tải...",
+    "noConversations": "Không có cuộc trò chuyện"
+  },
+
+  "sidebar": {
+    "chat": "Trò chuyện",
+    "users": "Người dùng",
+    "groups": "Nhóm",
+    "settings": "Cài đặt",
+    "conversations": "Cuộc trò chuyện",
+    "privateConversations": "Trò chuyện riêng tư",
+    "newChat": "Cuộc trò chuyện mới",
+    "newConversation": "Tạo cuộc trò chuyện",
+    "conversationTitle": "Tiêu đề cuộc trò chuyện",
+    "enterConversationTitle": "Nhập tiêu đề cuộc trò chuyện...",
+    "aiModel": "Mô hình AI",
+    "createChat": "Tạo chat",
+    "back": "Quay lại"
+  },
+
+  "chat": {
+    "title": "Agent Hub",
+    "subtitle": "Không gian cộng tác AI",
+    "model": "Mô hình",
+    "you": "Bạn",
+    "aiResponse": "Phản hồi AI",
+    "promptPlaceholder": "Nhập nội dung..."
+  },
+
+  "login": {
+    "secureAccess": "TRUY CẬP BẢO MẬT",
+    "title": "Agent Hub",
+    "login": "Đăng nhập",
+    "welcome": "Chào mừng quay lại Agent Hub. Nhập thông tin để truy cập bảng điều khiển.",
+    "email": "Địa chỉ Email",
+    "password": "Mật khẩu",
+    "enterPassword": "Nhập mật khẩu",
+    "continue": "Tiếp tục vào hệ thống",
+    "encrypted": "MÃ HÓA ĐẦU CUỐI",
+    "certified": "CHỨNG NHẬN ISO 27001",
+    "showPassword": "Hiện mật khẩu",
+    "hidePassword": "Ẩn mật khẩu"
+  },
+
+  "settings": {
+    "title": "Tài khoản & Tùy chọn",
+    "personalInfo": "Thông tin cá nhân",
+    "phone": "Số điện thoại",
+    "address": "Địa chỉ",
+    "personalization": "Cá nhân hóa",
+    "theme": "Giao diện",
+    "themeDescription": "Điều chỉnh giao diện phù hợp với môi trường sử dụng.",
+    "dark": "Tối",
+    "light": "Sáng",
+    "language": "Ngôn ngữ",
+    "languageDescription": "Chọn ngôn ngữ hiển thị.",
+    "security": "Tài khoản & Bảo mật",
+    "passwordSecurity": "Mật khẩu & Bảo mật",
+    "clearHistory": "Xóa lịch sử chat",
+    "deleteAccount": "Xóa tài khoản",
+    "signOut": "Đăng xuất"
+  },
+
+  "groups": {
+    "title": "Quản lý nhóm",
+    "description": "Quản lý và giám sát các nhóm AI.",
+    "createGroup": "Tạo nhóm mới",
+    "activeGroups": "Nhóm đang hoạt động",
+    "members": "Số thành viên",
+    "groupName": "Tên nhóm",
+    "total": "Tổng cộng",
+    "actions": "Hành động"
+  },
+
+  "users": {
+    "title": "Quản lý người dùng",
+    "description": "Quản lý người dùng, quyền hạn và nhóm.",
+    "addUser": "Thêm người dùng",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "fullName": "Họ tên",
+    "email": "Địa chỉ Email",
+    "role": "Vai trò",
+    "groups": "Nhóm",
+    "createUser": "Tạo người dùng",
+    "updateUser": "Cập nhật người dùng",
+    "addNewUser": "Thêm người dùng mới",
+    "sendEmail": "Đã tạo người dùng và gửi đến đường link này: "
+  },
+
+  "password": {
+    "security":"Tài khoản & Bảo mật",
+    "resetPassword": "Đặt lại mật khẩu",
+    "description": "Bảo mật tài khoản bằng mật khẩu bảo mật.",
+    "newPassword": "Mật khẩu mới",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "currentPassword": "Mật khẩu hiện tại",
+    "updatePassword": "Cập nhật mật khẩu",
+    "passwordRequired": "Mật khẩu là bắt buộc",
+    "passwordMin": "Mật khẩu tối thiểu 6 ký tự",
+    "confirmRequired": "Vui lòng xác nhận mật khẩu",
+    "passwordMismatch": "Mật khẩu không khớp",
+    "successChange": "Mật khẩu reset thành công"
+  }
+}

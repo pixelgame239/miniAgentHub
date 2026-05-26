@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { UserService } from "../service/user.service";
 import { MyError } from "../utils/MyError";
+import { checkPermission } from "../utils/checkPermission";
 
 const userService = new UserService();
 
@@ -18,6 +19,21 @@ export const updateUser = async(req:Request, res: Response, next:NextFunction)=>
             const userId = parseInt(req.params.userId as string,10);
             if(isNaN(userId)) throw new MyError("Forbidden", 403);
             const response =await userService.updateUser(userId, req.body);
+            res.status(201).json(response);
+            return;
+        }
+        throw new MyError("Unauthorized", 401);
+    }catch(error){
+        next(error);
+    }
+}
+export const deleteUser = async(req:Request, res: Response, next:NextFunction)=>{
+    try{
+        if(req.user){
+            const userId = parseInt(req.params.userId as string,10);
+            if(isNaN(userId)) throw new MyError("Forbidden", 403);
+            if(req.user.id!==userId && !req.user.permissions.includes("USER_D")) throw new MyError("Forbidden", 403);
+            const response =await userService.deleteUser(userId);
             res.status(201).json(response);
             return;
         }

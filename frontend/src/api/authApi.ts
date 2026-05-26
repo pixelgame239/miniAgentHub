@@ -1,3 +1,4 @@
+import type { User } from "../loader/userLoader"
 import { client } from "./apiClient"
 
 type LoginRequest ={
@@ -15,6 +16,7 @@ type RegisterRequest = {
     groups: number[]
 }
 type RegisterResponse = {
+    userData: User
     emailLink: string
 }
 type UserData = {

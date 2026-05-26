@@ -23,3 +23,82 @@ export const fetchUserGroups = async(req:Request, res:Response, next: NextFuncti
         next(error);
     }
 }
+export const createNewGroup = async(req:Request, res:Response, next: NextFunction)=>{
+    try{
+        if(req.user){
+            const response = await groupService.createGroup(req.body.groupName);
+            res.status(201).json(response);
+            return;
+        }
+        throw new MyError("Unauthorized", 401);
+    }catch(error){
+        next(error);
+    }
+}
+export const deleteGroup = async(req:Request, res:Response, next: NextFunction)=>{
+    try{
+        if(req.user){
+            const groupId = parseInt(req.params.groupId as string, 10);
+            const response = await groupService.deleteGroup(groupId);
+            res.status(201).json(response);
+            return;
+        }
+        throw new MyError("Unauthorized", 401);
+    }catch(error){
+        next(error);
+    }
+}
+export const addUserToGroup = async(req:Request, res:Response, next: NextFunction)=>{
+    try{
+        if(req.user){
+            const groupId = parseInt(req.params.groupId as string, 10);
+            const userId = parseInt(req.params.userId as string, 10);
+            const response = await groupService.addUserToGroup(groupId, userId);
+            res.status(201).json(response);
+            return;
+        }
+        throw new MyError("Unauthorized", 401);
+    }catch(error){
+        next(error);
+    }
+}
+export const removeUserFromGroup = async(req:Request, res:Response, next: NextFunction)=>{
+    try{
+        if(req.user){
+            const groupId = parseInt(req.params.groupId as string, 10);
+            const userId = parseInt(req.params.userId as string, 10);
+            const response = await groupService.removeUserFromGroup(groupId, userId);
+            res.status(201).json(response);
+            return;
+        }
+        throw new MyError("Unauthorized", 401);
+    }catch(error){
+        next(error);
+    }
+}
+export const updateGroupName = async(req:Request, res:Response, next: NextFunction)=>{
+    try{
+        if(req.user){
+            const groupId = parseInt(req.params.groupId as string, 10);
+            const response = await groupService.changeGroupName(groupId, req.body.groupName);
+            res.status(201).json(response);
+            return;
+        }
+        throw new MyError("Unauthorized", 401);
+    }catch(error){
+        next(error);
+    }
+}
+export const viewGroupDetail = async(req:Request, res:Response, next: NextFunction)=>{
+    try{
+        if(req.user){
+            const groupId = parseInt(req.params.groupId as string, 10);
+            const response = await groupService.getGroupDetail(groupId);
+            res.status(201).json(response);
+            return;
+        }
+        throw new MyError("Unauthorized", 401);
+    }catch(error){
+        next(error);
+    }
+}

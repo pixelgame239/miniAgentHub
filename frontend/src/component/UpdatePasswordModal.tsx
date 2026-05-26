@@ -1,6 +1,7 @@
 // components/UpdatePasswordModal.tsx
 import React, { useEffect, useState } from "react";
 import styles from "../styles/modal.module.css"; // Changed to CSS Module
+import { useTranslation } from "react-i18next";
 
 interface UpdatePasswordModalProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
+  const { t } = useTranslation();
   const [errors, setErrors] = useState<{
     currentPassword?: string;
     newPassword?: string;
@@ -45,21 +46,21 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
     const newErrors: typeof errors = {};
 
     if (!currentPassword.trim()) {
-      newErrors.currentPassword = "Current password is required";
+      newErrors.currentPassword = t("password.passwordRequired");
     }
 
     if (!newPassword.trim()) {
-      newErrors.newPassword = "New password is required";
+      newErrors.newPassword = t("password.passwordRequired");
     } else if (newPassword.length < 6) {
-      newErrors.newPassword = "New password must be at least 6 characters";
+      newErrors.newPassword = t("password.passwordMin");
     }
 
     if (!confirmPassword.trim()) {
-      newErrors.confirmPassword = "Please confirm your password";
+      newErrors.confirmPassword = t("password.confirmRequired");
     } else if (confirmPassword.length < 6) {
-      newErrors.confirmPassword = "Confirm password must be at least 6 characters";
+      newErrors.confirmPassword = t("password.passwordMin");
     } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = t("password.passwordMismatch");
     }
 
     setErrors(newErrors);
@@ -67,7 +68,7 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
@@ -91,8 +92,8 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
       <div className={styles["password-modal"]} onClick={(e) => e.stopPropagation()}>
         <div className={styles["modal-header"]}>
           <div>
-            <p className={styles["modal-eyebrow"]}>SECURITY</p>
-            <h2 className={styles["modal-title"]}>Update Password</h2>
+            <p className={styles["modal-eyebrow"]}>{t("password.security")}</p>
+            <h2 className={styles["modal-title"]}>{t("password.updatePassword")}</h2>
           </div>
 
           <button className={styles["modal-close"]} onClick={onClose}>
@@ -102,14 +103,14 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
 
         <form onSubmit={handleSubmit} className={styles["modal-form"]}>
           <div className={styles["form-group"]}>
-            <label className={styles["form-label"]}>Current Password</label>
+            <label className={styles["form-label"]}>{t("password.currentPassword")}</label>
 
             <input
               type="password"
               className={`${styles["form-input"]} ${
                 errors.currentPassword ? styles["error"] : ""
               }`}
-              placeholder="Enter current password"
+              placeholder={t("password.currentPassword")}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
             />
@@ -120,7 +121,7 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
           </div>
 
           <div className={styles["form-group"]}>
-            <label className={styles["form-label"]}>New Password</label>
+            <label className={styles["form-label"]}>{t("password.newPassword")}</label>
 
             <input
               type="password"
@@ -138,7 +139,7 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
           </div>
 
           <div className={styles["form-group"]}>
-            <label className={styles["form-label"]}>Confirm New Password</label>
+            <label className={styles["form-label"]}>{t("password.confirmPassword")}</label>
 
             <input
               type="password"
@@ -157,11 +158,11 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
 
           <div className={styles["modal-actions"]}>
             <button type="button" className={styles["secondary-btn"]} onClick={onClose}>
-              Cancel
+              {t("common.cancel")}
             </button>
 
             <button type="submit" className={styles["primary-btn"]}>
-              Update Password
+              {t("password.updatePassword")}
             </button>
           </div>
         </form>

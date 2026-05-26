@@ -3,6 +3,7 @@ import { useState } from "react";
 import styles from "../styles/initResetPassword.module.css";
 import { changePassword } from "../api/authApi";
 import { useAuth } from "../hooks/authHook";
+import { useTranslation } from "react-i18next";
 
 const InitResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -15,6 +16,7 @@ const InitResetPassword = () => {
   }>({});
 
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const validate = () => {
     const newErrors: {
@@ -23,18 +25,15 @@ const InitResetPassword = () => {
     } = {};
 
     if (!password) {
-      newErrors.password = "Password is required";
+      newErrors.password = t("password.passwordRequired");
     } else if (password.length < 6) {
-      newErrors.password =
-        "Password must be at least 6 characters";
+      newErrors.password = t("password.passwordMin");
     }
 
     if (!confirmPassword) {
-      newErrors.confirmPassword =
-        "Please confirm your password";
+      newErrors.confirmPassword = t("password.confirmRequired");
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword =
-        "Passwords do not match";
+      newErrors.confirmPassword = t("password.passwordMismatch")
     }
 
     setErrors(newErrors);
@@ -53,7 +52,7 @@ const InitResetPassword = () => {
       setLoading(true);
       await changePassword({ newPassword: password });
       setUser({...user, active: true})
-      alert("Password reset successful");
+      alert(t("password.successChange"));
     } catch (err) {
       console.error(err);
     } finally {
@@ -80,10 +79,10 @@ const InitResetPassword = () => {
             </svg>
           </div>
 
-          <h1>Reset Password</h1>
+          <h1>{t("password.resetPassword")}</h1>
 
           <p>
-            Create a new secure password for your account.
+            {t("password.description")}
           </p>
         </div>
 
@@ -92,11 +91,11 @@ const InitResetPassword = () => {
           className={styles.form}
         >
           <div className={styles.formGroup}>
-            <label>New Password</label>
+            <label>{t("password.newPassword")}</label>
 
             <input
               type="password"
-              placeholder="Enter new password"
+              placeholder={t("password.newPassword")}
               value={password}
               onChange={(e) =>
                 setPassword(e.target.value)
@@ -114,11 +113,11 @@ const InitResetPassword = () => {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Confirm Password</label>
+            <label>{t("password.confirmPassword")}</label>
 
             <input
               type="password"
-              placeholder="Confirm password"
+              placeholder={t("password.confirmPassword")}
               value={confirmPassword}
               onChange={(e) =>
                 setConfirmPassword(e.target.value)
@@ -143,8 +142,8 @@ const InitResetPassword = () => {
             disabled={loading}
           >
             {loading
-              ? "Updating Password..."
-              : "Reset Password"}
+              ? t("common.loading")
+              : t("password.updatePassword")}
           </button>
         </form>
       </div>

@@ -1,3 +1,5 @@
+/* layout.module.css – all colors via CSS variables */
+
 html,
 body,
 #root {
@@ -9,7 +11,7 @@ body,
 .chat-container {
   display: flex;
   height: 100vh;
-  background: #0b0f14;
+  background: var(--bg-primary);
   overflow: hidden;
 }
 
@@ -24,7 +26,7 @@ body,
   min-width: 0;
   height: 100vh;
   overflow: hidden;
-  background: #0b0f14;
+  background: var(--bg-primary);
 }
 
 /* THIS ENABLES PAGE SCROLLING */
@@ -44,10 +46,10 @@ body,
 }
 
 .page-scroll-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--border-strong);
   border-radius: 999px;
 }
 
 .page-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--border-hover);
 }

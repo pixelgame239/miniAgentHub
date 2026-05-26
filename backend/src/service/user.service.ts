@@ -30,4 +30,8 @@ export class UserService{
             groups:true
         }})
     }
+    public async deleteUser(userId:number){
+        const response = await prisma.user.delete({where:{id: userId}});
+        return response;
+    }
 }

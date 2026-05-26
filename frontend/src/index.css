@@ -1,3 +1,170 @@
+/* ================================================
+   GLOBAL CSS – design token system
+   All module files reference these variables only.
+   Swap theme by changing values here (or via
+   [data-theme] attribute on <html>/<body>).
+================================================ */
+
+:root {
+  /* ── Surface / Background ─────────────────── */
+  --bg-primary:      #0b0f14;
+  --bg-secondary:    #111827;
+  --bg-card:         rgba(17, 24, 39, 0.96);
+  --bg-input:        rgba(20, 22, 28, 0.95);
+  --bg-overlay:      rgba(0, 0, 0, 0.72);
+  --bg-hover:        rgba(255, 255, 255, 0.04);
+  --bg-subtle:       rgba(255, 255, 255, 0.03);
+  --bg-surface:      rgba(24, 27, 32, 0.98);
+
+  /* ── Border ───────────────────────────────── */
+  --border:          rgba(255, 255, 255, 0.06);
+  --border-hover:    rgba(255, 255, 255, 0.14);
+  --border-focus:    rgba(59, 130, 246, 0.70);
+  --border-strong:   rgba(255, 255, 255, 0.08);
+
+  /* ── Text ─────────────────────────────────── */
+  --text-primary:    #f1f5f9;
+  --text-secondary:  #9ca3af;
+  --text-muted:      #6b7280;
+  --text-heading:    #ffffff;
+  --text-dimmed:     #64748b;
+
+  /* ── Accent (blue) ───────────────────────── */
+  --accent:          #3b82f6;
+  --accent-hover:    #2563eb;
+  --accent-dim:      rgba(59, 130, 246, 0.12);
+  --accent-border:   rgba(59, 130, 246, 0.24);
+  --accent-glow:     rgba(37, 99, 235, 0.35);
+  --accent-focus:    rgba(37, 99, 235, 0.12);
+  --accent-text:     #93c5fd;
+
+  /* ── Danger (red) ────────────────────────── */
+  --danger:          #f87171;
+  --danger-dim:      rgba(248, 113, 113, 0.12);
+  --danger-border:   rgba(248, 113, 113, 0.24);
+  --danger-bg:       rgba(78, 27, 36, 0.85);
+
+  /* ── Success ─────────────────────────────── */
+  --success:         #10b981;
+
+  /* ── Sidebar-specific ────────────────────── */
+  --sidebar-bg:            #0b1016;
+  --sidebar-border:        rgba(255, 255, 255, 0.06);
+  --sidebar-active-bg:     rgba(47, 128, 237, 0.18);
+  --sidebar-active-border: rgba(96, 165, 250, 0.12);
+  --sidebar-active-accent: #60a5fa;
+
+  /* ── Dialog / Modal-specific ─────────────── */
+  --dialog-accent:          #61afef;
+  --dialog-accent-dim:      rgba(97, 175, 239, 0.15);
+  --dialog-accent-border:   rgba(97, 175, 239, 0.25);
+  --dialog-accent-glow:     rgba(97, 175, 239, 0.35);
+
+  /* ── Radius (layout, not changed per theme) ─ */
+  --radius:          20px;
+}
+
+/* ================================================
+   NIGHT THEME
+   A cooler, more blue/violet dark mode
+================================================ */
+/* [data-theme="dark"] {
+  --bg-primary:      #020617;
+  --bg-secondary:    #0f172a;
+  --bg-card:         rgba(17, 24, 39, 0.97);
+  --bg-input:        rgba(15, 23, 42, 0.95);
+  --bg-overlay:      rgba(0, 0, 0, 0.80);
+  --bg-hover:        rgba(255, 255, 255, 0.03);
+  --bg-subtle:       rgba(255, 255, 255, 0.02);
+  --bg-surface:      rgba(15, 23, 42, 0.98);
+
+  --border:          rgba(255, 255, 255, 0.05);
+  --border-hover:    rgba(255, 255, 255, 0.12);
+  --border-focus:    rgba(139, 92, 246, 0.70);
+  --border-strong:   rgba(255, 255, 255, 0.06);
+
+  --text-primary:    #e2e8f0;
+  --text-secondary:  #94a3b8;
+  --text-muted:      #64748b;
+  --text-heading:    #f1f5f9;
+  --text-dimmed:     #475569;
+
+  --accent:          #8b5cf6;
+  --accent-hover:    #7c3aed;
+  --accent-dim:      rgba(139, 92, 246, 0.12);
+  --accent-border:   rgba(139, 92, 246, 0.24);
+  --accent-glow:     rgba(109, 40, 217, 0.35);
+  --accent-focus:    rgba(109, 40, 217, 0.12);
+  --accent-text:     #c4b5fd;
+
+  --danger:          #f87171;
+  --danger-dim:      rgba(248, 113, 113, 0.12);
+  --danger-border:   rgba(248, 113, 113, 0.24);
+  --danger-bg:       rgba(78, 27, 36, 0.85);
+
+  --success:         #34d399;
+
+  --sidebar-bg:            #020617;
+  --sidebar-border:        rgba(255, 255, 255, 0.05);
+  --sidebar-active-bg:     rgba(139, 92, 246, 0.18);
+  --sidebar-active-border: rgba(167, 139, 250, 0.14);
+  --sidebar-active-accent: #a78bfa;
+
+  --dialog-accent:          #a78bfa;
+  --dialog-accent-dim:      rgba(167, 139, 250, 0.15);
+  --dialog-accent-border:   rgba(167, 139, 250, 0.25);
+  --dialog-accent-glow:     rgba(124, 58, 237, 0.35);
+} */
+[data-theme="light"] {
+  --bg-primary:      #ffffff;
+  --bg-secondary:    #f8fafc;
+  --bg-card:         rgba(255, 255, 255, 0.96);
+  --bg-input:        #f1f5f9;
+  --bg-overlay:      rgba(0, 0, 0, 0.4);
+  --bg-hover:        rgba(0, 0, 0, 0.04);
+  --bg-subtle:       rgba(0, 0, 0, 0.02);
+  --bg-surface:      rgba(255, 255, 255, 0.98);
+
+  --border:          rgba(0, 0, 0, 0.08);
+  --border-hover:    rgba(0, 0, 0, 0.16);
+  --border-focus:    #3b82f6;
+  --border-strong:   rgba(0, 0, 0, 0.12);
+
+  --text-primary:    #0f172a;
+  --text-secondary:  #475569;
+  --text-muted:      #94a3b8;
+  --text-heading:    #0f172a;
+  --text-dimmed:     #64748b;
+
+  --accent:          #2563eb;
+  --accent-hover:    #1d4ed8;
+  --accent-dim:      rgba(37, 99, 235, 0.08);
+  --accent-border:   rgba(37, 99, 235, 0.24);
+  --accent-glow:     rgba(37, 99, 235, 0.25);
+  --accent-focus:    rgba(37, 99, 235, 0.1);
+  --accent-text:     #1e40af;
+
+  --danger:          #dc2626;
+  --danger-dim:      rgba(220, 38, 38, 0.08);
+  --danger-border:   rgba(220, 38, 38, 0.24);
+  --danger-bg:       #fee2e2;
+
+  --success:         #16a34a;
+
+  --sidebar-bg:            #f1f5f9;
+  --sidebar-border:        rgba(0, 0, 0, 0.06);
+  --sidebar-active-bg:     rgba(37, 99, 235, 0.12);
+  --sidebar-active-border: rgba(37, 99, 235, 0.24);
+  --sidebar-active-accent: #2563eb;
+
+  --dialog-accent:          #2563eb;
+  --dialog-accent-dim:      rgba(37, 99, 235, 0.1);
+  --dialog-accent-border:   rgba(37, 99, 235, 0.25);
+  --dialog-accent-glow:     rgba(37, 99, 235, 0.2);
+}
+/* ================================================
+   BASE RESET
+================================================ */
 #root {
   max-width: 100%;
   margin: 0 auto;
@@ -8,5 +175,11 @@
 
 body {
   margin: 0;
-}
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
+}

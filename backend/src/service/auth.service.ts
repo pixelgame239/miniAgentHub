@@ -50,6 +50,7 @@ export class AuthService{
         const emailLink = await EmailService.sendFakeWelcomeEmail(newUser.email, newUser.fullname, randomPassword);
         return {
             message: "Registered successfully, check the link below for the password",
+            userData: newUser,
             emailLink: emailLink
         }
     }

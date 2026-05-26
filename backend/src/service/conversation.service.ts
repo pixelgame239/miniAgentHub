@@ -8,7 +8,9 @@ export class ConversationService {
         if(groupId==-1){
             findGroupId=null;
         }
-        const response = await prisma.conversation.findMany({where:{userId:id, groupId:findGroupId}});
+        const response = await prisma.conversation.findMany({where:{userId:id, groupId:findGroupId}, orderBy:{
+            id:"desc"
+        }});
         return response;
     }
     public async createNewConversation(id: number, title:string, model: string, groupId: any){
@@ -32,5 +34,19 @@ export class ConversationService {
             }
         }})
         return response;
+    }
+    public async deleteConversation(convId:number, userId: number){
+        const response = await prisma.conversation.findFirst({where:{id: convId, userId:userId}});
+        if(!response) throw new MyError("Forbidden",403);
+        const deleteRes = await prisma.conversation.delete({where:{id: convId}});
+        return deleteRes;
     }   
+    public async deleteAllConversations(userId:number){
+        const response = await prisma.conversation.deleteMany({where:{userId: userId}});
+        return response;
+    }
+    public async updateConversationTitle(convId: number, title: string){
+        const response = await prisma.conversation.update({where:{id: convId}, data:{title: title}});
+        return response;
+    }
 }

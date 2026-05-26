@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router';
-
+import "./i18n";
 function App() {
   return (
     <div style={{

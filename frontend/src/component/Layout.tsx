@@ -7,13 +7,13 @@ import ErrorBoundary from "./ErrorBoundary.tsx";
 const Layout = () => {
   return (
     <div className={styles["chat-container"]}>
-      <ErrorBoundary fallback={<div className={styles["sidebar-error"]}>Sidebar tạm thời không khả dụng.</div>}>
+      <ErrorBoundary fallback={<div className={styles["sidebar-error"]}>Sidebar isn't available now</div>}>
             <Sidebar />
       </ErrorBoundary>
       {/* ADD THIS WRAPPER */}
       <main className={styles["chat-main"]}>
         <div className={styles["page-scroll-container"]}>
-          <ErrorBoundary fallback={<div className={styles["sidebar-error"]}>Cửa sổ chính tạm thời không khả dụng.</div>}>
+          <ErrorBoundary fallback={<div className={styles["sidebar-error"]}>Mainscreen isn't available now</div>}>
               <Outlet />
           </ErrorBoundary>
         </div>

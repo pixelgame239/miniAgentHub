@@ -32,4 +32,54 @@ export class GroupService{
                 }
             });
     }
+    public async addUserToGroup(groupId:number, userId:number){
+        const response = await prisma.group.update({
+            where: {
+                id: groupId
+            },
+            data: {
+                users: {
+                    connect: {
+                        id: userId
+                    }
+                }
+            }
+        });
+        return response;
+    }
+    public async deleteGroup(groupId:number){
+        const response = await prisma.group.delete({where:{id: groupId}});
+        return response;
+    }
+    public async removeUserFromGroup(groupId:number, userId:number){
+        const response = await prisma.group.update({
+            where: {
+                id: groupId
+            },
+            data: {
+                users: {
+                    disconnect: {
+                        id: userId
+                    }
+                }
+            }
+        });
+        return response;
+    }
+    public async changeGroupName(groupId:number, groupName:string){
+        const response = await prisma.group.update({where:{id: groupId}, data:{groupName: groupName}});
+        return response;
+    }
+    public async getGroupDetail(groupId:number){
+        const response = await prisma.group.findFirst({where:{id: groupId}, 
+            include:{
+                users:{
+                    select:{
+                        id: true,
+                        fullname: true,
+                        email: true
+                    }
+                }}});
+        return response;
+    }
 };

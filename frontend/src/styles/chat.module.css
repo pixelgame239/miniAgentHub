@@ -1,20 +1,4 @@
-:root {
-  --bg-primary: #050b11;
-  --bg-secondary: #0f1722;
-  --bg-card: rgba(17, 24, 39, 0.95);
-
-  --border: rgba(255, 255, 255, 0.06);
-
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-
-  --success: #10b981;
-
-  --radius: 20px;
-}
+/* chat.module.css – all colors via CSS variables */
 
 /* ========================================
    MAIN PAGE
@@ -30,7 +14,7 @@
   background:
     radial-gradient(
       circle at top left,
-      rgba(59, 130, 246, 0.08),
+      var(--accent-dim),
       transparent 30%
     ),
     var(--bg-primary);
@@ -56,7 +40,7 @@
 
   border-bottom: 1px solid var(--border);
 
-  background: rgba(5, 11, 17, 0.9);
+  background: color-mix(in srgb, var(--bg-primary) 90%, transparent);
 
   backdrop-filter: blur(18px);
 
@@ -122,7 +106,7 @@
 
   background: var(--bg-secondary);
 
-  color: white;
+  color: var(--text-primary);
 
   padding: 0 14px;
 
@@ -190,11 +174,11 @@
 .userRow .messageBubble {
   background: linear-gradient(
     180deg,
-    #2563eb,
-    #1d4ed8
+    var(--accent),
+    var(--accent-hover)
   );
 
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-strong);
 }
 
 .messageSender {
@@ -244,7 +228,7 @@
 .messageTime {
   font-size: 12px;
 
-  color: #64748b;
+  color: var(--text-dimmed);
 
   padding: 0 8px;
 }
@@ -258,7 +242,7 @@
 
   background: linear-gradient(
     to top,
-    rgba(5, 11, 17, 0.98) 70%,
+    var(--bg-primary) 70%,
     transparent
   );
 
@@ -275,9 +259,9 @@
 
   border-radius: 24px;
 
-  background: rgba(15, 23, 34, 0.95);
+  background: var(--bg-card);
 
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-strong);
 
   display: flex;
   align-items: center;
@@ -302,13 +286,13 @@
   border: none;
   outline: none;
 
-  color: white;
+  color: var(--text-primary);
 
   font-size: 15px;
 }
 
 .chatInput::placeholder {
-  color: #64748b;
+  color: var(--text-dimmed);
 }
 
 .attachBtn,
@@ -330,17 +314,17 @@
 }
 
 .attachBtn {
-  background: rgba(255,255,255,0.05);
-  color: white;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .attachBtn:hover {
-  background: rgba(255,255,255,0.08);
+  background: var(--bg-subtle);
 }
 
 .sendBtn {
   background: var(--accent);
-  color: white;
+  color: var(--text-heading);
 }
 
 .sendBtn:hover {
@@ -362,12 +346,12 @@
 }
 
 .chatMessages::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.12);
+  background: var(--border-strong);
   border-radius: 999px;
 }
 
 .chatMessages::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.22);
+  background: var(--border-hover);
 }
 
 /* ========================================

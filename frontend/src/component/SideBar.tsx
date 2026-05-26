@@ -5,18 +5,29 @@ import { useAuth } from "../hooks/authHook";
 import styles from "../styles/sidebar.module.css";
 import type { Group } from "../loader/groupLoader";
 import { useChat } from "../hooks/chatHook";
-import { createConversation, getConversationDetail, getConversations } from "../api/conversationApi";
-import type { Conversation } from "../context/ChatContext";
+import { createConversation, deleteConversation, getConversationDetail, getConversations, updateConversationTitle } from "../api/conversationApi";
 import type { AIModels } from "../loader/aiLoader";
+import { useTranslation } from "react-i18next";
+import ReusableDialog from "./ReusableDialogProps";
+
+type ConversationItem = {
+  id: number;
+  title: string;
+};
 
 const Sidebar = ({}) => {
   const { userGroups, AIModels } = useRouteLoaderData("layout-data-loader") as {userGroups: Group[], AIModels: AIModels[]};
-  const { setUserGroups, currentConversation, setCurrentConversation } = useChat();
-  const [groupConversations, setGroupConversations] = useState<Conversation[]>([]);
+  const { setUserGroups, currentConversation, setCurrentConversation, groupConversations, setGroupConversations } = useChat();
   const [selectedGroup, setSelectedGroup] = useState<number|null>(null);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatTitle, setNewChatTitle] = useState("");
   const [selectedModel, setSelectedModel] = useState<AIModels | null>(AIModels[0] ?? null);
+  const { t } = useTranslation();
+  const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"edit" | "delete" | null>(null);
+  const [activeConversation, setActiveConversation] = useState<ConversationItem | null>(null);
+  const [editTitle, setEditTitle] = useState("");
   const openConversation = async(convId:number) =>{
     try{
       const response = await getConversationDetail(convId);
@@ -42,7 +53,10 @@ const Sidebar = ({}) => {
   const handleCreateNewChat=async()=>{
     try{
       if(!selectedModel||!newChatTitle ||!selectedGroup) return;
-      await createConversation(newChatTitle, selectedModel?.id, selectedGroup);
+      const response =await createConversation(newChatTitle, selectedModel?.id, selectedGroup);
+      if(response.data){
+        setGroupConversations([response.data,...groupConversations]);
+      }
       setShowNewChatModal(false);
       setNewChatTitle("");
       setSelectedModel(AIModels[0]);
@@ -50,6 +64,72 @@ const Sidebar = ({}) => {
       console.error(error);
     }
   }
+    const openEditDialog = (chat: ConversationItem) => {
+    setActiveConversation(chat);
+    setEditTitle(chat.title);
+    setDialogMode("edit");
+    setDialogOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const openDeleteDialog = (chat: ConversationItem) => {
+    setActiveConversation(chat);
+    setDialogMode("delete");
+    setDialogOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const closeDialog = () => {
+    setDialogOpen(false);
+    setDialogMode(null);
+    setActiveConversation(null);
+    setEditTitle("");
+  };
+
+  const handleEditConversation = async () => {
+    if (!activeConversation) return;
+
+    const nextTitle = editTitle.trim();
+    if (!nextTitle) return;
+
+    try {
+      await updateConversationTitle(activeConversation.id, nextTitle);
+      setGroupConversations((prev) =>
+        prev.map((item) =>
+          item.id === activeConversation.id ? { ...item, title: nextTitle } : item
+        )
+      );
+
+      if (currentConversation?.id === activeConversation.id) {
+        setCurrentConversation((prev: any) =>
+          prev ? { ...prev, title: nextTitle } : prev
+        );
+      }
+
+      closeDialog();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!activeConversation) return;
+
+    try {
+      await deleteConversation(activeConversation.id);
+      setGroupConversations((prev) =>
+        prev.filter((item) => item.id !== activeConversation.id)
+      );
+
+      if (currentConversation?.id === activeConversation.id) {
+        setCurrentConversation(null);
+      }
+
+      closeDialog();
+    } catch (err) {
+      console.error(err);
+    }
+  };
   useEffect(() => {
     if (userGroups) {
       setUserGroups(userGroups);
@@ -60,7 +140,7 @@ const Sidebar = ({}) => {
   const navItems = [
     {
       to: "/chat",
-      label: "Chat",
+      label: t("sidebar.chat"),
       icon: (
         <svg
           width="20"
@@ -78,7 +158,7 @@ const Sidebar = ({}) => {
     },
     {
       to: "/user",
-      label: "Users",
+      label: t("sidebar.users"),
       icon: (
         <svg
           width="20"
@@ -99,7 +179,7 @@ const Sidebar = ({}) => {
     },
     {
       to: "/groups",
-      label: "Groups",
+      label: t("sidebar.groups"),
       icon: (
         <svg
           width="20"
@@ -117,7 +197,7 @@ const Sidebar = ({}) => {
     },
     {
       to: "/settings",
-      label: "Settings",
+      label: t("sidebar.settings"),
       icon: (
         <svg
           width="20"
@@ -190,7 +270,7 @@ const Sidebar = ({}) => {
           <>
             <div className={styles.groupHeader}>
               <h3 className={styles.recentChatsTitle}>
-                Conversations
+                 {t("sidebar.conversations")}
               </h3>
             </div>
 
@@ -212,7 +292,7 @@ const Sidebar = ({}) => {
                   <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
                 </svg>
 
-                Private Conversations
+                 {t("sidebar.privateConversations")}
               </button>
 
               {userGroups
@@ -257,7 +337,7 @@ const Sidebar = ({}) => {
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
 
-                Back
+                {t("common.back")}
               </button>
 
               <button className={styles.newConversationBtn} onClick={() => setShowNewChatModal(true)}>
@@ -273,33 +353,110 @@ const Sidebar = ({}) => {
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
 
-                New Chat
+                {t("sidebar.newChat")}
               </button>
             </div>
             {/* CHATS */}
-            {groupConversations.length>0?
+            {groupConversations.length > 0 ? (
               <div className={styles.chatList}>
-              {groupConversations.map((chat) => (
-                <button
-                  key={chat.id}
-                  className={`${styles.chatItem} ${
-                    currentConversation&&currentConversation.id === chat.id
-                      ? styles.chatItemActive
-                      : ""
-                  }`}
-                  onClick={async() => await openConversation(chat.id)}
-                >
-                  <span className={styles.chatItemTitle}>
-                    {chat.title}
-                  </span>
-                </button>
-              ))}
-            </div>
-            :<h3>No conversations</h3>
+                {groupConversations.map((chat) => (
+                  <div key={chat.id} className={styles.chatRow}>
+                    <button
+                      className={`${styles.chatItem} ${
+                        currentConversation?.id === chat.id
+                          ? styles.chatItemActive
+                          : ""
+                      }`}
+                      onClick={async () => await openConversation(chat.id)}
+                    >
+                      <span className={styles.chatItemTitle}>{chat.title}</span>
+                    </button>
+
+                    <div className={styles.chatActionsWrap}>
+                      <button
+                        className={styles.chatActionBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMenuOpenId((prev) =>
+                            prev === chat.id ? null : chat.id
+                          );
+                        }}
+                        aria-label="Conversation actions"
+                      >
+                        ⋯
+                      </button>
+
+                      {menuOpenId === chat.id && (
+                        <div
+                          className={styles.chatActionMenu}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            className={styles.chatActionMenuItem}
+                            onClick={() => openEditDialog(chat)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className={`${styles.chatActionMenuItem} ${styles.chatActionMenuItemDanger}`}
+                            onClick={() => openDeleteDialog(chat)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>)
+            :<h3>{t("common.noConversations")}</h3>
             }
           </>
         )}
       </div>
+      <ReusableDialog
+        open={dialogOpen}
+        title={dialogMode === "edit" ? "Edit conversation" : "Delete conversation"}
+        onClose={closeDialog}
+        footer={
+          dialogMode === "edit" ? (
+            <>
+              <button className={styles.cancelBtn} onClick={closeDialog}>
+                Cancel
+              </button>
+              <button className={styles.createBtn} onClick={handleEditConversation}>
+                Save changes
+              </button>
+            </>
+          ) : (
+            <>
+              <button className={styles.cancelBtn} onClick={closeDialog}>
+                Cancel
+              </button>
+              <button className={styles.dangerBtn} onClick={handleDeleteConversation}>
+                Delete
+              </button>
+            </>
+          )
+        }
+      >
+        {dialogMode === "edit" ? (
+          <div className={styles.formGroup}>
+            <label>Conversation title</label>
+            <input
+              className={styles.formInput}
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              placeholder="Enter conversation title"
+            />
+          </div>
+        ) : (
+          <p className={styles.deleteText}>
+            Are you sure you want to delete this conversation? This action cannot be undone.
+          </p>
+        )}
+      </ReusableDialog>
         {showNewChatModal && (
         <div
           className={styles.modalOverlay}
@@ -310,7 +467,7 @@ const Sidebar = ({}) => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className={styles.modalHeader}>
-              <h2>New Conversation</h2>
+              <h2>{t("sidebar.newConversation")}</h2>
 
               <button
                 className={styles.modalCloseBtn}
@@ -322,11 +479,11 @@ const Sidebar = ({}) => {
 
             <div className={styles.modalBody}>
               <div className={styles.formGroup}>
-                <label>Conversation Title</label>
+                <label>{t("sidebar.conversationTitle")}</label>
 
                 <input
                   type="text"
-                  placeholder="Enter conversation title..."
+                  placeholder={t("sidebar.enterConversationTitle")}
                   value={newChatTitle}
                   onChange={(e) => setNewChatTitle(e.target.value)}
                   className={styles.formInput}
@@ -334,7 +491,7 @@ const Sidebar = ({}) => {
               </div>
 
               <div className={styles.formGroup}>
-                <label>AI Model</label>
+                <label>{t("sidebar.aiModel")}</label>
 
                 <select
                   value={selectedModel?.id}
@@ -355,14 +512,14 @@ const Sidebar = ({}) => {
                 className={styles.cancelBtn}
                 onClick={() => setShowNewChatModal(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
 
               <button
                 className={styles.createBtn}
                 onClick={handleCreateNewChat}
               >
-                Create Chat
+                {t("sidebar.createChat")}
               </button>
             </div>
           </div>

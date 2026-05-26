@@ -1,45 +1,95 @@
 // pages/SettingsPage.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "../styles/settings.module.css"; // Changed to CSS Module
 import { useNavigate } from "react-router";
 import { useAuth } from "../hooks/authHook";
 import { removeToken } from "../api/apiClient";
 import UpdatePasswordModal from "../component/UpdatePasswordModal";
 import { changePassword } from "../api/authApi";
+import { useTranslation } from "react-i18next";
+import { deleteAllConversations } from "../api/conversationApi";
+import { deleteUser } from "../api/userApi";
 
 type Theme = "dark" | "light";
 
 const SettingsPage: React.FC = () => {
-  const [theme, setTheme] = useState<Theme>("dark");
-  const [language, setLanguage] = useState("English (US)");
+  const [theme, setTheme] = useState<Theme>(localStorage.getItem("app-theme") as Theme || "dark");
+  const [language, setLanguage] = useState(localStorage.getItem("app-lang")||"en");
   const [openPasswordModal, setOpenPasswordModal] = useState(false);
+  const [dialogType, setDialogType] = useState<"clear-history" | "delete-account" | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const nav = useNavigate();
   const { user, setUser } = useAuth();
+  const { t, i18n } = useTranslation();
+  const changeLanguage = (lang: string) => {
+    i18n.changeLanguage(lang);
+    localStorage.setItem("app-lang", lang);
+    setLanguage(lang);
+  };
   const handleLogout = () => {
     removeToken();
     setUser(null);
     nav("/");
   };
+  const openClearHistoryDialog = () => {
+    setDialogType("clear-history");
+    setDialogOpen(true);
+  };
 
+  const openDeleteAccountDialog = () => {
+    setDialogType("delete-account");
+    setDialogOpen(true);
+  };
+
+  const closeDialog = () => {
+    setDialogOpen(false);
+    setDialogType(null);
+  };
+
+  const handleConfirmDialog = async () => {
+    try {
+      if (dialogType === "clear-history") {
+        console.log("Clear chat history");
+        await deleteAllConversations();
+        alert("All conversations are deleted");
+      }
+
+      if (dialogType === "delete-account") {
+        console.log("Delete account");
+        await deleteUser(user?.id);
+        localStorage.removeItem("accessToken");
+        setUser(null);
+        nav("/");
+      }
+
+      closeDialog();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  useEffect(()=>{
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("app-theme", theme);
+  },[theme])
   return (
     <div className={styles["settings-page"]}>
       <header className={styles["settings-header"]}>
         <div>
-          <p className={styles["settings-eyebrow"]}>Settings</p>
-          <h1 className={styles["settings-title"]}>Account & Preferences</h1>
+          <p className={styles["settings-eyebrow"]}>{t("sidebar.settings")}</p>
+          <h1 className={styles["settings-title"]}>{t("settings.title")}</h1>
         </div>
       </header>
 
       <section className={styles["settings-section"]}>
         <h2 className={styles["section-title"]}>
           <span className={styles["section-icon"]}>👤</span>
-          Personal Information
+          {t("settings.personalInfo")}
         </h2>
 
         <div className={styles["stack"]}>
           <SettingRow
             icon={<PhoneIcon />}
-            title="Phone Number"
+            title={t("settings.phone")}
             description={user?.fullname}
             actionLabel="Update"
             onAction={() => console.log("Update phone")}
@@ -47,7 +97,7 @@ const SettingsPage: React.FC = () => {
           <SettingRow
             icon={<LocationIcon />}
             title="Address"
-            description="123 Digital Way, Silicon Valley, CA"
+            description={t("settings.address")}
             actionLabel="Update"
             onAction={() => console.log("Update address")}
           />
@@ -57,17 +107,16 @@ const SettingsPage: React.FC = () => {
       <section className={styles["settings-section"]}>
         <h2 className={styles["section-title"]}>
           <span className={styles["section-icon"]}>🎨</span>
-          Personalization
+          {t("settings.personalization")}
         </h2>
 
         <div className={styles["personalization-grid"]}>
           <div className={styles["panel"]}>
             <div className={styles["panel-head"]}>
-              <p className={styles["panel-eyebrow"]}>VISUAL STYLE</p>
-              <h3 className={styles["panel-title"]}>Interface Theme</h3>
+              <p className={styles["panel-eyebrow"]}>{t("settings.theme")}</p>
+              <h3 className={styles["panel-title"]}>{t("settings.theme")}</h3>
               <p className={styles["panel-description"]}>
-                Adjust the workspace appearance to reduce eye strain or match
-                your lighting environment.
+                {t("settings.themeDescription")}
               </p>
             </div>
 
@@ -80,7 +129,7 @@ const SettingsPage: React.FC = () => {
                 onClick={() => setTheme("dark")}
               >
                 <MoonIcon />
-                <span>Dark</span>
+                <span>{t("settings.dark")}</span>
               </button>
 
               <button
@@ -91,17 +140,17 @@ const SettingsPage: React.FC = () => {
                 onClick={() => setTheme("light")}
               >
                 <SunIcon />
-                <span>Light</span>
+                <span>{t("settings.light")}</span>
               </button>
             </div>
           </div>
 
           <div className={styles["panel"]}>
             <div className={styles["panel-head"]}>
-              <p className={styles["panel-eyebrow"]}>GLOBAL</p>
-              <h3 className={styles["panel-title"]}>Language</h3>
+              <p className={styles["panel-eyebrow"]}>{t("settings.language")}</p>
+              <h3 className={styles["panel-title"]}>{t("settings.language")}</h3>
               <p className={styles["panel-description"]}>
-                Set your preferred communication language.
+                {t("settings.languageDescription")}
               </p>
             </div>
 
@@ -109,10 +158,10 @@ const SettingsPage: React.FC = () => {
               <select
                 className={styles["select"]}
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(e) => changeLanguage(e.target.value)}
               >
-                <option>English (US)</option>
-                <option>Tiếng Việt (VN)</option>
+                <option>en</option>
+                <option>vi</option>
               </select>
               <ChevronDownIcon />
             </label>
@@ -123,13 +172,13 @@ const SettingsPage: React.FC = () => {
       <section className={styles["settings-section"]}>
         <h2 className={styles["section-title"]}>
           <span className={styles["section-icon"]}>🛡️</span>
-          Account & Security
+          {t("settings.security")}
         </h2>
 
         <div className={styles["stack"]}>
           <SettingRow
             icon={<KeyIcon />}
-            title="Password & Security"
+            title={t("settings.passwordSecurity")}
             description="Last updated 14 days ago. Enable 2FA for better security."
             actionLabel="Update"
             onAction={() => setOpenPasswordModal(true)}
@@ -137,31 +186,83 @@ const SettingsPage: React.FC = () => {
 
           <SettingRow
             icon={<TrashIcon />}
-            title="Clear Chat History"
+            title={t("settings.clearHistory")}
             description="Permanently delete all your conversation data across the system."
             actionLabel="Clear"
             danger
-            onAction={() => console.log("Clear chat history")}
+            onAction={openClearHistoryDialog}
           />
 
           <SettingRow
             icon={<UserMinusIcon />}
-            title="Delete Account"
+            title={t("settings.deleteAccount")}
             description="Permanently remove your account and all associated data. This action cannot be undone."
             actionLabel="Delete"
             destructive
-            onAction={() => console.log("Delete account")}
+            onAction={openDeleteAccountDialog}
           />
 
           <SettingRow
             icon={<LogoutIcon />}
-            title="Sign Out"
+            title={t("settings.signOut")}
             description="End your current session and securely log out of the interface."
             actionLabel="Sign Out"
             onAction={() => handleLogout()}
           />
         </div>
       </section>
+      {dialogOpen && (
+      <div
+        className={styles["dialog-overlay"]}
+        onClick={closeDialog}
+      >
+        <div
+          className={styles["dialog"]}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={styles["dialog-header"]}>
+            <h2 className={styles["dialog-title"]}>
+              {dialogType === "clear-history"
+                ? t("settings.clearHistory")
+                : t("settings.deleteAccount")}
+            </h2>
+
+            <button
+              className={styles["dialog-close"]}
+              onClick={closeDialog}
+            >
+              ×
+            </button>
+          </div>
+
+          <div className={styles["dialog-body"]}>
+            <p className={styles["dialog-text"]}>
+              {dialogType === "clear-history"
+                ? "Are you sure you want to clear all chat history? This action cannot be undone."
+                : "Are you sure you want to permanently delete your account? All data will be removed forever."}
+            </p>
+          </div>
+
+          <div className={styles["dialog-footer"]}>
+            <button
+              className={styles["dialog-cancel"]}
+              onClick={closeDialog}
+            >
+              {t("common.cancel")}
+            </button>
+
+            <button
+              className={styles["dialog-danger"]}
+              onClick={handleConfirmDialog}
+            >
+              {dialogType === "clear-history"
+                ? t("settings.clearHistory")
+                : t("settings.deleteAccount")}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
       <UpdatePasswordModal
         isOpen={openPasswordModal}
         onClose={() => setOpenPasswordModal(false)}

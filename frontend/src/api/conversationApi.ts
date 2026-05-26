@@ -22,6 +22,27 @@ const createConversationRequest = client.createRequest<{payload:{title:string, m
         auth:true
     }
 )
+const deleteConversationRequest = client.createRequest<{params: {convId: number}}>()(
+    {
+        method:"DELETE",
+        endpoint: "/conversations/delete/:convId",
+        auth:true
+    }
+);
+const deleteAllConversationsRequest = client.createRequest<{}>()(
+    {
+        method:"DELETE",
+        endpoint: "/conversations/deleteAll",
+        auth:true
+    }
+)
+const updateConversationTitleRequest = client.createRequest<{params: {convId: number}, payload:{title: string}}>()(
+    {
+        method:"PUT",
+        endpoint: "/conversations/updateTitle/:convId",
+        auth:true
+    }
+)
 export const getConversations = async(groupId:number)=>{
     return await getConversationsRequest.send({params: {groupId}});
 }
@@ -30,4 +51,13 @@ export const getConversationDetail= async(convId: number)=>{
 }
 export const createConversation = async(title:string, model:string, groupId:number)=>{
     return await createConversationRequest.send({payload:{title,model}, params:{groupId}});
+}
+export const deleteConversation = async(convId:any)=>{
+    return await deleteConversationRequest.send({params: {convId}});
+}
+export const deleteAllConversations = async()=>{
+    return await deleteAllConversationsRequest.send();
+}
+export const updateConversationTitle = async(convId: number, title: string)=>{
+    return await updateConversationTitleRequest.send({params:{convId}, payload:{title}});
 }

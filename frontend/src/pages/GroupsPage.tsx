@@ -2,50 +2,49 @@ import React from "react";
 import styles from "../styles/groups.module.css";
 import { useLoaderData } from "react-router";
 import type { Group } from "../loader/groupLoader";
+import { useTranslation } from "react-i18next";
 
 const GroupsPage: React.FC = () => {
   const groups = useLoaderData() as Group[];
+  const { t } = useTranslation();
 
   return (
     <div className={styles.groupsPage}>
       <div className={styles.heroSection}>
         <div>
           <h1 className={styles.pageTitle}>
-            Group Management
+            {t("groups.title")}
           </h1>
 
           <p className={styles.pageDescription}>
-            Monitor and coordinate high-performance
-            intelligence teams. View active groups,
-            manage permissions, and inspect nested
-            member hierarchies.
+            {t("groups.description")}
           </p>
         </div>
 
         <button className={styles.createButton}>
           <UserPlusIcon />
 
-          <span>Create New Group</span>
+          <span>{t("groups.createGroup")}</span>
         </button>
       </div>
 
       <div className={styles.tableCard}>
         <div className={styles.tableHeader}>
           <h2 className={styles.tableTitle}>
-            Active Groups
+            {t("groups.activeGroups")}
           </h2>
 
           <div className={styles.totalBadge}>
-            {groups.length} TOTAL
+            {groups.length} {t("groups.total")}
           </div>
         </div>
 
         <div className={styles.table}>
           <div className={styles.tableHead}>
-            <div>GROUP NAME</div>
-            <div>MEMBER COUNT</div>
+            <div>{t("groups.groupName")}</div>
+            <div>{t("groups.members")}</div>
             <div className={styles.actionsColumn}>
-              ACTIONS
+              {t("groups.actions")}
             </div>
           </div>
 
@@ -59,7 +58,7 @@ const GroupsPage: React.FC = () => {
               </div>
 
               <div className={styles.memberCount}>
-                {group.totalUsers} members
+                {group.totalUsers}
               </div>
 
               <div className={styles.actions}>

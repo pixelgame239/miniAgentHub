@@ -43,12 +43,12 @@ class ErrorBoundary extends Component<Props, State> {
       // Giao diện mặc định khi một phần hệ thống bị sập
       return (
         <div style={styles.container}>
-          <h2 style={styles.title}>Đã có lỗi xảy ra ở khu vực này!</h2>
+          <h2 style={styles.title}>Cannot load this asset!</h2>
           <p style={styles.message}>
-            {this.state.error?.message || "Vui lòng thử lại hoặc liên hệ quản trị viên."}
+            {this.state.error?.message || "Please try again"}
           </p>
           <button style={styles.button} onClick={this.handleReset}>
-            Thử tải lại khu vực này
+            Try loading again
           </button>
         </div>
       );

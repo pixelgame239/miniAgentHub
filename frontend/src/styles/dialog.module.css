@@ -1,9 +1,11 @@
+/* dialog.module.css – all colors via CSS variables */
+
 /* ---------- DIALOG OVERLAY ---------- */
 .dialog-overlay {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--bg-overlay);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -12,23 +14,23 @@
 }
 
 .dialog-card {
-  background: rgba(30, 32, 40, 0.95);
+  background: var(--bg-card);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 2.5rem;
   width: 100%;
   max-width: 480px;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .dialog-title {
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 2rem;
-  background: linear-gradient(135deg, #fff 0%, #b4b4b4 100%);
+  background: linear-gradient(135deg, var(--text-heading) 0%, var(--text-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -49,7 +51,7 @@
 .form-field label {
   font-size: 0.85rem;
   font-weight: 500;
-  color: #808696;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -57,10 +59,10 @@
 .form-field input,
 .group-select {
   padding: 0.85rem 1rem;
-  background: rgba(20, 22, 28, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 0.95rem;
   outline: none;
   transition: border-color 0.2s;
@@ -68,7 +70,7 @@
 
 .form-field input:focus,
 .group-select:focus {
-  border-color: #61afef;
+  border-color: var(--dialog-accent);
 }
 
 .group-select {
@@ -92,8 +94,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: rgba(97, 175, 239, 0.15);
-  color: #61afef;
+  background: var(--dialog-accent-dim);
+  color: var(--dialog-accent);
   padding: 0.35rem 0.75rem;
   border-radius: 8px;
   font-size: 0.85rem;
@@ -102,7 +104,7 @@
 .tag-remove {
   background: none;
   border: none;
-  color: #61afef;
+  color: var(--dialog-accent);
   font-size: 1.1rem;
   cursor: pointer;
   line-height: 1;
@@ -110,7 +112,7 @@
 }
 
 .tag-remove:hover {
-  color: #f87171;
+  color: var(--danger);
 }
 
 .add-group-row select {
@@ -126,10 +128,10 @@
 .role-btn {
   flex: 1;
   padding: 0.7rem 0;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  color: #808696;
+  color: var(--text-secondary);
   font-weight: 500;
   font-size: 0.9rem;
   cursor: pointer;
@@ -137,13 +139,13 @@
 }
 
 .role-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-hover);
 }
 
 .role-btn.active {
-  background: rgba(97, 175, 239, 0.15);
-  border-color: #61afef;
-  color: #61afef;
+  background: var(--dialog-accent-dim);
+  border-color: var(--dialog-accent);
+  color: var(--dialog-accent);
 }
 
 /* Action buttons */
@@ -166,22 +168,22 @@
 
 .cancel-btn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #808696;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
 }
 
 .cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  background: var(--bg-hover);
+  color: var(--text-heading);
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, #61afef, #4a96f8);
+  background: linear-gradient(135deg, var(--dialog-accent), var(--accent));
   border: none;
-  color: #fff;
+  color: var(--text-heading);
 }
 
 .submit-btn:hover {
-  box-shadow: 0 8px 20px rgba(97, 175, 239, 0.35);
+  box-shadow: 0 8px 20px var(--dialog-accent-glow);
   transform: translateY(-1px);
 }

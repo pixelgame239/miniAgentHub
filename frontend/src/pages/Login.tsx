@@ -4,6 +4,7 @@ import { login } from "../api/authApi";
 import styles from "../styles/login.module.css"; // Changed to CSS Module
 import { useAuth } from "../hooks/authHook";
 import { getToken } from "../api/apiClient";
+import { useTranslation } from "react-i18next";
 
 const LoginPage = () => {
   const nav = useNavigate();
@@ -27,6 +28,7 @@ const LoginPage = () => {
   };
 
   const togglePasswordVisibility = () => setVisible((prev) => !prev);
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -56,20 +58,19 @@ const LoginPage = () => {
       {/* Login Card */}
       <div className={styles["login-card"]}>
         <div className={styles["login-header"]}>
-          <span className={styles["secure-access-badge"]}>SECURE ACCESS</span>
+          <span className={styles["secure-access-badge"]}>{t("login.secureAccess")}</span>
           <h1>Agent Hub</h1>
-          <h2>Log In</h2>
+          <h2>{t("login.login")}</h2>
         </div>
 
         <p className={styles["welcome-message"]}>
-          Welcome back to Agent Hub. Enter your credentials to access your
-          dashboard.
+          {t("login.welcome")}
         </p>
 
         <form className={styles["login-form"]} onSubmit={handleSubmit}>
           <div className={styles["form-group"]}>
             <label htmlFor={`${id}-email`} className={styles["form-label"]}>
-              Email Address
+              {t("login.email")}
             </label>
             <div className={styles["input-wrapper"]}>
               <input
@@ -102,7 +103,7 @@ const LoginPage = () => {
 
           <div className={styles["form-group"]}>
             <label htmlFor={`${id}-password`} className={styles["form-label"]}>
-              Password
+              {t("login.password")}
             </label>
             <div className={styles["input-wrapper"]}>
               <input
@@ -112,14 +113,14 @@ const LoginPage = () => {
                 value={formData.userPassword}
                 onChange={handleChange}
                 className={styles["form-input"]}
-                placeholder="Enter your password"
+                placeholder={t("login.enterPassword")}
                 required
               />
               <button
                 type="button"
                 className={styles["password-toggle"]}
                 onClick={togglePasswordVisibility}
-                aria-label={visible ? "Hide password" : "Show password"}
+                aria-label={visible ? t("login.hidePassword") : t("login.showPassword")}
               >
                 <svg
                   width="18"
@@ -139,7 +140,7 @@ const LoginPage = () => {
           </div>
 
           <button type="submit" className={styles["login-button"]}>
-            Continue to Dashboard
+            {t("login.continue")}
           </button>
         </form>
 

@@ -1,0 +1,115 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "create": "Create",
+    "update": "Update",
+    "delete": "Delete",
+    "save": "Save",
+    "back": "Back",
+    "send": "Send",
+    "stop": "Stop",
+    "loading": "Loading...",
+    "noConversations": "No conversations"
+  },
+
+  "sidebar": {
+    "chat": "Chat",
+    "users": "Users",
+    "groups": "Groups",
+    "settings": "Settings",
+    "conversations": "Conversations",
+    "privateConversations": "Private Conversations",
+    "newChat": "New Chat",
+    "newConversation": "New Conversation",
+    "conversationTitle": "Conversation Title",
+    "enterConversationTitle": "Enter conversation title...",
+    "aiModel": "AI Model",
+    "createChat": "Create Chat",
+    "back": "Back"
+  },
+
+  "chat": {
+    "title": "Agent Hub",
+    "subtitle": "AI Collaboration Workspace",
+    "model": "Model",
+    "you": "You",
+    "aiResponse": "AI Response",
+    "promptPlaceholder": "Enter a prompt here..."
+  },
+
+  "login": {
+    "secureAccess": "SECURE ACCESS",
+    "title": "Agent Hub",
+    "login": "Log In",
+    "welcome": "Welcome back to Agent Hub. Enter your credentials to access your dashboard.",
+    "email": "Email Address",
+    "password": "Password",
+    "enterPassword": "Enter your password",
+    "continue": "Continue to Dashboard",
+    "encrypted": "END-TO-END ENCRYPTED",
+    "certified": "ISO 27001 CERTIFIED",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
+
+  "settings": {
+    "title": "Account & Preferences",
+    "personalInfo": "Personal Information",
+    "phone": "Phone Number",
+    "address": "Address",
+    "personalization": "Personalization",
+    "theme": "Interface Theme",
+    "themeDescription": "Adjust the workspace appearance to reduce eye strain or match your lighting environment.",
+    "dark": "Dark",
+    "light": "Light",
+    "language": "Language",
+    "languageDescription": "Set your preferred communication language.",
+    "security": "Account & Security",
+    "passwordSecurity": "Password & Security",
+    "clearHistory": "Clear Chat History",
+    "deleteAccount": "Delete Account",
+    "signOut": "Sign Out"
+  },
+
+  "groups": {
+    "title": "Group Management",
+    "description": "Monitor and coordinate high-performance intelligence teams.",
+    "createGroup": "Create New Group",
+    "activeGroups": "Active Groups",
+    "members": "members",
+    "groupName": "Group Name",
+    "total": "Total",
+    "actions": "Actions"
+  },
+
+  "users": {
+    "title": "User Management",
+    "description": "Manage users, permissions and collaborative groups across Agent Hub.",
+    "addUser": "Add User",
+    "edit": "Edit",
+    "delete": "Delete",
+    "fullName": "Full Name",
+    "email": "Email Address",
+    "role": "Role",
+    "groups": "Groups",
+    "createUser": "Create User",
+    "updateUser": "Update User",
+    "addNewUser": "Add New User",
+    "sendEmail": "Created user, password is sent to this link: "
+  },
+
+  "password": {
+    "security":"Account & Security",
+    "resetPassword": "Reset Password",
+    "description": "Secure your account with a strong password.",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "currentPassword": "Current Password",
+    "updatePassword": "Update Password",
+    "passwordRequired": "Password is required",
+    "passwordMin": "Password must be at least 6 characters",
+    "confirmRequired": "Please confirm your password",
+    "passwordMismatch": "Passwords do not match",
+    "successChange": "Password changed successfully"
+  }
+}

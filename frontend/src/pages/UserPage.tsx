@@ -6,7 +6,9 @@ import { register } from "../api/authApi";
 import type { User } from "../loader/userLoader";
 import { useLoaderData } from "react-router";
 import type { Group } from "../loader/groupLoader";
-import { updateUser } from "../api/userApi";
+import { deleteUser, updateUser } from "../api/userApi";
+import { useTranslation } from "react-i18next";
+
 
 const UserPage = () => {
   const usersLoaded = useLoaderData() as User[];
@@ -15,6 +17,9 @@ const UserPage = () => {
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [groups, setGroups] = useState<Group[]>([]);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deletedUser, setDeletedUser] = useState<User | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { t } = useTranslation();
 
   const openCreateDialog = async () => {
     const response = await getAllGroups();
@@ -33,7 +38,15 @@ const UserPage = () => {
     setDialogMode(null);
     setEditingUser(null);
   };
+  const openDeleteDialog = (user: User) => {
+    setDeletedUser(user);
+    setDeleteDialogOpen(true);
+  };
 
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setDeletedUser(null);
+  };
   const handleFormSubmit = async (data: {
     email: string;
     fullname: string;
@@ -43,9 +56,9 @@ const UserPage = () => {
     if (dialogMode === "create") {
       try {
         const response = await register(data);
-
+        if(response.data) setUsers([...users,response.data.userData]);
         alert(
-          "Created user, password is sent to this link: " +
+          t("users.sendEmail") +
             response.data?.emailLink
         );
       } catch (err) {
@@ -72,7 +85,21 @@ const UserPage = () => {
 
     closeDialog();
   };
+  const handledeletedUser = async () => {
+    if (!deletedUser) return;
 
+    try {
+      await deleteUser(deletedUser.id);
+
+      setUsers((prev) =>
+        prev.filter((user) => user.id !== deletedUser.id)
+      );
+
+      closeDeleteDialog();
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const toggleSelectAll = () => {
     if (selectedIds.length === users.length) {
       setSelectedIds([]);
@@ -97,11 +124,10 @@ const UserPage = () => {
     <div className={styles.userContent}>
       <header className={styles.userHeader}>
         <div>
-          <h1>User Management</h1>
+          <h1>{t("users.title")}</h1>
 
           <p className={styles.userDescription}>
-            Manage users, permissions and collaborative groups
-            across Agent Hub.
+            {t("users.description")}
           </p>
         </div>
 
@@ -109,7 +135,7 @@ const UserPage = () => {
           className={styles.addUserBtn}
           onClick={openCreateDialog}
         >
-          Add User
+          {t("users.addUser")}
         </button>
       </header>
 
@@ -125,11 +151,11 @@ const UserPage = () => {
                 />
               </th>
 
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Groups</th>
-              <th className={styles.actionsCol}>Actions</th>
+              <th>{t("users.fullName")}</th>
+              <th>{t("users.email")}</th>
+              <th>{t("users.role")}</th>
+              <th>{t("users.groups")}</th>
+              <th className={styles.actionsCol}>{t("groups.actions")}</th>
             </tr>
           </thead>
 
@@ -191,13 +217,14 @@ const UserPage = () => {
                       className={styles.actionBtn}
                       onClick={() => openEditDialog(user)}
                     >
-                      Edit
+                      {t("users.edit")}
                     </button>
 
                     <button
                       className={`${styles.actionBtn} ${styles.deleteBtn}`}
+                      onClick={() => openDeleteDialog(user)}
                     >
-                      Delete
+                      {t("users.delete")}
                     </button>
                   </div>
                 </td>
@@ -224,6 +251,55 @@ const UserPage = () => {
           onSubmit={handleFormSubmit}
           groups={groups}
         />
+      )}
+      {deleteDialogOpen && (
+        <div
+          className={styles.dialogOverlay}
+          onClick={closeDeleteDialog}
+        >
+          <div
+            className={styles.dialog}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.dialogHeader}>
+              <h2>{t("users.deletedUser")}</h2>
+
+              <button
+                className={styles.dialogCloseBtn}
+                onClick={closeDeleteDialog}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.dialogBody}>
+              <p className={styles.dialogText}>
+                {t("users.deleteConfirmation")}{" "}
+                <strong>{deletedUser?.fullname}</strong>?
+              </p>
+
+              <p className={styles.dialogWarning}>
+                {t("users.deleteWarning")}
+              </p>
+            </div>
+
+            <div className={styles.dialogFooter}>
+              <button
+                className={styles.cancelBtn}
+                onClick={closeDeleteDialog}
+              >
+                {t("common.cancel")}
+              </button>
+
+              <button
+                className={styles.confirmDeleteBtn}
+                onClick={handledeletedUser}
+              >
+                {t("users.delete")}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

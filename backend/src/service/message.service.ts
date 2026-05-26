@@ -19,7 +19,7 @@ export class MessageService {
         type: "prompt"
       }
     });
-    const responseStream = await aiService.promptStream(content, model);
+    const responseStream = await aiService.promptStream(content, model, convId);
     let fullResponse = "";
     let buffer = "";
     responseStream.on("data", (chunk: Buffer) => {

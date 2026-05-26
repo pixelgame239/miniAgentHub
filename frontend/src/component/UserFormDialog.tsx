@@ -1,6 +1,8 @@
 import { useState, useEffect, type SubmitEvent } from "react";
 import styles from "../styles/dialog.module.css"; // Changed to CSS Module
 import type { Group } from "../loader/groupLoader";
+import { useTranslation } from "react-i18next";
+
 
 interface UserFormData {
   email: string;
@@ -35,6 +37,7 @@ const UserFormDialog = ({
 
   // For edit mode: store selected group IDs (as numbers)
   const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (mode === "edit" && initialData) {
@@ -87,17 +90,17 @@ const UserFormDialog = ({
     <div className={styles["dialog-overlay"]} onClick={onClose}>
       <div className={styles["dialog-card"]} onClick={(e) => e.stopPropagation()}>
         <h2 className={styles["dialog-title"]}>
-          {mode === "create" ? "Add New User" : "Update User"}
+          {mode === "create" ? t("users.createUser") : t("users.updateUser")}
         </h2>
         <form onSubmit={handleSubmit} className={styles["dialog-form"]}>
           {/* Full Name */}
           <div className={styles["form-field"]}>
-            <label htmlFor="fullname">Full Name</label>
+            <label htmlFor="fullname">{t("users.fullName")}</label>
             <input
               id="fullname"
               name="fullname"
               type="text"
-              placeholder="Enter full name"
+              placeholder={t("users.fullName")}
               value={form.fullname}
               onChange={handleChange}
               required
@@ -106,7 +109,7 @@ const UserFormDialog = ({
 
           {/* Email */}
           <div className={styles["form-field"]}>
-            <label htmlFor="email">Email Address</label>
+            <label htmlFor="email">{t("users.email")}</label>
             <input
               id="email"
               name="email"
@@ -122,9 +125,7 @@ const UserFormDialog = ({
           {/* Group(s) – differs by mode */}
           <div className={styles["form-field"]}>
             <label>
-              {mode === "create"
-                ? "Assign to Group (Optional)"
-                : "Groups (Multi-select)"}
+              {t("users.groups")}
             </label>
             {mode === "create" ? (
               <select
@@ -132,7 +133,7 @@ const UserFormDialog = ({
                 onChange={(e) => handleGroupSelect(Number(e.target.value))}
                 className={styles["group-select"]}
               >
-                <option value="">Select a group</option>
+                <option value="">...</option>
                 {groups.map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.groupName}
@@ -180,7 +181,7 @@ const UserFormDialog = ({
 
           {/* Role Selection */}
           <div className={styles["form-field"]}>
-            <label>Role Selection</label>
+            <label>{t("users.role")}</label>
             <div className={styles["role-options"]}>
               {ROLES.map((role) => (
                 <button
@@ -204,10 +205,10 @@ const UserFormDialog = ({
               className={styles["cancel-btn"]}
               onClick={onClose}
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button type="submit" className={styles["submit-btn"]}>
-              {mode === "create" ? "Create User" : "Update User"}
+              {mode === "create" ? t("users.createUser") : t("users.updateUser")}
             </button>
           </div>
         </form>
