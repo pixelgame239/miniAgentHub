@@ -1,13 +1,18 @@
 import React from "react";
 import styles from "../styles/groups.module.css";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useNavigate } from "react-router";
 import type { Group } from "../loader/groupLoader";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../hooks/authHook";
 
 const GroupsPage: React.FC = () => {
   const groups = useLoaderData() as Group[];
   const { t } = useTranslation();
-
+  const { user } = useAuth();
+  const nav = useNavigate();
+  if(!user?.groupAccess){
+    nav("/chat");
+  }
   return (
     <div className={styles.groupsPage}>
       <div className={styles.heroSection}>

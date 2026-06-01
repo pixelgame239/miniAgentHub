@@ -32,7 +32,7 @@ export const deleteUser = async(req:Request, res: Response, next:NextFunction)=>
         if(req.user){
             const userId = parseInt(req.params.userId as string,10);
             if(isNaN(userId)) throw new MyError("Forbidden", 403);
-            if(req.user.id!==userId && !req.user.permissions.includes("USER_D")) throw new MyError("Forbidden", 403);
+            if(req.user.id!==userId && !checkPermission("USER_D")) throw new MyError("Forbidden", 403);
             const response =await userService.deleteUser(userId);
             res.status(201).json(response);
             return;

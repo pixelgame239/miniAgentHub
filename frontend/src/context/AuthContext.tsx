@@ -5,9 +5,11 @@ import { getToken, removeToken } from "../api/apiClient";
 interface UserType{
     id?:number;
     email?: string; 
-    userRole?: string;
+    userAccess?: boolean;
+    groupAccess?: boolean;
     fullname?: string;
     active?: boolean;
+    groups?: {id: number, groupName: string}[];
 }
 interface AuthContextType{
     user: UserType|null;

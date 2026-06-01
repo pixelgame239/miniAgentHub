@@ -7,8 +7,7 @@ const conversationService = new ConversationService();
 export const fetchAllConversations = async(req: Request, res:Response, next: NextFunction)=>{
     try{
         if(req.user){
-            const groupId = parseInt(req.params.groupId as string, 10);
-            const response = await conversationService.getConversations(req.user?.id, groupId);
+            const response = await conversationService.getConversations(req.user?.id);
             res.status(200).json(response);
             return;
         }
@@ -35,14 +34,7 @@ export const fetchConversationDetail = async(req: Request, res: Response, next: 
 export const createNewConversation = async(req: Request, res: Response, next: NextFunction)=>{
     try{
         if(req.user){
-            let groupId= null
-            if(req.params.groupId){
-                groupId = parseInt(req.params.groupId as string, 10);
-                if(groupId===-1){
-                    groupId= null;
-                }
-            }
-            const response = await conversationService.createNewConversation(req.user.id, req.body.title, req.body.model, groupId);
+            const response = await conversationService.createNewConversation(req.user.id, req.body.title, req.body.model);
             res.status(201).json(response);
             return;
         }

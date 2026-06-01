@@ -1,9 +1,8 @@
 // Sidebar.tsx
 import { NavLink, useRouteLoaderData } from "react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "../hooks/authHook";
 import styles from "../styles/sidebar.module.css";
-import type { Group } from "../loader/groupLoader";
 import { useChat } from "../hooks/chatHook";
 import { createConversation, deleteConversation, getConversationDetail, getConversations, updateConversationTitle } from "../api/conversationApi";
 import type { AIModels } from "../loader/aiLoader";
@@ -16,9 +15,8 @@ type ConversationItem = {
 };
 
 const Sidebar = ({}) => {
-  const { userGroups, AIModels } = useRouteLoaderData("layout-data-loader") as {userGroups: Group[], AIModels: AIModels[]};
-  const { setUserGroups, currentConversation, setCurrentConversation, groupConversations, setGroupConversations } = useChat();
-  const [selectedGroup, setSelectedGroup] = useState<number|null>(null);
+  const { AIModels } = useRouteLoaderData("layout-data-loader") as { AIModels: AIModels[]};
+  const { currentConversation, setCurrentConversation, groupConversations, setGroupConversations } = useChat();
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatTitle, setNewChatTitle] = useState("");
   const [selectedModel, setSelectedModel] = useState<AIModels | null>(AIModels[0] ?? null);
@@ -38,22 +36,10 @@ const Sidebar = ({}) => {
       console.error(err);
     }
   }
-  const openGroup = async(groupId:number) =>{
-    try{
-      setSelectedGroup(groupId);
-      const response = await getConversations(groupId);
-      console.log(response);
-      if(response&&response.data){
-        setGroupConversations(response.data);
-      }
-    } catch(err){
-      console.error(err);
-    }
-  }
   const handleCreateNewChat=async()=>{
     try{
-      if(!selectedModel||!newChatTitle ||!selectedGroup) return;
-      const response =await createConversation(newChatTitle, selectedModel?.id, selectedGroup);
+      if(!selectedModel||!newChatTitle) return;
+      const response =await createConversation(newChatTitle, selectedModel?.id);
       if(response.data){
         setGroupConversations([response.data,...groupConversations]);
       }
@@ -130,11 +116,6 @@ const Sidebar = ({}) => {
       console.error(err);
     }
   };
-  useEffect(() => {
-    if (userGroups) {
-      setUserGroups(userGroups);
-    }
-  }, [userGroups, setUserGroups]);
   const { user } = useAuth();
 
   const navItems = [
@@ -243,8 +224,9 @@ const Sidebar = ({}) => {
         {user &&
           navItems
             .filter((item) => {
-              if (user.userRole === "ADMIN") return true;
-              return item.label !== "Users" && item.label !== "Groups";
+              if (item.label === "Users" && !user.userAccess) return false;
+              if (item.label === "Groups" && !user.groupAccess) return false;
+              return true;
             })
             .map((item) => (
               <NavLink
@@ -266,80 +248,7 @@ const Sidebar = ({}) => {
 
       {/* GROUPS / CHATS */}
       <div className={styles.recentChats}>
-        {!selectedGroup ? (
-          <>
-            <div className={styles.groupHeader}>
-              <h3 className={styles.recentChatsTitle}>
-                 {t("sidebar.conversations")}
-              </h3>
             </div>
-
-            <div className={styles.groupList}>
-              <button
-                className={styles.privateButton}
-                onClick={async() => {
-                  await openGroup(-1);
-                }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
-                </svg>
-
-                 {t("sidebar.privateConversations")}
-              </button>
-
-              {userGroups
-                .map((group) => (
-                  <button
-                    key={group.id}
-                    className={styles.groupItem}
-                    onClick={async() => await openGroup(group.id)}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
-                    </svg>
-
-                    {group.groupName}
-                  </button>
-                ))}
-            </div>
-          </>
-        ) : (
-          <>
-            {/* GROUP HEADER */}
-            <div className={styles.groupTopBar}>
-              <button
-                className={styles.backButton}
-                onClick={() => setSelectedGroup(null)}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-
-                {t("common.back")}
-              </button>
-
               <button className={styles.newConversationBtn} onClick={() => setShowNewChatModal(true)}>
                 <svg
                   width="16"
@@ -355,7 +264,6 @@ const Sidebar = ({}) => {
 
                 {t("sidebar.newChat")}
               </button>
-            </div>
             {/* CHATS */}
             {groupConversations.length > 0 ? (
               <div className={styles.chatList}>
@@ -411,9 +319,6 @@ const Sidebar = ({}) => {
             </div>)
             :<h3>{t("common.noConversations")}</h3>
             }
-          </>
-        )}
-      </div>
       <ReusableDialog
         open={dialogOpen}
         title={dialogMode === "edit" ? "Edit conversation" : "Delete conversation"}
@@ -547,9 +452,6 @@ const Sidebar = ({}) => {
               {user?.fullname}
             </span>
 
-            <span className={styles.userRole}>
-              {user?.userRole}
-            </span>
           </div>
         </div>
       </div>

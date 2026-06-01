@@ -1,10 +1,11 @@
 import express, { Router } from 'express';
 import { checkAdmin } from '../middleware/admin.middleware';
 import { deleteUser, fetchAllUsers, updateUser } from '../controller/user.controller';
-import { checkPermission } from '../utils/checkPermission';
+import { checkPermission, narrowCheckPermission } from '../utils/checkPermission';
 
 export const userRouter: Router = express.Router();
 // userRouter.use(checkAdmin);
+userRouter.use(narrowCheckPermission("USER"));
 userRouter.get("/", checkPermission("USER_R"), fetchAllUsers);
 userRouter.put("/updateUser/:userId" , checkPermission("USER_U"), updateUser)
-userRouter.delete("/deleteUser/:userId", deleteUser);
+userRouter.delete("/deleteUser/:userId", checkPermission("USER_D"), deleteUser);

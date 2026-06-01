@@ -98,7 +98,6 @@ const ChatPage = () => {
         const response = await createConversation(
           content,
           selectedModel.id,
-          -1
         );
         if (response.data) {
           conversation = response.data;

@@ -2,23 +2,17 @@ import { prisma } from "../../lib/prisma";
 import { MyError } from "../utils/MyError";
 
 export class ConversationService {
-    public async getConversations(id: number, groupId: number){
-        let findGroupId;
-        findGroupId=groupId;
-        if(groupId==-1){
-            findGroupId=null;
-        }
-        const response = await prisma.conversation.findMany({where:{userId:id, groupId:findGroupId}, orderBy:{
+    public async getConversations(id: number){
+        const response = await prisma.conversation.findMany({where:{userId:id}, orderBy:{
             id:"desc"
         }});
         return response;
     }
-    public async createNewConversation(id: number, title:string, model: string, groupId: any){
-        const response = await prisma.conversation.create({data:{title: title,userId:id,AIModel: model, groupId:groupId}, select:{
+    public async createNewConversation(id: number, title:string, model: string){
+        const response = await prisma.conversation.create({data:{title: title,userId:id,AIModel: model}, select:{
             id: true,
             title: true,
             AIModel:true,
-            groupId:true
         }});
         return response;
     }
@@ -29,7 +23,7 @@ export class ConversationService {
         const response = await prisma.conversation.findUnique({where: {userId: userId, id:convId}, include:{
             messages: {
                 orderBy: {
-                    id:"asc"
+                    createdAt:"asc"
                 }
             }
         }})

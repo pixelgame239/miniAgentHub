@@ -10,7 +10,6 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       email: req.body.email,
       fullname: req.body.fullname,
       groups: req.body.groups ? req.body.groups : null,
-      userRole: req.body.userRole ? req.body.userRole : "USER"
     };
     const result = await authService.authRegister(userData);
     res.status(201).json(result);

@@ -12,15 +12,6 @@ export class AuthService{
         if(existingUser){
             throw new MyError("Email existed", 403);
         }
-        const roleInfo = await prisma.role.findUnique({
-            where: { 
-                roleId: userData.userRole 
-            }
-        });
-
-        if (!roleInfo) {
-            throw new MyError("Role not found", 404);
-        }
         const randomPassword = createRandomPassword();
         const hashedPassword = await hashPassword(randomPassword)
         const newUser = await prisma.user.create({
@@ -28,8 +19,6 @@ export class AuthService{
                 email: userData.email,
                 fullname: userData.fullname,
                 userPassword: hashedPassword,
-                userRole: userData.userRole,
-                permission: roleInfo.permission,
                 groups:{
                     connect: userData.groups.map((id:number)=>({id}))
                 }
@@ -37,7 +26,6 @@ export class AuthService{
                 id: true,
                 fullname:true,
                 email: true,
-                userRole:true,
                 groups: {
                     select:{
                         id: true,
@@ -56,9 +44,9 @@ export class AuthService{
     }
     public async authLogin(userData: any){
         const existingUser = await prisma.user.findUnique({where: {email:userData.email}, include:{
-            role:{
+            groups:{
                 select:{
-                    permission:true
+                    permissions:true
                 }                
             }
         }});
@@ -67,16 +55,26 @@ export class AuthService{
         }
         const passwordCorrect = await comparePassword(userData.userPassword, existingUser.userPassword);
         if(passwordCorrect){
-            const userPermissions = existingUser.role?.permission;
+            const userPermissions = existingUser.groups.flatMap((group: any) => group.permissions);
+            let userAccess = false;
+            let groupAccess = false;
+            if(userPermissions.some((permission: string) => permission.startsWith("USER"))){
+                userAccess = true;
+            }
+            if(userPermissions.some((permission: string) => permission.startsWith("GROUP"))){
+                groupAccess = true;
+            }
             return{
                 message: "Logged in!",
-                token: generateAccessToken(existingUser.id, existingUser.email, existingUser.userRole, existingUser.fullname, existingUser.active, userPermissions),
+                token: generateAccessToken(existingUser.id, existingUser.email, userAccess, groupAccess, existingUser.fullname, existingUser.active, existingUser.groups.map((group: any) => group.id)),
                 userData: {
                     id: existingUser.id,
                     fullname: existingUser.fullname,
                     email: existingUser.email,
-                    userRole: existingUser.userRole,
-                    active: existingUser.active
+                    userAccess: userAccess,
+                    groupAccess: groupAccess,
+                    active: existingUser.active,
+                    groups: existingUser.groups.map((group: any) => ({id: group.id, groupName: group.groupName}))
                 }
             }
         }

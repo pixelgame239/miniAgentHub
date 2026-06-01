@@ -6,7 +6,6 @@ export class UserService{
             id:true,
             fullname:true,
             email:true,
-            userRole:true,
             groups: {
                 select:{
                     id: true,
@@ -22,13 +21,13 @@ export class UserService{
             id: userId
         }, data:{
             fullname: formData.fullname,
-            userRole: formData.userRole,
             groups:{
                 set: formData.groups.map((id:number)=>({id:id}))
             }
         }, include:{
             groups:true
-        }})
+        }});
+        return response;
     }
     public async deleteUser(userId:number){
         const response = await prisma.user.delete({where:{id: userId}});

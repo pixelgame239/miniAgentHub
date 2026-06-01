@@ -17,31 +17,29 @@ export class GroupService{
             totalUsers: group._count.users
         }));
     }
-    public async createGroup(groupName:string){
-        const response = await prisma.group.create({data:{groupName: groupName}});
+    public async createGroup(groupName:string, permissions:string[]){
+        const response = await prisma.group.create({data:{groupName: groupName, permissions: permissions}});
         return response
     }
-    public async getUserGroups(id:number){
-        return await prisma.group.findMany({
-                where: {
-                    users: {
-                        some: {
-                            id: id
-                        }
-                    }
-                }
-            });
-    }
-    public async addUserToGroup(groupId:number, userId:number){
+    // public async getUserGroups(id:number){
+    //     return await prisma.group.findMany({
+    //             where: {
+    //                 users: {
+    //                     some: {
+    //                         id: id
+    //                     }
+    //                 }
+    //             }
+    //         });
+    // }
+    public async addUserToGroup(groupId:number, userIds:number[]){
         const response = await prisma.group.update({
             where: {
                 id: groupId
             },
             data: {
                 users: {
-                    connect: {
-                        id: userId
-                    }
+                    connect: userIds.map(id => ({ id }))
                 }
             }
         });
@@ -66,8 +64,8 @@ export class GroupService{
         });
         return response;
     }
-    public async changeGroupName(groupId:number, groupName:string){
-        const response = await prisma.group.update({where:{id: groupId}, data:{groupName: groupName}});
+    public async updateGroup(groupId:number, groupName:string, permissions:string[]){
+        const response = await prisma.group.update({where:{id: groupId}, data:{groupName: groupName, permissions: permissions}});
         return response;
     }
     public async getGroupDetail(groupId:number){

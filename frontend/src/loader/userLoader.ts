@@ -6,7 +6,6 @@ export interface User {
   id: number;
   fullname: string;
   email: string;
-  userRole: string;
   groups: Group[];
   active: boolean;
 }

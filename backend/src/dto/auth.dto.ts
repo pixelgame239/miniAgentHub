@@ -7,7 +7,6 @@ export class RegisterRequest{
     public  fullname!: string;
     @IsArray({message:"Invalid group Id"})
     public groups!: number[];
-    public userRole: string | undefined;
 }
 export class LoginRequest{
     @IsEmail({}, {message:"Invalid email"})

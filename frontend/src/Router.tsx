@@ -7,7 +7,6 @@ import Layout from "./component/Layout";
 import ProtectedRoute from "./component/ProtectedRoute";
 import SettingsPage from "./pages/SettingsPage";
 import GroupsPage from "./pages/GroupsPage";
-import AdminRoute from "./component/AdminRoute";
 import { userLoader } from "./loader/userLoader";
 import { groupLoader, layoutLoader } from "./loader/groupLoader";
 
@@ -33,19 +32,14 @@ export const router = createBrowserRouter([
                 element: <ChatPage></ChatPage>,
               },
               {
-                element:<AdminRoute></AdminRoute>,
-                children:[
-                  {
-                    path:"user",
-                    element:<UserPage></UserPage>,
-                    loader: userLoader
-                  },
-                  {
-                    path:"groups",
-                    element:<GroupsPage></GroupsPage>,
-                    loader: groupLoader
-                  },
-                ]
+                path:"user",
+                element:<UserPage></UserPage>,
+                loader: userLoader
+              },
+              {
+                path:"groups",
+                element:<GroupsPage></GroupsPage>,
+                loader: groupLoader
               },
               {
                 path:"settings",

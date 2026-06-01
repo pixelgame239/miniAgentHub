@@ -8,10 +8,12 @@ declare global{
             user?:{
                 id: number,
                 email: string,
+                userAcess: boolean,
+                groupAccess: boolean,
                 fullname: string,
                 userRole: string,
                 active: boolean,
-                permissions: string[]
+                groups: number[]
             }
         }
     }

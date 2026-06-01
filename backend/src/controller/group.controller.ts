@@ -12,22 +12,23 @@ export const fetchAllGroups = async(req: Request, res: Response, next: NextFunct
         next(error);
     }
 }
-export const fetchUserGroups = async(req:Request, res:Response, next: NextFunction)=>{
-    try{
-        if(req.user){
-            const groups = await groupService.getUserGroups(req.user.id);
-            res.status(200).json(groups);
-        }
-        throw new MyError("Unauthorized", 401);
-    }catch(error){
-        next(error);
-    }
-}
+// export const fetchUserGroups = async(req:Request, res:Response, next: NextFunction)=>{
+//     try{
+//         if(req.user){
+//             const groups = await groupService.getUserGroups(req.user.id);
+//             res.status(200).json(groups);
+//         }
+//         throw new MyError("Unauthorized", 401);
+//     }catch(error){
+//         next(error);
+//     }
+// }
 export const createNewGroup = async(req:Request, res:Response, next: NextFunction)=>{
     try{
         if(req.user){
-            const response = await groupService.createGroup(req.body.groupName);
-            res.status(201).json(response);
+            const response = await groupService.createGroup(req.body.groupName, req.body.permissions);
+            await groupService.addUserToGroup(response.id, req.body.userIds);
+            res.status(201).json({ message: "Group created successfully"});
             return;
         }
         throw new MyError("Unauthorized", 401);
@@ -52,8 +53,7 @@ export const addUserToGroup = async(req:Request, res:Response, next: NextFunctio
     try{
         if(req.user){
             const groupId = parseInt(req.params.groupId as string, 10);
-            const userId = parseInt(req.params.userId as string, 10);
-            const response = await groupService.addUserToGroup(groupId, userId);
+            const response = await groupService.addUserToGroup(groupId, req.body.userIds);
             res.status(201).json(response);
             return;
         }
@@ -76,11 +76,11 @@ export const removeUserFromGroup = async(req:Request, res:Response, next: NextFu
         next(error);
     }
 }
-export const updateGroupName = async(req:Request, res:Response, next: NextFunction)=>{
+export const updateGroupData = async(req:Request, res:Response, next: NextFunction)=>{
     try{
         if(req.user){
             const groupId = parseInt(req.params.groupId as string, 10);
-            const response = await groupService.changeGroupName(groupId, req.body.groupName);
+            const response = await groupService.updateGroup(groupId, req.body.groupName, req.body.permissions);
             res.status(201).json(response);
             return;
         }

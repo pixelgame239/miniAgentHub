@@ -3,7 +3,6 @@ import { client } from "./apiClient";
 
 type UpdateRequestType = {
     fullname: string,
-    userRole: string,
     groups: number[]
 }
 const getUserRequest = client.createRequest<{response:User[]}>()(

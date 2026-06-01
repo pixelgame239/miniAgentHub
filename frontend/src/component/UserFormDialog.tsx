@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 interface UserFormData {
   email: string;
   fullname: string;
-  userRole: string;
   groups: number[]; // array of group IDs
 }
 
@@ -18,8 +17,6 @@ interface UserFormDialogProps {
   onSubmit: (data: UserFormData) => void;
   groups: Group[];
 }
-
-const ROLES: UserFormData["userRole"][] = ["ADMIN", "USER"];
 
 const UserFormDialog = ({
   mode,
@@ -32,7 +29,6 @@ const UserFormDialog = ({
     fullname: "",
     email: "",
     groups: [],
-    userRole: "USER",
   });
 
   // For edit mode: store selected group IDs (as numbers)
@@ -44,7 +40,7 @@ const UserFormDialog = ({
       setForm(initialData);
       setSelectedGroupIds(initialData.groups || []);
     } else {
-      setForm({ fullname: "", email: "", groups: [], userRole: "USER" });
+      setForm({ fullname: "", email: "", groups: []});
       setSelectedGroupIds([]);
     }
   }, [mode, initialData]);
@@ -52,10 +48,6 @@ const UserFormDialog = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleRoleSelect = (role: UserFormData["userRole"]) => {
-    setForm((prev) => ({ ...prev, userRole: role }));
   };
 
   // For add mode: single group selected
@@ -177,25 +169,6 @@ const UserFormDialog = ({
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Role Selection */}
-          <div className={styles["form-field"]}>
-            <label>{t("users.role")}</label>
-            <div className={styles["role-options"]}>
-              {ROLES.map((role) => (
-                <button
-                  key={role}
-                  type="button"
-                  className={`${styles["role-btn"]} ${
-                    form.userRole === role ? styles["active"] : ""
-                  }`}
-                  onClick={() => handleRoleSelect(role)}
-                >
-                  {role}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Buttons */}

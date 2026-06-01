@@ -4,10 +4,11 @@ import UserFormDialog from "../component/UserFormDialog";
 import { getAllGroups } from "../api/groupApi";
 import { register } from "../api/authApi";
 import type { User } from "../loader/userLoader";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useNavigate } from "react-router";
 import type { Group } from "../loader/groupLoader";
 import { deleteUser, updateUser } from "../api/userApi";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../hooks/authHook";
 
 
 const UserPage = () => {
@@ -20,6 +21,11 @@ const UserPage = () => {
   const [deletedUser, setDeletedUser] = useState<User | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const nav = useNavigate();
+  if(!user?.userAccess){
+    nav("/chat");
+  }
 
   const openCreateDialog = async () => {
     const response = await getAllGroups();
@@ -50,7 +56,6 @@ const UserPage = () => {
   const handleFormSubmit = async (data: {
     email: string;
     fullname: string;
-    userRole: string;
     groups: number[];
   }) => {
     if (dialogMode === "create") {
@@ -119,7 +124,9 @@ const UserPage = () => {
   const isAllSelected =
     users.length > 0 &&
     selectedIds.length === users.length;
-
+  if (users.length === 0) {
+    return <h1>You don't have permission to view Users</h1>
+  }
   return (
     <div className={styles.userContent}>
       <header className={styles.userHeader}>
@@ -193,9 +200,14 @@ const UserPage = () => {
                 <td>{user.email}</td>
 
                 <td>
-                  <span className={styles.roleBadge}>
-                    {user.userRole}
-                  </span>
+                  {user.groups.map((group) => (
+                    <span
+                      key={group.id}
+                      className={styles.roleBadge}
+                    >
+                      {group.groupName}
+                    </span>
+                  ))}
                 </td>
 
                 <td>
@@ -242,8 +254,7 @@ const UserPage = () => {
               ? {
                   fullname: editingUser.fullname,
                   email: editingUser.email,
-                  groups: [],
-                  userRole: editingUser.userRole,
+                  groups: editingUser.groups.map((g) => g.id),
                 }
               : undefined
           }

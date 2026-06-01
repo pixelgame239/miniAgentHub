@@ -12,7 +12,6 @@ type LoginResponse ={
 type RegisterRequest = {
     email: string,
     fullname: string,
-    userRole: string,
     groups: number[]
 }
 type RegisterResponse = {
@@ -23,8 +22,10 @@ type UserData = {
     id: number,
     fullname: string,
     email: string,
-    userRole: string,
-    active: boolean
+    userAccess: boolean,
+    groupAccess: boolean,
+    active: boolean,
+    groups: {id: number, groupName: string}[]
 }
 type ChangePasswordData ={
     currentPassword?: string,
