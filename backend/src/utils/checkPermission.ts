@@ -12,7 +12,7 @@ export const narrowCheckPermission = (requiredPermission: string) => {
       if (!user || !user.groups) {
         throw new MyError("Forbidden", 403);
       }
-      const hasPermission = requiredPermission === "USER" ? user.userAcess : requiredPermission === "GROUP" ? user.groupAccess : false;
+      const hasPermission = requiredPermission === "USER" ? user.userAccess : requiredPermission === "GROUP" ? user.groupAccess : false;
 
       if (!hasPermission) {
         throw new MyError("Forbidden", 403);
@@ -31,13 +31,14 @@ export const checkPermission = (requiredPermission:string) => {
       if (!user || !user.groups) {
         throw new MyError("Forbidden",403)
       }
-
+      console.log(user);
       const hasPermission = user.groups.some(async (group: any) => {
         const groupPermissions = await getPermissionsForGroup(group.id); 
         return groupPermissions.includes(requiredPermission);
       });
 
       if (!hasPermission) {
+        console.log(`User does not have required permission: ${requiredPermission}`);
         throw new MyError("Forbidden",403)
       }
       next();

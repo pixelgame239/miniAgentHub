@@ -9,6 +9,7 @@ import { changePassword } from "../api/authApi";
 import { useTranslation } from "react-i18next";
 import { deleteAllConversations } from "../api/conversationApi";
 import { deleteUser } from "../api/userApi";
+import { useChat } from "../hooks/chatHook";
 
 type Theme = "dark" | "light";
 
@@ -18,6 +19,7 @@ const SettingsPage: React.FC = () => {
   const [openPasswordModal, setOpenPasswordModal] = useState(false);
   const [dialogType, setDialogType] = useState<"clear-history" | "delete-account" | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { setGroupConversations } = useChat();
   const nav = useNavigate();
   const { user, setUser } = useAuth();
   const { t, i18n } = useTranslation();
@@ -51,6 +53,7 @@ const SettingsPage: React.FC = () => {
       if (dialogType === "clear-history") {
         console.log("Clear chat history");
         await deleteAllConversations();
+        setGroupConversations([]);
         alert("All conversations are deleted");
       }
 

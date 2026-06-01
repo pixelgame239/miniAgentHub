@@ -46,6 +46,8 @@ export class AuthService{
         const existingUser = await prisma.user.findUnique({where: {email:userData.email}, include:{
             groups:{
                 select:{
+                    id: true,
+                    groupName: true,
                     permissions:true
                 }                
             }
@@ -66,7 +68,7 @@ export class AuthService{
             }
             return{
                 message: "Logged in!",
-                token: generateAccessToken(existingUser.id, existingUser.email, userAccess, groupAccess, existingUser.fullname, existingUser.active, existingUser.groups.map((group: any) => group.id)),
+                token: generateAccessToken(existingUser.id, existingUser.email, userAccess, groupAccess, existingUser.fullname, existingUser.active, existingUser.groups.map((group: any) => ({ id: group.id, groupName: group.groupName }))),
                 userData: {
                     id: existingUser.id,
                     fullname: existingUser.fullname,

@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { UserService } from "../service/user.service";
 import { MyError } from "../utils/MyError";
 import { checkPermission } from "../utils/checkPermission";
+import { error } from "node:console";
 
 const userService = new UserService();
 
@@ -10,6 +11,19 @@ export const fetchAllUsers = async(req: Request, res: Response, next: NextFuncti
         const users = await userService.getAllUsers();
         res.status(200).json(users);
     } catch(error){
+        next(error);
+    }
+}
+export const getGroupUsers = async(req: Request, res: Response, next: NextFunction)=>{
+    try{
+        if(!req.params.groupId){
+            throw new MyError("Forbidden", 403);
+        }
+        const groupId = parseInt(req.params.groupId as string,10);
+        const users = await userService.getGroupUsers(groupId);
+        res.status(200).json(users);
+        return;
+    }catch(error){
         next(error);
     }
 }
@@ -27,6 +41,21 @@ export const updateUser = async(req:Request, res: Response, next:NextFunction)=>
         next(error);
     }
 }
+export const findUsers = async(req: Request, res: Response, next: NextFunction)=>{
+    try{
+        if(req.user){
+            const input = req.query.input as string;
+            const response = await userService.queryUser(input);
+            res.status(200).json(response);
+            return;
+            
+        }
+        throw new MyError("Forbidden", 403);
+    }catch(error){
+        next(error)
+    }
+}
+
 export const deleteUser = async(req:Request, res: Response, next:NextFunction)=>{
     try{
         if(req.user){

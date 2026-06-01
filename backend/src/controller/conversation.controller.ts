@@ -25,7 +25,6 @@ export const fetchConversationDetail = async(req: Request, res: Response, next: 
             res.status(200).json(response);
             return;
         }
-        console.log(req);
         throw new MyError("Unauthorized", 401);
     } catch(error){
         next(error);

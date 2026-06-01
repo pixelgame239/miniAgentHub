@@ -5,6 +5,7 @@ export class GroupService{
         const groupData = await prisma.group.findMany({select:{
             id: true,
             groupName:true,
+            permissions:true,
             _count:{
                 select:{
                     users:true
@@ -14,7 +15,8 @@ export class GroupService{
         return groupData.map(group=>({
             id:group.id,
             groupName:group.groupName,
-            totalUsers: group._count.users
+            totalUsers: group._count.users,
+            permissions: group.permissions
         }));
     }
     public async createGroup(groupName:string, permissions:string[]){

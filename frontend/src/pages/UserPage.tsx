@@ -77,7 +77,6 @@ const UserPage = () => {
           console.error("Dữ liệu cập nhật không hợp lệ");
           return;
         }
-        console.log(updateUser);
         setUsers(prevUsers => 
             prevUsers.map(user => 
                 user.id === editingUser?.id ? updatedUser : user
@@ -160,7 +159,6 @@ const UserPage = () => {
 
               <th>{t("users.fullName")}</th>
               <th>{t("users.email")}</th>
-              <th>{t("users.role")}</th>
               <th>{t("users.groups")}</th>
               <th className={styles.actionsCol}>{t("groups.actions")}</th>
             </tr>
@@ -198,17 +196,6 @@ const UserPage = () => {
                 </td>
 
                 <td>{user.email}</td>
-
-                <td>
-                  {user.groups.map((group) => (
-                    <span
-                      key={group.id}
-                      className={styles.roleBadge}
-                    >
-                      {group.groupName}
-                    </span>
-                  ))}
-                </td>
 
                 <td>
                   <div className={styles.groupList}>

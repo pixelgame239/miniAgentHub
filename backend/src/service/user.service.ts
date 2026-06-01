@@ -33,4 +33,52 @@ export class UserService{
         const response = await prisma.user.delete({where:{id: userId}});
         return response;
     }
+    public async getGroupUsers(groupId:number){
+        const response = await prisma.user.findMany({where:{
+            groups:{
+                some:{
+                    id:groupId
+                }
+            }
+        }, select:{
+            id:true,
+            fullname:true,
+            email:true,
+            groups: {
+                select:{
+                    id: true,
+                    groupName: true
+                }
+            },
+        }});
+        return response;
+    }
+    public async queryUser(input: string) {
+        const response = await prisma.user.findMany({
+            where: {
+                OR: [
+                    { 
+                        email: { 
+                            contains: input, 
+                            mode: 'insensitive' 
+                        } 
+                    },
+                    { 
+                        fullname: { 
+                            contains: input, 
+                            mode: 'insensitive' 
+                        } 
+                    }
+                ]
+            },
+            take: 10,
+            select:{
+                id:true,
+                fullname: true,
+                email:true
+            }
+        });
+        
+        return response;
+    }
 }

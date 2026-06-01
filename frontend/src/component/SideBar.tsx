@@ -1,22 +1,32 @@
 // Sidebar.tsx
 import { NavLink, useRouteLoaderData } from "react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/authHook";
 import styles from "../styles/sidebar.module.css";
 import { useChat } from "../hooks/chatHook";
-import { createConversation, deleteConversation, getConversationDetail, getConversations, updateConversationTitle } from "../api/conversationApi";
+import {
+  createConversation,
+  deleteConversation,
+  getConversationDetail,
+  updateConversationTitle,
+} from "../api/conversationApi";
 import type { AIModels } from "../loader/aiLoader";
 import { useTranslation } from "react-i18next";
 import ReusableDialog from "./ReusableDialogProps";
+import type { Conversation } from "../loader/groupLoader";
 
 type ConversationItem = {
   id: number;
   title: string;
 };
 
-const Sidebar = ({}) => {
-  const { AIModels } = useRouteLoaderData("layout-data-loader") as { AIModels: AIModels[]};
-  const { currentConversation, setCurrentConversation, groupConversations, setGroupConversations } = useChat();
+const Sidebar = () => {
+  const { AIModels, conversations } = useRouteLoaderData("layout-data-loader") as {
+    AIModels: AIModels[];
+    conversations: Conversation[];
+  };
+  const { currentConversation, setCurrentConversation, groupConversations, setGroupConversations } =
+    useChat();
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatTitle, setNewChatTitle] = useState("");
   const [selectedModel, setSelectedModel] = useState<AIModels | null>(AIModels[0] ?? null);
@@ -26,31 +36,39 @@ const Sidebar = ({}) => {
   const [dialogMode, setDialogMode] = useState<"edit" | "delete" | null>(null);
   const [activeConversation, setActiveConversation] = useState<ConversationItem | null>(null);
   const [editTitle, setEditTitle] = useState("");
-  const openConversation = async(convId:number) =>{
-    try{
+  const { user } = useAuth();
+
+  useEffect(() => {
+    setGroupConversations(conversations);
+  }, [conversations, setGroupConversations]);
+
+  const openConversation = async (convId: number) => {
+    try {
       const response = await getConversationDetail(convId);
-      if(response&&response.data){
+      if (response && response.data) {
         setCurrentConversation(response.data);
       }
-    } catch(err){
+    } catch (err) {
       console.error(err);
     }
-  }
-  const handleCreateNewChat=async()=>{
-    try{
-      if(!selectedModel||!newChatTitle) return;
-      const response =await createConversation(newChatTitle, selectedModel?.id);
-      if(response.data){
-        setGroupConversations([response.data,...groupConversations]);
+  };
+
+  const handleCreateNewChat = async () => {
+    try {
+      if (!selectedModel || !newChatTitle) return;
+      const response = await createConversation(newChatTitle, selectedModel.id);
+      if (response.data) {
+        setGroupConversations([response.data, ...groupConversations]);
       }
       setShowNewChatModal(false);
       setNewChatTitle("");
       setSelectedModel(AIModels[0]);
-    }catch(error){
+    } catch (error) {
       console.error(error);
     }
-  }
-    const openEditDialog = (chat: ConversationItem) => {
+  };
+
+  const openEditDialog = (chat: ConversationItem) => {
     setActiveConversation(chat);
     setEditTitle(chat.title);
     setDialogMode("edit");
@@ -74,10 +92,8 @@ const Sidebar = ({}) => {
 
   const handleEditConversation = async () => {
     if (!activeConversation) return;
-
     const nextTitle = editTitle.trim();
     if (!nextTitle) return;
-
     try {
       await updateConversationTitle(activeConversation.id, nextTitle);
       setGroupConversations((prev) =>
@@ -85,13 +101,9 @@ const Sidebar = ({}) => {
           item.id === activeConversation.id ? { ...item, title: nextTitle } : item
         )
       );
-
       if (currentConversation?.id === activeConversation.id) {
-        setCurrentConversation((prev: any) =>
-          prev ? { ...prev, title: nextTitle } : prev
-        );
+        setCurrentConversation((prev: any) => (prev ? { ...prev, title: nextTitle } : prev));
       }
-
       closeDialog();
     } catch (err) {
       console.error(err);
@@ -100,39 +112,24 @@ const Sidebar = ({}) => {
 
   const handleDeleteConversation = async () => {
     if (!activeConversation) return;
-
     try {
       await deleteConversation(activeConversation.id);
-      setGroupConversations((prev) =>
-        prev.filter((item) => item.id !== activeConversation.id)
-      );
-
+      setGroupConversations((prev) => prev.filter((item) => item.id !== activeConversation.id));
       if (currentConversation?.id === activeConversation.id) {
         setCurrentConversation(null);
       }
-
       closeDialog();
     } catch (err) {
       console.error(err);
     }
   };
-  const { user } = useAuth();
 
   const navItems = [
     {
       to: "/chat",
       label: t("sidebar.chat"),
       icon: (
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
       ),
@@ -141,16 +138,7 @@ const Sidebar = ({}) => {
       to: "/user",
       label: t("sidebar.users"),
       icon: (
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -162,16 +150,7 @@ const Sidebar = ({}) => {
       to: "/groups",
       label: t("sidebar.groups"),
       icon: (
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 7a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3z" />
         </svg>
       ),
@@ -180,16 +159,7 @@ const Sidebar = ({}) => {
       to: "/settings",
       label: t("sidebar.settings"),
       icon: (
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l-.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
@@ -203,18 +173,10 @@ const Sidebar = ({}) => {
       <header className={styles.sidebarHeader}>
         <div className={styles.appTitle}>
           <span className={styles.appIcon}>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </span>
-
           <span className={styles.appName}>Agent Hub</span>
         </div>
       </header>
@@ -224,8 +186,8 @@ const Sidebar = ({}) => {
         {user &&
           navItems
             .filter((item) => {
-              if (item.label === "Users" && !user.userAccess) return false;
-              if (item.label === "Groups" && !user.groupAccess) return false;
+              if (item.label === t("sidebar.users") && !user.userAccess) return false;
+              if (item.label === t("sidebar.groups") && !user.groupAccess) return false;
               return true;
             })
             .map((item) => (
@@ -233,9 +195,7 @@ const Sidebar = ({}) => {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `${styles.navItem} ${
-                    isActive ? styles.navItemActive : ""
-                  }`
+                  `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
                 }
               >
                 {item.icon}
@@ -246,79 +206,78 @@ const Sidebar = ({}) => {
 
       <div className={styles.sidebarDivider} />
 
-      {/* GROUPS / CHATS */}
-      <div className={styles.recentChats}>
-            </div>
-              <button className={styles.newConversationBtn} onClick={() => setShowNewChatModal(true)}>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
+      {/* CHAT SECTION — button pinned above scrollable list */}
+      <div className={styles.chatSection}>
+        <button className={styles.newConversationBtn} onClick={() => setShowNewChatModal(true)}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          {t("sidebar.newChat")}
+        </button>
 
-                {t("sidebar.newChat")}
-              </button>
-            {/* CHATS */}
-            {groupConversations.length > 0 ? (
-              <div className={styles.chatList}>
-                {groupConversations.map((chat) => (
-                  <div key={chat.id} className={styles.chatRow}>
+        {groupConversations.length > 0 ? (
+          <>
+            <span className={styles.chatListLabel}>{t("sidebar.recent") ?? "Recent"}</span>
+            <div className={styles.chatList}>
+              {groupConversations.map((chat) => (
+                <div key={chat.id} className={styles.chatRow}>
+                  <button
+                    className={`${styles.chatItemBtn} ${
+                      currentConversation?.id === chat.id ? styles.chatItemActive : ""
+                    }`}
+                    onClick={async () => await openConversation(chat.id)}
+                  >
+                    <span className={styles.chatIcon}>💬</span>
+                    <span className={styles.chatItemTitle}>{chat.title}</span>
+                  </button>
+
+                  <div className={styles.chatActionsWrap}>
                     <button
-                      className={`${styles.chatItem} ${
-                        currentConversation?.id === chat.id
-                          ? styles.chatItemActive
-                          : ""
-                      }`}
-                      onClick={async () => await openConversation(chat.id)}
+                      className={styles.chatActionBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpenId((prev) => (prev === chat.id ? null : chat.id));
+                      }}
+                      aria-label="Conversation actions"
                     >
-                      <span className={styles.chatItemTitle}>{chat.title}</span>
+                      ⋯
                     </button>
 
-                    <div className={styles.chatActionsWrap}>
-                      <button
-                        className={styles.chatActionBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMenuOpenId((prev) =>
-                            prev === chat.id ? null : chat.id
-                          );
-                        }}
-                        aria-label="Conversation actions"
+                    {menuOpenId === chat.id && (
+                      <div
+                        className={styles.chatActionMenu}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        ⋯
-                      </button>
-
-                      {menuOpenId === chat.id && (
-                        <div
-                          className={styles.chatActionMenu}
-                          onClick={(e) => e.stopPropagation()}
+                        <button
+                          className={styles.chatActionMenuItem}
+                          onClick={() => openEditDialog(chat)}
                         >
-                          <button
-                            className={styles.chatActionMenuItem}
-                            onClick={() => openEditDialog(chat)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className={`${styles.chatActionMenuItem} ${styles.chatActionMenuItemDanger}`}
-                            onClick={() => openDeleteDialog(chat)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                          Edit
+                        </button>
+                        <button
+                          className={`${styles.chatActionMenuItem} ${styles.chatActionMenuItemDanger}`}
+                          onClick={() => openDeleteDialog(chat)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ))}
-            </div>)
-            :<h3>{t("common.noConversations")}</h3>
-            }
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className={styles.emptyChats}>
+            <div className={styles.emptyIcon}>💬</div>
+            <h4>No conversations yet</h4>
+            <p>Create your first chat to get started.</p>
+          </div>
+        )}
+      </div>
+
+      {/* EDIT / DELETE DIALOG */}
       <ReusableDialog
         open={dialogOpen}
         title={dialogMode === "edit" ? "Edit conversation" : "Delete conversation"}
@@ -362,22 +321,14 @@ const Sidebar = ({}) => {
           </p>
         )}
       </ReusableDialog>
-        {showNewChatModal && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setShowNewChatModal(false)}
-        >
-          <div
-            className={styles.modal}
-            onClick={(e) => e.stopPropagation()}
-          >
+
+      {/* NEW CHAT MODAL */}
+      {showNewChatModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowNewChatModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h2>{t("sidebar.newConversation")}</h2>
-
-              <button
-                className={styles.modalCloseBtn}
-                onClick={() => setShowNewChatModal(false)}
-              >
+              <button className={styles.modalCloseBtn} onClick={() => setShowNewChatModal(false)}>
                 ×
               </button>
             </div>
@@ -385,7 +336,6 @@ const Sidebar = ({}) => {
             <div className={styles.modalBody}>
               <div className={styles.formGroup}>
                 <label>{t("sidebar.conversationTitle")}</label>
-
                 <input
                   type="text"
                   placeholder={t("sidebar.enterConversationTitle")}
@@ -397,10 +347,9 @@ const Sidebar = ({}) => {
 
               <div className={styles.formGroup}>
                 <label>{t("sidebar.aiModel")}</label>
-
                 <select
                   value={selectedModel?.id}
-                  onChange={(e) => setSelectedModel({id: e.target.value})}
+                  onChange={(e) => setSelectedModel({ id: e.target.value })}
                   className={styles.formSelect}
                 >
                   {AIModels.map((model) => (
@@ -413,45 +362,28 @@ const Sidebar = ({}) => {
             </div>
 
             <div className={styles.modalFooter}>
-              <button
-                className={styles.cancelBtn}
-                onClick={() => setShowNewChatModal(false)}
-              >
+              <button className={styles.cancelBtn} onClick={() => setShowNewChatModal(false)}>
                 {t("common.cancel")}
               </button>
-
-              <button
-                className={styles.createBtn}
-                onClick={handleCreateNewChat}
-              >
+              <button className={styles.createBtn} onClick={handleCreateNewChat}>
                 {t("sidebar.createChat")}
               </button>
             </div>
           </div>
         </div>
       )}
+
       {/* FOOTER */}
       <div className={styles.sidebarFooter}>
         <div className={styles.userProfile}>
           <div className={styles.userAvatar}>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
           </div>
-
           <div className={styles.userInfo}>
-            <span className={styles.userName}>
-              {user?.fullname}
-            </span>
-
+            <span className={styles.userName}>{user?.fullname}</span>
           </div>
         </div>
       </div>

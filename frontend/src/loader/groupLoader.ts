@@ -2,12 +2,20 @@ import type { LoaderFunction } from "react-router";
 import { getAllGroups } from "../api/groupApi";
 import type { AIModels } from "./aiLoader";
 import { getGroqModels } from "../api/aiApi";
+import { getConversations } from "../api/conversationApi";
 
 export interface Group {
   id: number;
   groupName: string;
-  totalUsers?:number
+  totalUsers?:number,
+  permissions?:string[]
 }
+export interface Conversation {
+  id: number;
+  title: string;
+  AIModel: string;
+}
+
 export const groupLoader:LoaderFunction = async():Promise<Group[]>=>{
     try {
         const response = await getAllGroups();
@@ -32,16 +40,17 @@ export const groupLoader:LoaderFunction = async():Promise<Group[]>=>{
 //         return [];
 //     }
 // }
-export const layoutLoader: LoaderFunction = async():Promise<{AIModels: AIModels[]}> => {
+export const layoutLoader: LoaderFunction = async():Promise<{conversations: Conversation[], AIModels: AIModels[]}> => {
     try {
         // const userGroups = await getUserGroups();
         const aiModels = await getGroqModels();
-        if(aiModels){
-            return {AIModels: aiModels.data||[]};
+        const conversations = await getConversations();
+        if(aiModels&&conversations){
+            return {AIModels: aiModels.data||[], conversations: conversations.data||[]};
         }
-        return {AIModels: []};
+        return {AIModels: [], conversations: []};
     } catch(err){
         console.error(err);
-        return {AIModels: []};
+        return {AIModels: [], conversations: []};
     }
 }

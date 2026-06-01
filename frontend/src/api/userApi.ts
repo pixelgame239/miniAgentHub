@@ -22,9 +22,25 @@ const deleteUserRequest = client.createRequest<{params: {userId: string|number}}
     method:"DELETE",
     auth:true
 })
+const getGroupUsersRequest =client.createRequest<{params:{groupId:number}}>()({
+    method:"GET",
+    endpoint: "/users/:groupId",
+    auth: true
+});
+const findUsersRequest = client.createRequest<{queryParams:{input: string}}>()({
+    method:"GET",
+    endpoint:"/users/find",
+    auth:true
+})
 export const getUsers = async()=>{
     return await getUserRequest.send();
 } 
+export const findUsers = async(input:string)=>{
+    return await findUsersRequest.send({queryParams:{input}});
+}
+export const getGroupUsers = async(groupId:number)=>{
+    return await getGroupUsersRequest.send({params:{groupId}})
+}
 export const updateUser = async(formData:UpdateRequestType, userId:any)=>{
     return await updateUserRequest.send({payload: formData, params: {userId}});
 }

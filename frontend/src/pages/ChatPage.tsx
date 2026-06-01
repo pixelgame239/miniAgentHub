@@ -19,7 +19,7 @@ const ChatPage = () => {
   const [selectedModel, setSelectedModel] = useState<AIModels | null>(
     AIModels[0] ?? null
   );
-  const { currentConversation, groupConversations, setGroupConversations } =
+  const { currentConversation, setCurrentConversation, groupConversations, setGroupConversations } =
     useChat();
 
   // ✅ FIX 1: Local ref to track the active conversation, including newly
@@ -84,7 +84,11 @@ const ChatPage = () => {
     streaming,
     start,
   ]);
-
+  useEffect(() => {
+    return () => {
+      setCurrentConversation(null);
+    };
+  }, []);
   const sendMessage = async () => {
     if (!inputText.trim() || !selectedModel) return;
 

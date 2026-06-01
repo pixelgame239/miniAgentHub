@@ -1,0 +1,440 @@
+/* groupMembers.module.css – Group Members Modal styling */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Header */
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 32px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(
+    180deg,
+    rgba(59, 130, 246, 0.05) 0%,
+    transparent 100%
+  );
+}
+
+.modalTitle {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+  color: var(--text-heading);
+}
+
+.modalDescription {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  font-size: 32px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-heading);
+}
+
+/* Content */
+.modalContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Table Card */
+.tableCard {
+  background: transparent;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tableTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-heading);
+}
+
+.tableHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.totalBadge {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.addUserBtn {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--accent);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addUserBtn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Table */
+.table {
+  width: 100%;
+}
+
+.tableHead,
+.tableRow {
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr 1fr 140px;
+  align-items: center;
+  padding: 0 32px;
+}
+
+.tableHead {
+  height: 56px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.tableRow {
+  min-height: 80px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s ease;
+}
+
+.tableRow:hover {
+  background: var(--bg-subtle);
+}
+
+/* Columns */
+.nameCol,
+.emailCol,
+.groupsCol,
+.actionsCol {
+  display: flex;
+  align-items: center;
+}
+
+.userName {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.emailCol {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.groupsCol {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.actionsCol {
+  justify-content: flex-end;
+}
+
+/* Icon Button */
+.iconButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.iconButton:hover {
+  background: var(--bg-hover);
+  color: var(--text-heading);
+}
+
+.iconButton:active {
+  transform: scale(0.95);
+}
+
+.deleteBtn:hover {
+  background: var(--danger-dim);
+  color: var(--danger);
+}
+
+/* States */
+.loadingState,
+.emptyState {
+  padding: 48px 32px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Nested Modal (Add Users) */
+.nestedModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  backdrop-filter: blur(4px);
+}
+
+.nestedModal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 70vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.nestedModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.nestedModalHeader h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-heading);
+}
+
+.nestedModalContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.userList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.userCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.userCheckbox:hover {
+  background: var(--bg-hover);
+}
+
+.userCheckbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.userCheckbox span {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.nestedModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-subtle);
+}
+
+.cancelBtn,
+.confirmBtn {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelBtn {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.cancelBtn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+
+.confirmBtn {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.confirmBtn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.confirmBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .modal {
+    max-width: 95%;
+  }
+
+  .tableHead,
+  .tableRow {
+    grid-template-columns: 1fr 1.2fr 0.8fr 120px;
+  }
+
+  .modalTitle {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .modal {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 16px;
+  }
+
+  .modalHeader {
+    padding: 20px;
+  }
+
+  .tableHead {
+    display: none;
+  }
+
+  .tableRow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 20px;
+    min-height: auto;
+  }
+
+  .nameCol,
+  .emailCol,
+  .groupsCol,
+  .actionsCol {
+    width: 100%;
+  }
+
+  .tableHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .tableHeaderActions {
+    width: 100%;
+  }
+
+  .addUserBtn {
+    width: 100%;
+  }
+}
