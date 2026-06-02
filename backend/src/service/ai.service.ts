@@ -34,7 +34,8 @@ export class AIService{
             });
             return models;
         }catch(error){
-            throw new MyError("Unexpected Error",500);
+            console.error();
+            throw new MyError("Unexpected Error fetch model",500);
         }
     }
     public async promptStream(content: string, model: string, convId: any) {

@@ -98,7 +98,6 @@ const UserPage = () => {
       setUsers((prev) =>
         prev.filter((user) => user.id !== deletedUser.id)
       );
-
       closeDeleteDialog();
     } catch (error) {
       console.error(error);

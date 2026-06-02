@@ -38,6 +38,10 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
         console.log(response.data);
         setMembers(response.data);
       }
+      const usersResponse = await getUsers();
+      if(usersResponse.data){
+        setAllUsers(usersResponse.data);
+      }
     } catch (err) {
       console.error("Error loading members:", err);
     } finally {

@@ -14,8 +14,8 @@ interface Permission {
   value: string;
 }
 
-interface Member {
-  id: string;
+export interface Member {
+  id: number;
   fullname: string;
   email: string;
 }
@@ -32,7 +32,6 @@ export interface GroupDialogProps {
   onClose: () => void;
   onSubmit: (data: {
     groupName: string;
-    entityType: string;
     permissions: Permission[];
     members: Member[];
   }) => void;
@@ -105,13 +104,13 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
   
   // Get current permissions for active entity type
   const permissions = permissionsByType[entityType] || getDefaultPermissions(entityType);
-  
   const [members, setMembers]         = useState<Member[]>(initialData?.members ?? []);
   const [memberSearch, setMemberSearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   /* lock body scroll */
   useEffect(() => {
+    console.log(members);
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
@@ -150,12 +149,16 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
     setShowSuggestions(false);
   };
 
-  const removeMember = (id: string) =>
+  const removeMember = (id: number) =>
     setMembers((prev) => prev.filter((m) => m.id !== id));
 
   /* submit */
   const handleSubmit = () => {
-    onSubmit({ groupName, entityType, permissions, members });
+    const allPermissions = [
+    ...permissionsByType.Users,
+    ...permissionsByType.Groups
+  ];
+    onSubmit({ groupName, permissions:allPermissions, members });
     onClose();
   };
 
@@ -257,9 +260,8 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
           </section>
 
           {/* INITIAL MEMBERS (create mode only) */}
-          {isCreate && (
             <section className={styles.section}>
-              <span className={styles.sectionLabelAccent}>INITIAL MEMBERS</span>
+              <span className={styles.sectionLabelAccent}>{isCreate?"INITIAL MEMBERS": "Current memebers"}</span>
 
               <div className={styles.memberSearchWrapper}>
                 <span className={styles.memberSearchIcon}><AddUserIcon /></span>
@@ -277,7 +279,7 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
                 />
                 {showSuggestions && availableUsers.length > 0 && (
                   <div className={styles.suggestions}>
-                    {availableUsers.map((s) => (
+                    {availableUsers.filter((s)=>members.every((m) => m.id !== s.id)).map((s) => (
                       <button
                         key={s.id}
                         className={styles.suggestionItem}
@@ -311,7 +313,6 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
                 </div>
               )}
             </section>
-          )}
         </div>
 
         {/* ── Footer ── */}

@@ -4,11 +4,12 @@ import { useLoaderData, useNavigate } from "react-router";
 import type { Group } from "../loader/groupLoader";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/authHook";
-import GroupDialog from "../component/GroupDialog";
+import GroupDialog, { type Member } from "../component/GroupDialog";
 import GroupMembersModal from "../component/GroupMembersModal";
 import ReusableDialog from "../component/ReusableDialogProps";
-import { deleteGroup } from "../api/groupApi";
+import { createGroup, deleteGroup, updateGroupData } from "../api/groupApi";
 import stylesDialog from "../styles/sidebar.module.css";
+import { getGroupUsers } from "../api/userApi";
 /* ─── Dialog state shape ─────────────────────── */
 type DialogState =
   | { open: false }
@@ -16,17 +17,18 @@ type DialogState =
   | { open: true; mode: "update"; group: Group };
 
 const GroupsPage: React.FC = () => {
-  const groups = useLoaderData() as Group[];
+  const groupsLoaded = useLoaderData() as Group[];
   const { t } = useTranslation();
   const { user } = useAuth();
   const nav = useNavigate();
-
+  const [groups, setGroups]= useState<Group[]>(groupsLoaded);
   const [dialog, setDialog] = useState<DialogState>({ open: false });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<number | null>(null);
   const [membersModalOpen, setMembersModalOpen] = useState(false);
   const [selectedGroupForMembers, setSelectedGroupForMembers] =
     useState<Group | null>(null);
+  const [members, setMembers] = useState<Member[]|undefined>(undefined);
 
   if (!user?.groupAccess) {
     nav("/chat");
@@ -34,8 +36,13 @@ const GroupsPage: React.FC = () => {
 
   /* ── handlers ── */
   const openCreate = () => setDialog({ open: true, mode: "create" });
-  const openUpdate = (group: Group) =>
+  const openUpdate = async(group: Group) =>{
+    const response = await getGroupUsers(group.id);
+    if(response.data){
+        setMembers(response.data);
+    }
     setDialog({ open: true, mode: "update", group });
+  }
   const closeDialog = () => setDialog({ open: false });
 
   const openDelete = (groupId: number) => {
@@ -48,26 +55,48 @@ const GroupsPage: React.FC = () => {
     setMembersModalOpen(true);
   };
 
-  const handleSubmit = (data: {
+  const handleSubmit = async(data: {
     groupName: string;
-    entityType: string;
-    permissions: { action: string; description: string; granted: boolean }[];
-    members: { id: string; fullname: string }[];
+    permissions: { action: string; description: string; granted: boolean; value: string }[];
+    members: { id: number; fullname: string }[];
   }) => {
-    if (dialog.open && dialog.mode === "create") {
-      console.log("Create group:", data);
-      // TODO: call your API
-    } else if (dialog.open && dialog.mode === "update") {
-      console.log("Update group:", data);
-      // TODO: call your API
+    try{
+      if(!data.groupName.trim()){
+        alert("Group name cannot be empty");
+        return;
+      }
+      const permissionList = data.permissions.filter((per)=>per.granted===true).map((per)=>per.value);
+      const userList = data.members.map((mem)=>mem.id);
+      if (dialog.open && dialog.mode === "create") {
+        console.log("Create group:", data);
+        const response = await createGroup({groupName: data.groupName, permissions: permissionList, userIds: userList});
+        if(response.data){
+          setGroups([...groups, response.data])
+        }
+        alert(response.data);
+      } else if (dialog.open && dialog.mode === "update") {
+        console.log("Update group:", data);
+        const response = await updateGroupData(dialog.group.id, permissionList, userList, data.groupName);
+        if(response.data){
+          console.log(response.data);
+          const newGroup = response.data;
+          setGroups(groups.map((group) => 
+            group.id === dialog.group.id ? newGroup : group
+          ));
+        }
+        alert(response.data);
+      }
+    }catch(error){
+      console.error(error);
     }
   };
-  const handleDeleteConversation = async () => {
+  const handleDeleteGroup = async () => {
     if(selectedGroup === null) return;
     await deleteGroup(selectedGroup);
     setDeleteDialogOpen(false);
     setSelectedGroup(null);
   };
+  if(groupsLoaded.length===0) return <h1>You dont have permission to view Groups detail</h1>
   return (
     <>
       <div className={styles.groupsPage}>
@@ -119,7 +148,7 @@ const GroupsPage: React.FC = () => {
                   {/* Settings / Edit → opens Update dialog */}
                   <button
                     className={styles.iconButton}
-                    onClick={() => openUpdate(group)}
+                    onClick={async() => await openUpdate(group)}
                     aria-label={`Edit ${group.groupName}`}
                   >
                     <SettingsIcon />
@@ -154,7 +183,8 @@ const GroupsPage: React.FC = () => {
           mode="update"
           initialData={{
             groupName: dialog.group.groupName,
-            permissions: dialog.group.permissions
+            permissions: dialog.group.permissions,
+            members: members?members:undefined
           }}
           onClose={closeDialog}
           onSubmit={handleSubmit}
@@ -165,7 +195,7 @@ const GroupsPage: React.FC = () => {
           <button className={stylesDialog.cancelBtn} onClick={() => setDeleteDialogOpen(false)}>
             Cancel
           </button>
-          <button className={stylesDialog.dangerBtn} onClick={handleDeleteConversation}>
+          <button className={stylesDialog.dangerBtn} onClick={handleDeleteGroup}>
             Delete
           </button>
         </>} children={<p>Are you sure you want to delete this group?</p>}></ReusableDialog>

@@ -20,8 +20,22 @@ export class GroupService{
         }));
     }
     public async createGroup(groupName:string, permissions:string[]){
-        const response = await prisma.group.create({data:{groupName: groupName, permissions: permissions}});
-        return response
+        const response = await prisma.group.create({data:{groupName: groupName, permissions: permissions}, select:{
+            id: true,
+            groupName:true,
+            permissions:true,
+            _count:{
+                select:{
+                    users:true
+                }
+            }
+        }});
+        return {
+            id:response.id,
+            groupName:response.groupName,
+            totalUsers: response._count.users,
+            permissions: response.permissions
+        };
     }
     // public async getUserGroups(id:number){
     //     return await prisma.group.findMany({
@@ -66,9 +80,25 @@ export class GroupService{
         });
         return response;
     }
-    public async updateGroup(groupId:number, groupName:string, permissions:string[]){
-        const response = await prisma.group.update({where:{id: groupId}, data:{groupName: groupName, permissions: permissions}});
-        return response;
+    public async updateGroup(groupId:number, groupName:string, permissions:string[], userIds: number[]){
+        const response = await prisma.group.update({where:{id: groupId}, data:{groupName: groupName, permissions: permissions, users:{
+            set: userIds.map((id) => ({ id: id }))
+        } }, select:{
+            id: true,
+            groupName:true,
+            permissions:true,
+            _count:{
+                select:{
+                    users:true
+                }
+            }
+        }});
+        return {
+            id:response.id,
+            groupName:response.groupName,
+            totalUsers: response._count.users,
+            permissions: response.permissions
+        };
     }
     public async getGroupDetail(groupId:number){
         const response = await prisma.group.findFirst({where:{id: groupId}, 

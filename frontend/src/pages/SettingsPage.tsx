@@ -8,7 +8,7 @@ import UpdatePasswordModal from "../component/UpdatePasswordModal";
 import { changePassword } from "../api/authApi";
 import { useTranslation } from "react-i18next";
 import { deleteAllConversations } from "../api/conversationApi";
-import { deleteUser } from "../api/userApi";
+import { deleteAccount } from "../api/userApi";
 import { useChat } from "../hooks/chatHook";
 
 type Theme = "dark" | "light";
@@ -59,7 +59,7 @@ const SettingsPage: React.FC = () => {
 
       if (dialogType === "delete-account") {
         console.log("Delete account");
-        await deleteUser(user?.id);
+        await deleteAccount();
         localStorage.removeItem("accessToken");
         setUser(null);
         nav("/");

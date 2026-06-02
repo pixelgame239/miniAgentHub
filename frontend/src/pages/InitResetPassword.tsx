@@ -4,6 +4,7 @@ import styles from "../styles/initResetPassword.module.css";
 import { changePassword } from "../api/authApi";
 import { useAuth } from "../hooks/authHook";
 import { useTranslation } from "react-i18next";
+import { setToken } from "../api/apiClient";
 
 const InitResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -50,8 +51,12 @@ const InitResetPassword = () => {
 
     try {
       setLoading(true);
-      await changePassword({ newPassword: password });
-      setUser({...user, active: true})
+      const response = await changePassword({ newPassword: password });
+      setUser({...user, active: true});
+      if(response.data){
+        console.log("Token setted");
+        setToken(response.data);
+      }
       alert(t("password.successChange"));
     } catch (err) {
       console.error(err);

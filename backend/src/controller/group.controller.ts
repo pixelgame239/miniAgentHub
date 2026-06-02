@@ -28,7 +28,7 @@ export const createNewGroup = async(req:Request, res:Response, next: NextFunctio
         if(req.user){
             const response = await groupService.createGroup(req.body.groupName, req.body.permissions);
             await groupService.addUserToGroup(response.id, req.body.userIds);
-            res.status(201).json({ message: "Group created successfully"});
+            res.status(201).json(response);
             return;
         }
         throw new MyError("Unauthorized", 401);
@@ -80,7 +80,7 @@ export const updateGroupData = async(req:Request, res:Response, next: NextFuncti
     try{
         if(req.user){
             const groupId = parseInt(req.params.groupId as string, 10);
-            const response = await groupService.updateGroup(groupId, req.body.groupName, req.body.permissions);
+            const response = await groupService.updateGroup(groupId, req.body.groupName, req.body.permissions, req.body.userIds);
             res.status(201).json(response);
             return;
         }

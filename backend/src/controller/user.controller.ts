@@ -10,6 +10,7 @@ export const fetchAllUsers = async(req: Request, res: Response, next: NextFuncti
     try{
         const users = await userService.getAllUsers();
         res.status(200).json(users);
+        return;
     } catch(error){
         next(error);
     }
@@ -61,8 +62,19 @@ export const deleteUser = async(req:Request, res: Response, next:NextFunction)=>
         if(req.user){
             const userId = parseInt(req.params.userId as string,10);
             if(isNaN(userId)) throw new MyError("Forbidden", 403);
-            if(req.user.id!==userId && !checkPermission("USER_D")) throw new MyError("Forbidden", 403);
             const response =await userService.deleteUser(userId);
+            res.status(201).json(response);
+            return;
+        }
+        throw new MyError("Unauthorized", 401);
+    }catch(error){
+        next(error);
+    }
+}
+export const deleteAccount = async(req:Request, res:Response, next:NextFunction)=>{
+    try{
+        if(req.user){
+            const response= await userService.deleteUser(req.user.id);
             res.status(201).json(response);
             return;
         }

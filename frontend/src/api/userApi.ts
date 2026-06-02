@@ -22,6 +22,11 @@ const deleteUserRequest = client.createRequest<{params: {userId: string|number}}
     method:"DELETE",
     auth:true
 })
+const deleteAccountRequest = client.createRequest()({
+    endpoint:"/users/deleteAccount",
+    method:"DELETE",
+    auth:true
+})
 const getGroupUsersRequest =client.createRequest<{params:{groupId:number}}>()({
     method:"GET",
     endpoint: "/users/:groupId",
@@ -46,4 +51,7 @@ export const updateUser = async(formData:UpdateRequestType, userId:any)=>{
 }
 export const deleteUser = async(userId:any)=>{
     return await deleteUserRequest.send({params: {userId}});
+}
+export const deleteAccount= async()=>{
+    return await deleteAccountRequest.send();
 }

@@ -11,7 +11,6 @@ declare global{
                 userAccess: boolean,
                 groupAccess: boolean,
                 fullname: string,
-                userRole: string,
                 active: boolean,
                 groups: {id: number, groupName:string}[]
             }

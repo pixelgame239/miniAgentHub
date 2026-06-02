@@ -24,17 +24,21 @@ export const narrowCheckPermission = (requiredPermission: string) => {
   };
 };
 export const checkPermission = (requiredPermission:string) => {
-  return (req:Request, res:Response, next:NextFunction) => {
+  return async(req:Request, res:Response, next:NextFunction) => {
     try {
       const user = req.user; 
 
       if (!user || !user.groups) {
         throw new MyError("Forbidden",403)
       }
-      console.log(user);
-      const hasPermission = user.groups.some(async (group: any) => {
-        const groupPermissions = await getPermissionsForGroup(group.id); 
-        return groupPermissions.includes(requiredPermission);
+      const groupIds = user.groups.map((group)=>group.id);
+      const hasPermission = await prisma.group.findFirst({
+        where: {
+          id: { in: groupIds },
+          permissions: {
+            has: requiredPermission 
+          }
+        }
       });
 
       if (!hasPermission) {
