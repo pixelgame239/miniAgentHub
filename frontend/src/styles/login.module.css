@@ -299,3 +299,18 @@ body {
     font-size: 1.5rem;
   }
 }
+.input-error {
+  border-color: #ef4444;
+}
+
+.input-error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.error-message {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #ef4444;
+}

@@ -50,7 +50,7 @@ const GROUP_PERMISSIONS: Permission[] = [
   { action: "Update", description: "Edit Group Settings",   granted: false, value:"GROUP_U" },
   { action: "Delete", description: "Remove Groups",  granted: false, value:"GROUP_D" },
   { action: "Add user to group", description: "Add user to group", granted: false, value:"GROUP_ADD_USER"},
-  {action: "Remove user from group", description: "Remove user from group", granted: false, value: "GROUP_DELETE_USER"}
+  { action: "Remove user from group", description: "Remove user from group", granted: false, value: "GROUP_DELETE_USER"}
 ];
 
 const getDefaultPermissions = (entityType: string): Permission[] => {
@@ -75,61 +75,67 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
   const [availableUsers, setAvailableUsers] = useState<Member[]>([]);
 
   /* state */
-  const [groupName, setGroupName]   = useState(initialData?.groupName ?? "");
-  const [entityType, setEntityType] = useState<string>(
-    initialData?.entityType ?? "Users"
-  );
+  const [groupName, setGroupName] = useState(initialData?.groupName ?? "");
+  
+  // FIX 1: Chuẩn hóa thực thể ban đầu, đảm bảo viết hoa chữ cái đầu đồng bộ với cấu trúc dữ liệu hệ thống
+  const [entityType, setEntityType] = useState<string>(() => {
+    if (!initialData?.entityType) return "Users";
+    // Tránh trường hợp BE hoặc dữ liệu cũ trả về "users"/"groups" hoặc "USERS"/"GROUPS"
+    const formatted = initialData.entityType.trim().toLowerCase();
+    return formatted === "groups" ? "Groups" : "Users";
+  });
   
   // Track permissions separately for each entity type
-    const [permissionsByType, setPermissionsByType] = useState<Record<string, Permission[]>>(() => {
+  const [permissionsByType, setPermissionsByType] = useState<Record<string, Permission[]>>(() => {
     const initial: Record<string, Permission[]> = {
-        Users: USER_PERMISSIONS.map((p) => ({ ...p })),
-        Groups: GROUP_PERMISSIONS.map((p) => ({ ...p })),
+      Users: USER_PERMISSIONS.map((p) => ({ ...p })),
+      Groups: GROUP_PERMISSIONS.map((p) => ({ ...p })),
     };
 
     if (initialData?.permissions) {
-        initial.Users = initial.Users.map((p) => ({
+      initial.Users = initial.Users.map((p) => ({
         ...p,
         granted: initialData.permissions!.includes(p.value),
-        }));
+      }));
 
-        initial.Groups = initial.Groups.map((p) => ({
+      initial.Groups = initial.Groups.map((p) => ({
         ...p,
         granted: initialData.permissions!.includes(p.value),
-        }));
+      }));
     }
 
     return initial;
-    });
+  });
   
   // Get current permissions for active entity type
   const permissions = permissionsByType[entityType] || getDefaultPermissions(entityType);
-  const [members, setMembers]         = useState<Member[]>(initialData?.members ?? []);
+  const [members, setMembers] = useState<Member[]>(initialData?.members ?? []);
   const [memberSearch, setMemberSearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   /* lock body scroll */
   useEffect(() => {
-    console.log(members);
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
-  useEffect(()=>{
-    const fetchUsersByQuery = async()=>{
-        const response = await findUsers(memberSearch);
-        if(response.data){
-            setAvailableUsers(response.data);
-        }
-    }
+
+  useEffect(() => {
+    const fetchUsersByQuery = async () => {
+      const response = await findUsers(memberSearch);
+      if (response.data) {
+        setAvailableUsers(response.data);
+      }
+    };
     fetchUsersByQuery();
-  },[memberSearch])
+  }, [memberSearch]);
+
   /* close on backdrop click */
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === overlayRef.current) onClose();
   };
 
-  /* entity type tabs */
-  const entityTabs =["Users", "Groups"];
+  // FIX 2: Đồng bộ hóa mảng các Tab dựa trên Key chuẩn ("Users", "Groups") đại diện cho State nội bộ
+  const entityTabs = ["Users", "Groups"];
 
   /* toggle permission */
   const togglePermission = (index: number) => {
@@ -142,7 +148,6 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
   };
 
   /* members */
-
   const addMember = (member: Member) => {
     setMembers((prev) => [...prev, member]);
     setMemberSearch("");
@@ -155,19 +160,20 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
   /* submit */
   const handleSubmit = () => {
     const allPermissions = [
-    ...permissionsByType.Users,
-    ...permissionsByType.Groups
-  ];
-    onSubmit({ groupName, permissions:allPermissions, members });
+      ...permissionsByType.Users,
+      ...permissionsByType.Groups
+    ];
+    onSubmit({ groupName, permissions: allPermissions, members });
     onClose();
   };
 
   const isCreate = mode === "create";
-  const title = isCreate ? "Create New Group" : "Update Group";
+  const title = isCreate ? t("groupDialog.createTitle") : t("groupDialog.editTitle");
   const subtitle = isCreate
-    ? "Define identity and access control for your new workspace."
-    : "Modify identity and access control for this group.";
-  const submitLabel = isCreate ? "Initialize Group" : "Update Group";
+    ? t("groupDialog.createDescription")
+    : t("groupDialog.editDescription");
+  const submitLabel = isCreate ? t("groupDialog.initializeGroup") : t("groupDialog.updateGroup");
+
   return (
     <div
       className={styles.overlay}
@@ -191,12 +197,12 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
 
           {/* IDENTITY */}
           <section className={styles.section}>
-            <span className={styles.sectionLabel}>IDENTITY</span>
+            <span className={styles.sectionLabel}>{t("groupDialog.identity")}</span>
 
             <div className={styles.identityGrid}>
               {/* Group Name */}
               <div className={styles.field}>
-                <label className={styles.fieldLabel}>Group Name</label>
+                <label className={styles.fieldLabel}>{t("groups.groupName")}</label>
                 <input
                   className={styles.input}
                   type="text"
@@ -208,7 +214,7 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
 
               {/* Entity Type */}
               <div className={styles.field}>
-                <label className={styles.fieldLabel}>Entity Type</label>
+                <label className={styles.fieldLabel}>{t("groupDialog.entityType")}</label>
                 <div className={styles.tabGroup}>
                   {entityTabs.map((tab) => (
                     <button
@@ -216,7 +222,8 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
                       className={`${styles.tab} ${entityType === tab ? styles.tabActive : ""}`}
                       onClick={() => setEntityType(tab)}
                     >
-                      {tab}
+                      {/* Giữ nguyên logic Translate text hiển thị ra UI, không làm ảnh hưởng data gốc */}
+                      {tab === "Users" ? t("groupDialog.usersTab", "USERS") : t("groupDialog.groupsTab", "GROUPS")}
                     </button>
                   ))}
                 </div>
@@ -227,15 +234,15 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
           {/* RBAC PERMISSIONS */}
           <section className={styles.section}>
             <div className={styles.rbacHeader}>
-              <span className={styles.sectionLabelAccent}>RBAC PERMISSIONS MATRIX</span>
-              <span className={styles.rbacTag}>Role-Based Access Control</span>
+              <span className={styles.sectionLabelAccent}>{t("groupDialog.rbacPermissions")}</span>
+              <span className={styles.rbacTag}>{t("groupDialog.rbacTag")}</span>
             </div>
 
             <div className={styles.permissionsTable}>
               <div className={styles.permHead}>
-                <span>Action</span>
-                <span>{isCreate ? "Description" : "Scope"}</span>
-                <span className={styles.grantCol}>Grant</span>
+                <span>{t("groupDialog.action")}</span>
+                <span>{isCreate ? t("groupDialog.description") : t("groupDialog.scope")}</span>
+                <span className={styles.grantCol}>{t("groupDialog.grant")}</span>
               </div>
               {permissions.map((perm, i) => (
                 <div
@@ -259,60 +266,60 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
             </div>
           </section>
 
-          {/* INITIAL MEMBERS (create mode only) */}
-            <section className={styles.section}>
-              <span className={styles.sectionLabelAccent}>{isCreate?"INITIAL MEMBERS": "Current memebers"}</span>
+          {/* INITIAL MEMBERS */}
+          <section className={styles.section}>
+            <span className={styles.sectionLabelAccent}>{isCreate ? t("groupDialog.initialMembers") : t("groupDialog.currentMembers")}</span>
 
-              <div className={styles.memberSearchWrapper}>
-                <span className={styles.memberSearchIcon}><AddUserIcon /></span>
-                <input
-                  className={styles.memberInput}
-                  type="text"
-                  placeholder="Search by name or email…"
-                  value={memberSearch}
-                  onChange={(e) => {
-                    setMemberSearch(e.target.value);
-                    setShowSuggestions(true);
-                  }}
-                  onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                />
-                {showSuggestions && availableUsers.length > 0 && (
-                  <div className={styles.suggestions}>
-                    {availableUsers.filter((s)=>members.every((m) => m.id !== s.id)).map((s) => (
-                      <button
-                        key={s.id}
-                        className={styles.suggestionItem}
-                        onMouseDown={() => addMember(s)}
-                      >
-                        <span className={styles.suggestionAvatar}>
-                          {s.fullname.charAt(0)}
-                        </span>
-                        {s.fullname} - {s.email}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {members.length > 0 && (
-                <div className={styles.memberTags}>
-                  {members.map((m) => (
-                    <span key={m.id} className={styles.memberTag}>
-                      <span className={styles.memberTagAvatar}>{m.fullname.charAt(0)}</span>
-                      {m.fullname}
-                      <button
-                        className={styles.memberTagRemove}
-                        onClick={() => removeMember(m.id)}
-                        aria-label={`Remove ${m.fullname}`}
-                      >
-                        <XSmallIcon />
-                      </button>
-                    </span>
+            <div className={styles.memberSearchWrapper}>
+              <span className={styles.memberSearchIcon}><AddUserIcon /></span>
+              <input
+                className={styles.memberInput}
+                type="text"
+                placeholder={t("groupDialog.searchMembers")}
+                value={memberSearch}
+                onChange={(e) => {
+                  setMemberSearch(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              />
+              {showSuggestions && availableUsers.length > 0 && (
+                <div className={styles.suggestions}>
+                  {availableUsers.filter((s) => members.every((m) => m.id !== s.id)).map((s) => (
+                    <button
+                      key={s.id}
+                      className={styles.suggestionItem}
+                      onMouseDown={() => addMember(s)}
+                    >
+                      <span className={styles.suggestionAvatar}>
+                        {s.fullname.charAt(0)}
+                      </span>
+                      {s.fullname} - {s.email}
+                    </button>
                   ))}
                 </div>
               )}
-            </section>
+            </div>
+
+            {members.length > 0 && (
+              <div className={styles.memberTags}>
+                {members.map((m) => (
+                  <span key={m.id} className={styles.memberTag}>
+                    <span className={styles.memberTagAvatar}>{m.fullname.charAt(0)}</span>
+                    {m.fullname}
+                    <button
+                      className={styles.memberTagRemove}
+                      onClick={() => removeMember(m.id)}
+                      aria-label={`Remove ${m.fullname}`}
+                    >
+                      <XSmallIcon />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
 
         {/* ── Footer ── */}

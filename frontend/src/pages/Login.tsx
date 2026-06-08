@@ -10,6 +10,10 @@ const LoginPage = () => {
   const nav = useNavigate();
   const id = useId(); // unique ID prefix for accessibility
   const { user, setUser } = useAuth();
+  const [emailError, setEmailError] = useState("");
+  const validateEmail = (email: string) => {
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/.test(email);
+  };
   useEffect(() => {
     const token = getToken();
     if (user || token) {
@@ -32,17 +36,20 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
-    try {
-      const response = await login(formData);
-      console.log(response);
-      if (response.data?.token) {
-        localStorage.setItem("accessToken", response.data.token);
-        setUser(response.data.userData);
-        nav("/chat");
-      }
-    } catch (error) {
-      alert(error);
-      console.error(error);
+    if (!validateEmail(formData.email)) {
+      setEmailError(t("login.invalidEmail"));
+      return;
+    }
+    setEmailError("");
+    const { data, error } = await login(formData);
+    if(data&&data.token){
+      localStorage.setItem("accessToken", data.token);
+      setUser(data.userData);
+      nav("/chat");
+    } else if (error) {
+      alert(error.message);
+    } else {
+      alert("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -98,6 +105,11 @@ const LoginPage = () => {
                   <polyline points="22,6 12,13 2,6" />
                 </svg>
               </div>
+              {emailError && (
+                <span className={styles["error-message"]}>
+                  {emailError}
+                </span>
+              )}
             </div>
           </div>
 

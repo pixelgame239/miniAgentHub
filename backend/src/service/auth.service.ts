@@ -7,13 +7,21 @@ import { comparePassword, hashPassword } from "../utils/passwordHashing";
 import { generateAccessToken } from "../utils/tokenGenerator";
 
 export class AuthService{
-    public async authRegister(userData: any){
+    public async authRegister(userData: any, lang: string = "en"){
         const existingUser = await prisma.user.findUnique({where:{email:userData.email}});
         if(existingUser){
             throw new MyError("Email existed", 403);
         }
         const randomPassword = createRandomPassword();
         const hashedPassword = await hashPassword(randomPassword)
+        try {
+                await EmailService.sendSMTPEmail(userData.email, userData.fullname, randomPassword, lang);
+                console.log(`Email sent to ${userData.email}`);
+            } catch (error) {
+                console.error(`Failed to send email to ${userData.email}:`, error);
+                // Ngăn không cho đăng ký tiếp nếu lỗi gửi mail (Tuỳ bạn quyết định)
+                throw new MyError("Không thể gửi email kích hoạt, vui lòng thử lại.", 500);
+            }
         const newUser = await prisma.user.create({
             data:{
                 email: userData.email,
@@ -35,11 +43,10 @@ export class AuthService{
                 active:true
             }
         });
-        const emailLink = await EmailService.sendFakeWelcomeEmail(newUser.email, newUser.fullname, randomPassword);
         return {
             message: "Registered successfully, check the link below for the password",
             userData: newUser,
-            emailLink: emailLink
+            emailLink: "SENT"
         }
     }
     public async authLogin(userData: any){

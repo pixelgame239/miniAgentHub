@@ -49,26 +49,32 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleConfirmDialog = async () => {
-    try {
       if (dialogType === "clear-history") {
         console.log("Clear chat history");
-        await deleteAllConversations();
+        const { data, error } = await deleteAllConversations();
         setGroupConversations([]);
-        alert("All conversations are deleted");
+        if (data) {
+          alert(t("settings.success"));
+        }
+        if (error) {
+          alert(t("settings.failed"));
+        }
       }
 
       if (dialogType === "delete-account") {
         console.log("Delete account");
-        await deleteAccount();
-        localStorage.removeItem("accessToken");
-        setUser(null);
-        nav("/");
+        const { data, error } = await deleteAccount();
+        if (data) {
+          localStorage.removeItem("accessToken");
+          setUser(null);
+          nav("/");
+        }
+        if (error) {
+          alert(t("settings.failed"));
+        }
       }
 
       closeDialog();
-    } catch (error) {
-      console.error(error);
-    }
   };
   useEffect(()=>{
     document.documentElement.setAttribute("data-theme", theme);
@@ -94,14 +100,14 @@ const SettingsPage: React.FC = () => {
             icon={<PhoneIcon />}
             title={t("settings.phone")}
             description={user?.fullname}
-            actionLabel="Update"
+            actionLabel={t("settings.update")}
             onAction={() => console.log("Update phone")}
           />
           <SettingRow
             icon={<LocationIcon />}
-            title="Address"
+            title={t("settings.address")}
             description={t("settings.address")}
-            actionLabel="Update"
+            actionLabel={t("settings.update")}
             onAction={() => console.log("Update address")}
           />
         </div>
@@ -183,7 +189,7 @@ const SettingsPage: React.FC = () => {
             icon={<KeyIcon />}
             title={t("settings.passwordSecurity")}
             description="Last updated 14 days ago. Enable 2FA for better security."
-            actionLabel="Update"
+            actionLabel={t("settings.update")}
             onAction={() => setOpenPasswordModal(true)}
           />
 
@@ -191,7 +197,7 @@ const SettingsPage: React.FC = () => {
             icon={<TrashIcon />}
             title={t("settings.clearHistory")}
             description="Permanently delete all your conversation data across the system."
-            actionLabel="Clear"
+            actionLabel={t("settings.clearHistory")}
             danger
             onAction={openClearHistoryDialog}
           />
@@ -200,7 +206,7 @@ const SettingsPage: React.FC = () => {
             icon={<UserMinusIcon />}
             title={t("settings.deleteAccount")}
             description="Permanently remove your account and all associated data. This action cannot be undone."
-            actionLabel="Delete"
+            actionLabel={t("settings.deleteAccount")}
             destructive
             onAction={openDeleteAccountDialog}
           />
@@ -209,7 +215,7 @@ const SettingsPage: React.FC = () => {
             icon={<LogoutIcon />}
             title={t("settings.signOut")}
             description="End your current session and securely log out of the interface."
-            actionLabel="Sign Out"
+            actionLabel={t("settings.signOut")}
             onAction={() => handleLogout()}
           />
         </div>
@@ -241,8 +247,8 @@ const SettingsPage: React.FC = () => {
           <div className={styles["dialog-body"]}>
             <p className={styles["dialog-text"]}>
               {dialogType === "clear-history"
-                ? "Are you sure you want to clear all chat history? This action cannot be undone."
-                : "Are you sure you want to permanently delete your account? All data will be removed forever."}
+                ? t("settings.clearHistoryConfirmation")
+                : t("settings.deleteAccountConfirmation")}
             </p>
           </div>
 
@@ -270,15 +276,16 @@ const SettingsPage: React.FC = () => {
         isOpen={openPasswordModal}
         onClose={() => setOpenPasswordModal(false)}
         onSubmit={async (formData) => {
-            try{
                 console.log(formData);
-                const response = await changePassword(formData);
-                alert(response.data);
-            } catch(error:any){
-                console.log(error);
-                alert(error.message)
-            }
-        }}
+                const {data, error, status } = await changePassword(formData);
+                if (status === 200) {
+                    alert(t("settings.success"));
+                    setOpenPasswordModal(false);
+                }
+                if (error) {
+                    alert(error.message);
+                }
+            }}
       />
     </div>
   );

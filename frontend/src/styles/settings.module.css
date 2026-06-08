@@ -112,7 +112,7 @@
 .setting-action {
   border: 1px solid var(--accent);
   background: var(--accent);
-  color: var(--text-heading);
+  color: var(--btn-text-solid); /* Thay var(--text-heading) thành màu chuyên dụng cho text trên nền solid */
   border-radius: 999px;
   padding: 10px 18px;
   font-size: 14px;
@@ -121,21 +121,30 @@
   transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
 }
 
-.setting-action:hover {
-  transform: translateY(-1px);
-  opacity: 0.95;
-}
-
 .setting-action.danger {
   background: transparent;
   border-color: var(--danger);
-  color: var(--danger);
+  color: var(--btn-text-danger-shading); /* Sử dụng màu danger có độ tương phản cao cho chữ */
 }
 
 .setting-action.destructive {
   background: var(--danger);
   border-color: var(--danger);
-  color: var(--text-heading);
+  color: var(--btn-text-solid); /* Chữ trắng trên nền đỏ solid */
+}
+
+/* Sửa bóng đổ (box-shadow) của panel để nhìn sạch hơn ở Lightmode */
+.setting-row,
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05); /* Giảm độ đậm shadow đen của darkmode khi ở lightmode */
+}
+
+.setting-action:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
 }
 
 .personalization-grid {

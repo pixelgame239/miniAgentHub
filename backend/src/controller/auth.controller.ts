@@ -12,7 +12,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       fullname: req.body.fullname,
       groups: req.body.groups ? req.body.groups : null,
     };
-    const result = await authService.authRegister(userData);
+    const result = await authService.authRegister(userData, req.body.lang);
     res.status(201).json(result);
   } catch (error) {
     next(error);
@@ -48,7 +48,7 @@ export const changePassword = async(req:Request, res: Response, next:NextFunctio
       const response = await authService.authChangePassword({id: req.user.id, currentPassword: req.body.currentPassword? req.body.currentPassword : null, newPassword: req.body.newPassword});
       if(response){
         const newToken = generateAccessToken(req.user.id, req.user.email, req.user.userAccess, req.user.groupAccess, req.user.fullname,true, req.user.groups);
-        res.status(201).json(newToken);
+        res.status(200).json(newToken);
       } else{
         res.status(500).json({message: "Unexpected Error"});
       }

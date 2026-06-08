@@ -96,7 +96,7 @@ const GroupsPage: React.FC = () => {
     setDeleteDialogOpen(false);
     setSelectedGroup(null);
   };
-  if(groupsLoaded.length===0) return <h1>You dont have permission to view Groups detail</h1>
+  if(groupsLoaded.length===0) return <h1>{t("common.noPermission")}</h1>
   return (
     <>
       <div className={styles.groupsPage}>
@@ -191,14 +191,14 @@ const GroupsPage: React.FC = () => {
         />
       )}
       {deleteDialogOpen && (
-        <ReusableDialog title="Delete Group" open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} footer={<>
+        <ReusableDialog title={t("groups.deleteTitle")} open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} footer={<>
           <button className={stylesDialog.cancelBtn} onClick={() => setDeleteDialogOpen(false)}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button className={stylesDialog.dangerBtn} onClick={handleDeleteGroup}>
-            Delete
+            {t("common.delete")}
           </button>
-        </>} children={<p>Are you sure you want to delete this group?</p>}></ReusableDialog>
+        </>} children={<p>{t("groups.deleteConfirmation")}</p>}></ReusableDialog>
        )}
 
       {/* Members Modal */}

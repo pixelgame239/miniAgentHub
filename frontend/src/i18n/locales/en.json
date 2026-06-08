@@ -9,7 +9,8 @@
     "send": "Send",
     "stop": "Stop",
     "loading": "Loading...",
-    "noConversations": "No conversations"
+    "noConversations": "No conversations",
+    "noPermission": "You do not have permission to view this content."
   },
 
   "sidebar": {
@@ -25,7 +26,8 @@
     "enterConversationTitle": "Enter conversation title...",
     "aiModel": "AI Model",
     "createChat": "Create Chat",
-    "back": "Back"
+    "back": "Back",
+    "recent": "Recent Conversations"
   },
 
   "chat": {
@@ -49,7 +51,8 @@
     "encrypted": "END-TO-END ENCRYPTED",
     "certified": "ISO 27001 CERTIFIED",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "invalidEmail": "Invalid email address"
   },
 
   "settings": {
@@ -68,7 +71,12 @@
     "passwordSecurity": "Password & Security",
     "clearHistory": "Clear Chat History",
     "deleteAccount": "Delete Account",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "update": "Update",
+    "clearHistoryConfirmation": "Are you sure you want to clear all chat history? This action cannot be undone.",
+    "deleteAccountConfirmation": "Are you sure you want to permanently delete your account? All data will be removed forever.",
+    "success": "Success",
+    "failed": "Failed"
   },
 
   "groups": {
@@ -79,7 +87,15 @@
     "members": "members",
     "groupName": "Group Name",
     "total": "Total",
-    "actions": "Actions"
+    "actions": "Actions",
+    "name": "Name",
+    "email": "Email",
+    "groups": "User's groups",
+    "removeMember": "Remove from group",
+    "addMember": "Add Member",
+    "allUsersInGroup": "All users are already in this group",
+    "deleteConfirmation": "Are you sure you want to delete this group? This action cannot be undone.",
+    "deleteTitle": "Delete Group"
   },
 
   "users": {
@@ -95,7 +111,10 @@
     "createUser": "Create User",
     "updateUser": "Update User",
     "addNewUser": "Add New User",
-    "sendEmail": "Created user, password is sent to this link: "
+    "sendEmail": "Created user, password is sent to this link: ",
+    "deletedUser": "Delete user with email: ",
+    "deleteConfirmation": "Are you sure you want to delete this user? This action cannot be undone.",
+    "deleteWarning": "Warning: Deleting a user will permanently remove their access and data. Please confirm this action."
   },
 
   "password": {
@@ -111,5 +130,30 @@
     "confirmRequired": "Please confirm your password",
     "passwordMismatch": "Passwords do not match",
     "successChange": "Password changed successfully"
+  },
+  "userGroupModal":{
+    "description":"Manage users, permissions and collaborative groups across Agent Hub."
+  },
+  "groupDialog":{
+    "createTitle": "Create Group",
+    "updateTitle": "Update Group",
+    "action": "Action",
+    "description": "Description",
+    "scope": "Scope",
+    "initialMembers": "Initial Members",
+    "currentMembers": "Current Members",
+    "searchMembers": "Search members by name or email...",
+    "grant": "Grant",
+    "entityType": "Entity Type",
+    "selectEntityType": "Select entity type",
+    "user": "User",
+    "group": "Group",
+    "rbacPermissions": "RBAC Permissions Matrix",
+    "rbacTag": "Role-Based Access Control",
+    "identity": "Identity",
+    "createDescription": "Create a new group to collaborate more effectively. Easily add members and manage access permissions.",
+    "updateDescription": "Update group information and manage members to maintain effective collaboration.",
+    "allUsersInGroup": "All users are already in this group",
+    "initializeGroup": "Initialize Group"
   }
 }

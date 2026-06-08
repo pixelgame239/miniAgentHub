@@ -3,7 +3,7 @@ import { client } from "./apiClient"
 
 type LoginRequest ={
     email: string,
-    userPassword:string
+    userPassword:string,
 }
 type LoginResponse ={
     token: string,
@@ -12,7 +12,8 @@ type LoginResponse ={
 type RegisterRequest = {
     email: string,
     fullname: string,
-    groups: number[]
+    groups: number[],
+    lang: string
 }
 type RegisterResponse = {
     userData: User

@@ -60,7 +60,7 @@ const UserPage = () => {
   }) => {
     if (dialogMode === "create") {
       try {
-        const response = await register(data);
+        const response = await register({...data, lang: localStorage.getItem("app-lang") || "en"});
         if(response.data) setUsers([...users,response.data.userData]);
         alert(
           t("users.sendEmail") +
@@ -123,7 +123,7 @@ const UserPage = () => {
     users.length > 0 &&
     selectedIds.length === users.length;
   if (users.length === 0) {
-    return <h1>You don't have permission to view Users</h1>
+    return <h1>{t("common.noPermission")}</h1>
   }
   return (
     <div className={styles.userContent}>
@@ -259,7 +259,7 @@ const UserPage = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className={styles.dialogHeader}>
-              <h2>{t("users.deletedUser")}</h2>
+              <h2>{t("users.deletedUser")} {deletedUser?.email}</h2>
 
               <button
                 className={styles.dialogCloseBtn}

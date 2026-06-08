@@ -1,0 +1,44 @@
+<body>
+    <div class="email-wrapper">
+        <div class="email-card">
+            <div class="email-header">
+                <h1>Đăng Ký Thành Công!</h1>
+            </div>
+
+            <div class="email-body">
+                <p class="welcome-text">Xin chào, {{fullname}}!</p>
+                <p class="instruction-text">
+                    Tài khoản của bạn đã được khởi tạo thành công. Vì lý do bảo mật, chúng tôi đã tạo một mật khẩu tạm thời an toàn cho lần đăng nhập đầu tiên của bạn. Vui lòng sử dụng thông tin dưới đây để truy cập hệ thống:
+                </p>
+
+                <div class="credentials-box">
+                    <div class="info-row">
+                        <span class="info-label">Họ và tên:</span>
+                        <span class="info-value">{{fullname}}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Địa chỉ Email:</span>
+                        <span class="info-value">{{email}}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Mật khẩu tạm thời:</span>
+                        <span class="info-value password-highlight">{{password}}</span>
+                    </div>
+                </div>
+
+                <p class="instruction-text" style="font-size: 14px; font-style: italic; color: #ef4444; margin-bottom: 20px;">
+                    * Lưu ý: Bạn sẽ được yêu cầu đổi mật khẩu này ngay sau khi đăng nhập lần đầu tiên.
+                </p>
+
+                <div class="btn-container">
+                    <a href="http://localhost:5173" class="btn-primary" target="_blank">Đăng Nhập Vào Tài Khoản</a>
+                </div>
+            </div>
+
+            <div class="email-footer">
+                <p>Đây là email tự động từ hệ thống, vui lòng không phản hồi trực tiếp email này.</p>
+                <p class="footer-note">&copy; 2026 Công ty của bạn. Toàn bộ quyền được bảo lưu.</p>
+            </div>
+        </div>
+    </div>
+</body>

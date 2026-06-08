@@ -1,6 +1,6 @@
 // Sidebar.tsx
 import { NavLink, useRouteLoaderData } from "react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // Thêm useRef ở đây
 import { useAuth } from "../hooks/authHook";
 import styles from "../styles/sidebar.module.css";
 import { useChat } from "../hooks/chatHook";
@@ -38,9 +38,30 @@ const Sidebar = () => {
   const [editTitle, setEditTitle] = useState("");
   const { user } = useAuth();
 
+  // Tạo ref để theo dõi vùng bao quanh danh sách menu hành động
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     setGroupConversations(conversations);
   }, [conversations, setGroupConversations]);
+
+  // SỬA ĐỔI: Xử lý click outside đóng menu ba chấm
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpenId(null);
+      }
+    };
+
+    // Đăng ký sự kiện khi menu đang mở
+    if (menuOpenId !== null) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuOpenId]);
 
   const openConversation = async (convId: number) => {
     try {
@@ -206,7 +227,7 @@ const Sidebar = () => {
 
       <div className={styles.sidebarDivider} />
 
-      {/* CHAT SECTION — button pinned above scrollable list */}
+      {/* CHAT SECTION */}
       <div className={styles.chatSection}>
         <button className={styles.newConversationBtn} onClick={() => setShowNewChatModal(true)}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -219,7 +240,8 @@ const Sidebar = () => {
         {groupConversations.length > 0 ? (
           <>
             <span className={styles.chatListLabel}>{t("sidebar.recent") ?? "Recent"}</span>
-            <div className={styles.chatList}>
+            {/* Gắn ref vào bọc danh sách chat để lắng nghe click outside */}
+            <div className={styles.chatList} ref={menuRef}>
               {groupConversations.map((chat) => (
                 <div key={chat.id} className={styles.chatRow}>
                   <button

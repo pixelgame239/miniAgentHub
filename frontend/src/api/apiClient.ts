@@ -23,7 +23,10 @@ export const client = createClient<{ error: GlobalErrorType }>({
     // 3. Handle global errors (e.g., logging or 401 redirects)
     console.error(`[API Error] ${request.endpoint}:`, error);
     
-    if (error.status === 401) {
+    const isLoginRequest =
+      request.endpoint.includes("/auth/login");
+
+    if (error.status === 401 && !isLoginRequest) {
       removeToken();
       window.location.href = "/";
     }

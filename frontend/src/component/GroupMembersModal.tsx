@@ -32,30 +32,33 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
 
   const loadMembers = async () => {
     setLoading(true);
-    try {
-      const response = await getGroupUsers(group.id);
-      if (response.data) {
-        console.log(response.data);
-        setMembers(response.data);
-      }
-      const usersResponse = await getUsers();
-      if(usersResponse.data){
-        setAllUsers(usersResponse.data);
-      }
-    } catch (err) {
-      console.error("Error loading members:", err);
-    } finally {
-      setLoading(false);
+    const { data, error } = await getGroupUsers(group.id);
+    if (data) {
+      console.log(data);
+      setMembers(data);
+    }
+    const { data: allUserData, error: allUserError } = await getUsers();
+    if(allUserData){
+      setAllUsers(allUserData);
+    }
+    setLoading(false);
+    if(error) {
+      alert(error.message);
+      return;
+    }
+    if(allUserError){
+      alert(allUserError.message);
+      return;
     }
   };
 
   const handleRemoveUser = async (userId: number) => {
-    try {
-      await removeUser(group.id, userId);
+      const { data, error, status } = await removeUser(group.id, userId);
+      if(error){
+        alert(error.message);
+        return;
+      } 
       setMembers(members.filter((u) => u.id !== userId));
-    } catch (err) {
-      console.error("Error removing user:", err);
-    }
   };
 
   const handleAddUsers = async () => {
@@ -85,7 +88,7 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
           <div>
             <h2 className={styles.modalTitle}>{group.groupName}</h2>
             <p className={styles.modalDescription}>
-              Manage group members and their permissions
+              {t("userGroupModal.description")}
             </p>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>
@@ -98,7 +101,7 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
           {/* Table Card */}
           <div className={styles.tableCard}>
             <div className={styles.tableHeader}>
-              <h3 className={styles.tableTitle}>Members</h3>
+              <h3 className={styles.tableTitle}>{t("groups.members")}</h3>
               <div className={styles.tableHeaderActions}>
                 <div className={styles.totalBadge}>
                   {members.length} {members.length === 1 ? "member" : "members"}
@@ -108,7 +111,7 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                   onClick={() => setShowAddDialog(true)}
                 >
                   <PlusIcon />
-                  <span>Add User</span>
+                  <span>{t("groups.addMember")}</span>
                 </button>
               </div>
             </div>
@@ -118,15 +121,15 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
               <div className={styles.loadingState}>Loading members...</div>
             ) : members.length === 0 ? (
               <div className={styles.emptyState}>
-                No members in this group yet
+                {t("groups.noMembers")}
               </div>
             ) : (
               <div className={styles.table}>
                 <div className={styles.tableHead}>
-                  <div className={styles.nameCol}>Full Name</div>
-                  <div className={styles.emailCol}>Email</div>
-                  <div className={styles.groupsCol}>Groups</div>
-                  <div className={styles.actionsCol}>Actions</div>
+                  <div className={styles.nameCol}>{t("groups.name")}</div>
+                  <div className={styles.emailCol}>{t("groups.email")}</div>
+                  <div className={styles.groupsCol}>{t("groups.groups")}</div>
+                  <div className={styles.actionsCol}>{t("groups.actions")}</div>
                 </div>
 
                 {members.map((user) => (
@@ -136,14 +139,14 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                     </div>
                     <div className={styles.emailCol}>{user.email}</div>
                     <div className={styles.groupsCol}>
-                      {user.groups?.length || 0} group(s)
+                      {t("groups.total")}: {user.groups?.length || 0}
                     </div>
                     <div className={styles.actionsCol}>
                       <button
                         className={`${styles.iconButton} ${styles.deleteBtn}`}
                         onClick={() => handleRemoveUser(user.id)}
                         aria-label={`Remove ${user.fullname}`}
-                        title="Remove from group"
+                        title={t("groups.removeMember")}
                       >
                         <TrashIcon />
                       </button>
@@ -167,7 +170,7 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className={styles.nestedModalHeader}>
-              <h3>Add Users to Group</h3>
+              <h3>{t("groups.addMember")}</h3>
               <button
                 className={styles.closeBtn}
                 onClick={() => setShowAddDialog(false)}
@@ -178,7 +181,7 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
 
             <div className={styles.nestedModalContent}>
               {availableUsers.length === 0 ? (
-                <p>All users are already in this group</p>
+                <p>{t("groups.allUsersInGroup")}</p>
               ) : (
                 <div className={styles.userList}>
                   {availableUsers.map((user) => (
@@ -213,14 +216,14 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                 className={styles.cancelBtn}
                 onClick={() => setShowAddDialog(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 className={styles.confirmBtn}
                 onClick={handleAddUsers}
                 disabled={selectedUsersToAdd.length === 0}
               >
-                Add Users
+                {t("groups.addMember")}
               </button>
             </div>
           </div>
