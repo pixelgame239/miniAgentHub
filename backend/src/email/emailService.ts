@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import { MyError } from '../utils/MyError';
 
 dotenv.config();
 
@@ -31,8 +32,8 @@ if (PROXY_URL) {
         tls: {
             rejectUnauthorized: false
         },
-        logger: true,
-        debug: true
+        // logger: true,
+        // debug: true
     };
     
     transporter = nodemailer.createTransport(proxyConfig);
@@ -103,7 +104,7 @@ export class EmailService {
             
         } catch (error) {
             console.error(`[SMTP Error] Lỗi khi gửi email tới ${email}:`, error);
-            throw error; // Throw error để controller hoặc nơi gọi hàm có thể bắt và xử lý tiếp
+            throw new MyError("Cannot send email", 500);
         }
     }
 }

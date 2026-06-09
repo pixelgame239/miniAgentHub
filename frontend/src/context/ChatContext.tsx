@@ -6,6 +6,9 @@ import React, {
 export interface Message {
   id?: number;
   content: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
   conversationId: number;
   type: string;
   createdAt?: string | Date;
@@ -37,7 +40,7 @@ interface ChatContextType {
   initConvMessages: (convId: number, messages: Message[]) => void;
   appendMessage: (convId: number, message: Message) => void;
   // abort controllers — one per conversation, stored as a ref (no re-renders)
-  abortMapRef: React.MutableRefObject<Map<number, AbortController>>;
+  abortMapRef: React.RefObject<Map<number, AbortController>>;
 }
 
 export const ChatContext = createContext<ChatContextType | undefined>(undefined);

@@ -1,7 +1,9 @@
-// message.service.ts
 import type { Response } from "express";
 import { prisma } from "../../lib/prisma";
 import { AIService } from "./ai.service";
+import path from "path";
+import crypto from "crypto";
+import fs from "fs";
 
 const aiService = new AIService();
 
@@ -16,14 +18,67 @@ export class MessageService {
     convId: number,
     content: string,
     model: string,
-    res: Response
+    res: Response,
+    files?: { data: string; fileName: string; mimeType: string }[]
   ): Promise<void> {
-    await prisma.message.create({
-      data: { content, conversationId: convId, type: "prompt" },
-    });
+    
+    let dbFileUrl: string | null = null;
+    let dbFileName: string | null = null;
+    let dbFileType: string | null = null;
 
-    // promptStream returns response.data directly — don't access .data again
-    const stream = await aiService.promptStream(content, model, convId);
+    const primaryFile = files && files.length > 0 ? files[0] : null;    
+    
+    // 1. Xử lý file vật lý TRƯỚC khi gọi API và lưu DB
+    if (primaryFile) {
+      const base64Data = primaryFile.data.split(";base64,").pop();
+      if (base64Data) {
+        const fileBuffer = Buffer.from(base64Data, "base64");
+
+        let fileExt = path.extname(primaryFile.fileName);
+        const fileBaseName = path.basename(primaryFile.fileName, fileExt);
+        let mimeType = primaryFile.mimeType;
+
+        // Bọc lót lỗi file rỗng đuôi/rỗng mimeType từ Ubuntu
+        if (!fileExt && (!mimeType || mimeType === "application/octet-stream")) {
+          fileExt = ".txt";
+          mimeType = "text/plain";
+        }
+
+        const randomSuffix = crypto.randomBytes(3).toString("hex"); // 6 ký tự ngẫu nhiên
+        const uniqueFileName = `${fileBaseName}-${randomSuffix}${fileExt}`;
+
+        const dirPath = path.join(process.cwd(), "files", convId.toString());
+        const filePath = path.join(dirPath, uniqueFileName);
+
+        if (!fs.existsSync(dirPath)) {
+          fs.mkdirSync(dirPath, { recursive: true });
+        }
+
+        fs.writeFileSync(filePath, fileBuffer);
+
+        // Cập nhật thông tin chuẩn bị ghi vào tin nhắn của USER
+        dbFileUrl = `/static-files/${convId}/${uniqueFileName}`;
+        dbFileName = primaryFile.fileName;
+        dbFileType = mimeType;
+      }
+    }
+
+    await prisma.message.create({
+      data: { 
+        content, 
+        conversationId: convId, 
+        type: "prompt",
+        fileUrl: dbFileUrl,   // Đã chuyển đúng vị trí về đây
+        fileName: dbFileName,
+        fileType: dbFileType
+      },
+    });
+    if (files && files.length > 0) {
+    for (const file of files) {
+        await aiService.upsertFile(convId.toString(), file);
+    }
+}
+    const stream = await aiService.promptStream(content, model, convId, files);
 
     let fullResponse = "";
     let buffer = "";
@@ -43,7 +98,6 @@ export class MessageService {
           const jsonStr = line.replace("data:", "").trim();
           if (!jsonStr) continue;
 
-          // Flowise end signal — forward [DONE] and stop processing
           if (jsonStr === "[DONE]") {
             if (!res.writableEnded) {
               res.write("data: [DONE]\n\n");
@@ -69,7 +123,6 @@ export class MessageService {
       });
 
       stream.on("end", async () => {
-        // Save full AI response to DB
         if (fullResponse) {
           try {
             await prisma.message.create({

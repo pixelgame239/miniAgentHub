@@ -1,10 +1,16 @@
 // api/messageApi.ts
 import { getToken } from "./apiClient";
 
+export type FileUpload = {
+  data: string;
+  fileName: string;
+  mimeType: string;
+}
 export type ChatRequest = {
   conversationId?: number;
   content?: string;
   model?: string;
+  files?: FileUpload[]; 
 };
 
 export type SSEHandlers = {
@@ -23,6 +29,14 @@ const extractChunkText = (payload: string): string => {
     // plain text — already extracted by backend
   }
   return payload;
+};
+export const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 };
 const apiURL = import.meta.env.VITE_API_URL;
 export const streamPrompt = async (

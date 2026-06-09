@@ -9,7 +9,7 @@ export const promptToAI = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { conversationId, content, model } = req.body;
+  const { conversationId, content, model, files } = req.body;
 
   // Basic validation before flushing headers — after flushHeaders()
   // you can no longer send error status codes to the client
@@ -24,7 +24,7 @@ export const promptToAI = async (
   res.flushHeaders();
 
   try {
-    await messageService.sendPrompt(conversationId, content, model, res);
+    await messageService.sendPrompt(conversationId, content, model, res, files);
   } catch (error) {
     // Headers already sent — can't use next(error) for a JSON error response.
     // Write an SSE error event instead so the client knows something went wrong.

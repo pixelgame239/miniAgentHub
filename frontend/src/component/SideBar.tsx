@@ -75,18 +75,15 @@ const Sidebar = () => {
   };
 
   const handleCreateNewChat = async () => {
-    try {
       if (!selectedModel || !newChatTitle) return;
-      const response = await createConversation(newChatTitle, selectedModel.id);
-      if (response.data) {
-        setGroupConversations([response.data, ...groupConversations]);
+      const { data, error } = await createConversation(newChatTitle, selectedModel.id);
+      if (data) {
+        
+        setGroupConversations([data, ...groupConversations]);
       }
       setShowNewChatModal(false);
       setNewChatTitle("");
       setSelectedModel(AIModels[0]);
-    } catch (error) {
-      console.error(error);
-    }
   };
 
   const openEditDialog = (chat: ConversationItem) => {
@@ -229,7 +226,7 @@ const Sidebar = () => {
 
       {/* CHAT SECTION */}
       <div className={styles.chatSection}>
-        <button className={styles.newConversationBtn} onClick={() => setShowNewChatModal(true)}>
+        <button className={styles.newConversationBtn} onClick={() => setCurrentConversation(null)}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
