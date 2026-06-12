@@ -79,6 +79,49 @@ const ChatPage = () => {
     if (file.type.includes("text")) return "📃";
     return "📎";
   };
+  async function optimizeBase64Image(base64Str: string, maxEdge: number = 1024, quality: number = 0.75): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = base64Str;
+
+        img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+
+            // Maintain the geometric aspect ratio while checking maximum dimensions
+            if (width > height) {
+                if (width > maxEdge) {
+                    height = Math.round((height * maxEdge) / width);
+                    width = maxEdge;
+                }
+            } else {
+                if (height > maxEdge) {
+                    width = Math.round((width * maxEdge) / height);
+                    height = maxEdge;
+                }
+            }
+
+            // Create an off-screen HTML5 Canvas container
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                return reject(new Error('Failed to acquire a 2D Canvas Context pipeline.'));
+            }
+
+            // Draw the large image elements into the downscaled canvas dimensions
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Transcode the active pixel frame buffer into a small compressed JPEG string 
+            const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressedBase64);
+        };
+
+        img.onerror = (error) => reject(error);
+    });
+}
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -123,10 +166,18 @@ const ChatPage = () => {
       let uploads: FileUpload[] | undefined = undefined;
       if(fileToSend){
         const base64Data = await fileToBase64(fileToSend);
+        let finalData = base64Data;
+        let finalMime = fileToSend.type;
+        let finalName = fileToSend.name;
+        if(fileToSend.type.startsWith("image/")){
+          finalData = await optimizeBase64Image(base64Data, 1024, 0.7);
+          finalMime = "image/jpeg";
+          finalName = fileToSend.name.replace(/\.[^/.]+$/, "") + ".jpg";
+        }
         uploads=[{
           data:base64Data,
-          fileName: fileToSend.name,
-          mimeType: fileToSend.type
+          fileName: finalName,
+          mimeType: finalMime
         }]
       }
       start({ conversationId: convId, content, model: conversation.AIModel, files: uploads});

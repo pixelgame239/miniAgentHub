@@ -24,6 +24,7 @@ export const promptToAI = async (
   res.flushHeaders();
 
   try {
+    console.log(req.body.files);
     await messageService.sendPrompt(conversationId, content, model, res, files);
   } catch (error) {
     // Headers already sent — can't use next(error) for a JSON error response.

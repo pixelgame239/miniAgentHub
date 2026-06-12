@@ -73,11 +73,11 @@ export class MessageService {
         fileType: dbFileType
       },
     });
-    if (files && files.length > 0) {
-    for (const file of files) {
-        await aiService.upsertFile(convId.toString(), file);
-    }
-}
+//     if (files && files.length > 0) {
+//     for (const file of files) {
+//         await aiService.upsertFile(convId.toString(), file);
+//     }
+// }
     const stream = await aiService.promptStream(content, model, convId, files);
 
     let fullResponse = "";
