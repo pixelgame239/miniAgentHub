@@ -9,6 +9,7 @@ import type { Group } from "../loader/groupLoader";
 import { deleteUser, updateUser } from "../api/userApi";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/authHook";
+import { useNotificationPopup } from "../context/NotificationPopupContext";
 
 
 const UserPage = () => {
@@ -22,6 +23,7 @@ const UserPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { showInfo, showError } = useNotificationPopup();
   const nav = useNavigate();
   if(!user?.userAccess){
     nav("/chat");
@@ -53,55 +55,52 @@ const UserPage = () => {
     setDeleteDialogOpen(false);
     setDeletedUser(null);
   };
-  const handleFormSubmit = async (data: {
+  const handleFormSubmit = async (formData: {
     email: string;
     fullname: string;
     groups: number[];
   }) => {
     if (dialogMode === "create") {
-      try {
-        const response = await register({...data, lang: localStorage.getItem("app-lang") || "en"});
-        if(response.data) setUsers([...users,response.data.userData]);
-        alert(
-          t("users.sendEmail") +
-            response.data?.emailLink
-        );
-      } catch (err) {
-        console.error(err);
+      const { data, error } = await register({...formData, lang: localStorage.getItem("app-lang") || "en"});
+      if(data){
+        setUsers([...users,data.userData]);
+        showInfo(t("users.sendEmail"));
+      }
+      if(error){
+        showError(t("common.failed"+":"+error.message));
+        console.error(error);
       }
     } else{
-      try{
-        const response = await updateUser(data, editingUser?.id);
-        const updatedUser = response.data;
-        if (!updatedUser) {
-          console.error("Dữ liệu cập nhật không hợp lệ");
+        const { data, error } = await updateUser(formData, editingUser?.id);
+        const updatedUser = data;
+        if (error) {
+          showError(t("common.failed"+":"+error.message));
+          console.error(error);
           return;
         }
+        if(updatedUser){
         setUsers(prevUsers => 
             prevUsers.map(user => 
                 user.id === editingUser?.id ? updatedUser : user
             )
         );
-      }catch(error){
-        console.error(error);
       }
-    }
-
+      }
     closeDialog();
   };
   const handledeletedUser = async () => {
     if (!deletedUser) return;
-
-    try {
-      await deleteUser(deletedUser.id);
-
-      setUsers((prev) =>
-        prev.filter((user) => user.id !== deletedUser.id)
-      );
-      closeDeleteDialog();
-    } catch (error) {
+    const { data, error } = await deleteUser(deletedUser.id);
+    if (error) {
+      showError(t("common.failed"+":"+error.message));
       console.error(error);
+      return;
     }
+
+    setUsers((prev) =>
+      prev.filter((user) => user.id !== deletedUser.id)
+    );
+    closeDeleteDialog();
   };
   const toggleSelectAll = () => {
     if (selectedIds.length === users.length) {

@@ -17,16 +17,14 @@ export interface Conversation {
 }
 
 export const groupLoader:LoaderFunction = async():Promise<Group[]>=>{
-    try {
-        const response = await getAllGroups();
-        if(response.data){
-            return response.data;
-        }
-        return [];
-    } catch(err){
-        console.error(err);
-        return [];
+    const { data, error } = await getAllGroups();
+    if(data){
+        return data;
     }
+    if(error){
+        console.error("Failed to fetch groups:", error);
+    }
+    return [];
 };
 // export const userGroupLoader:LoaderFunction = async():Promise<Group[]>=>{
 //     try {
@@ -41,16 +39,18 @@ export const groupLoader:LoaderFunction = async():Promise<Group[]>=>{
 //     }
 // }
 export const layoutLoader: LoaderFunction = async():Promise<{conversations: Conversation[], AIModels: AIModels[]}> => {
-    try {
         // const userGroups = await getUserGroups();
-        const aiModels = await getGroqModels();
-        const conversations = await getConversations();
-        if(aiModels&&conversations){
-            return {AIModels: aiModels.data||[], conversations: conversations.data||[]};
-        }
-        return {AIModels: [], conversations: []};
-    } catch(err){
-        console.error(err);
-        return {AIModels: [], conversations: []};
+    const { data: aiModels, error: aiModelsError } = await getGroqModels();
+    const { data: conversations, error: conversationsError } = await getConversations();
+    if(aiModels&&conversations){
+        return {AIModels: aiModels||[], conversations: conversations||[]};
     }
+    if(aiModelsError){
+        console.error("Failed to fetch AI models:", aiModelsError);
+    }
+    if(conversationsError){
+        console.error("Failed to fetch conversations:", conversationsError);
+    }
+    return {AIModels: [], conversations: []};
+
 }

@@ -81,4 +81,18 @@ export class UserService{
         
         return response;
     }
+    public async updateAddress(userId: number, address: string){
+        const response = await prisma.user.update({
+            where: { id: userId },
+            data: { address }
+        });
+        return response;
+    }
+    public async updatePhoneNumber(userId: number, phoneNumber: string){
+        const response = await prisma.user.update({
+            where: { id: userId },
+            data: { phoneNumber }
+        });
+        return response;
+    }
 }

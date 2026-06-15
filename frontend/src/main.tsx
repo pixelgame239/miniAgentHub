@@ -5,12 +5,15 @@ import { RouterProvider } from 'react-router'
 import { router } from './Router.tsx'
 import { AuthProvider } from './context/AuthContext.tsx'
 import { ChatProvider } from './context/ChatContext.tsx'
+import { NotificationPopupProvider } from './context/NotificationPopupContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <ChatProvider>
-        <RouterProvider router={router}></RouterProvider>
+        <NotificationPopupProvider>
+          <RouterProvider router={router}></RouterProvider>
+        </NotificationPopupProvider>
       </ChatProvider>
     </AuthProvider>
   </StrictMode>,

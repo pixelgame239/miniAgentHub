@@ -5,6 +5,7 @@ import type { Group } from "../loader/groupLoader";
 import type { User } from "../loader/userLoader";
 import { getGroupUsers, getUsers } from "../api/userApi";
 import { removeUser, addUser } from "../api/groupApi";
+import { useNotificationPopup } from "../context/NotificationPopupContext";
 
 interface GroupMembersModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedUsersToAdd, setSelectedUsersToAdd] = useState<number[]>([]);
+  const { showError, showInfo } = useNotificationPopup();
 
   useEffect(() => {
     if (open) {
@@ -43,11 +45,11 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
     }
     setLoading(false);
     if(error) {
-      alert(error.message);
+      showError(t("common.failed") + ": " + error.message);
       return;
     }
     if(allUserError){
-      alert(allUserError.message);
+      showError(t("common.failed") + ": " + allUserError.message);
       return;
     }
   };
@@ -55,23 +57,30 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
   const handleRemoveUser = async (userId: number) => {
       const { data, error, status } = await removeUser(group.id, userId);
       if(error){
-        alert(error.message);
+        showError(t("common.failed") + ": " + error.message);
         return;
       } 
+      if(data){
+        showInfo(t("common.success"));
+      }
       setMembers(members.filter((u) => u.id !== userId));
   };
 
   const handleAddUsers = async () => {
     if (selectedUsersToAdd.length === 0) return;
-    try {
-      await addUser(group.id, selectedUsersToAdd);
+      const { data, error } = await addUser(group.id, selectedUsersToAdd);
+      if(error){
+        console.error("Failed to add users to group:", error);
+        showError(t("common.failed") + ": " + error.message);
+        return;
+      }
+      if(data){
       // Reload members
-      await loadMembers();
-      setSelectedUsersToAdd([]);
-      setShowAddDialog(false);
-    } catch (err) {
-      console.error("Error adding users:", err);
-    }
+        await loadMembers();
+        setSelectedUsersToAdd([]);
+        setShowAddDialog(false);
+        showInfo(t("common.success"));
+      }
   };
 
   if (!open) return null;

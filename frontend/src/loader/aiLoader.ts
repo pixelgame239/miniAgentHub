@@ -5,14 +5,12 @@ export interface AIModels{
     id: string
 }
 export const aiLoader: LoaderFunction = async():Promise<AIModels[]>=>{
-    try{
-        const response = await getGroqModels();
-        if(response.data){
-            return response.data;
-        }
-        return [];
-    }catch(error){
-        console.error();
-        return[];
+    const {data, error} = await getGroqModels();
+    if(data){
+        return data;
     }
+    if(error){
+        console.error("Failed to fetch AI models:", error);
+    }
+    return [];
 }

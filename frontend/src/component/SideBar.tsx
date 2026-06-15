@@ -1,11 +1,10 @@
 // Sidebar.tsx
-import { NavLink, useRouteLoaderData } from "react-router";
+import { NavLink, useNavigate, useRouteLoaderData } from "react-router";
 import { useEffect, useState, useRef } from "react"; // Thêm useRef ở đây
 import { useAuth } from "../hooks/authHook";
 import styles from "../styles/sidebar.module.css";
 import { useChat } from "../hooks/chatHook";
 import {
-  createConversation,
   deleteConversation,
   getConversationDetail,
   updateConversationTitle,
@@ -14,6 +13,7 @@ import type { AIModels } from "../loader/aiLoader";
 import { useTranslation } from "react-i18next";
 import ReusableDialog from "./ReusableDialogProps";
 import type { Conversation } from "../loader/groupLoader";
+import { useNotificationPopup } from "../context/NotificationPopupContext";
 
 type ConversationItem = {
   id: number;
@@ -37,7 +37,8 @@ const Sidebar = () => {
   const [activeConversation, setActiveConversation] = useState<ConversationItem | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const { user } = useAuth();
-
+  const { showError , showInfo } = useNotificationPopup();
+  const nav = useNavigate();
   // Tạo ref để theo dõi vùng bao quanh danh sách menu hành động
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -64,26 +65,19 @@ const Sidebar = () => {
   }, [menuOpenId]);
 
   const openConversation = async (convId: number) => {
-    try {
-      const response = await getConversationDetail(convId);
-      if (response && response.data) {
-        setCurrentConversation(response.data);
-      }
-    } catch (err) {
-      console.error(err);
+    const {data, error} = await getConversationDetail(convId);
+    if (data) {
+      setCurrentConversation(data);
     }
+    if(error){
+      showError(error.message);
+    }
+    nav("/chat");
   };
 
-  const handleCreateNewChat = async () => {
-      if (!selectedModel || !newChatTitle) return;
-      const { data, error } = await createConversation(newChatTitle, selectedModel.id);
-      if (data) {
-        
-        setGroupConversations([data, ...groupConversations]);
-      }
-      setShowNewChatModal(false);
-      setNewChatTitle("");
-      setSelectedModel(AIModels[0]);
+  const handleCreateNewChat = () => {
+    setCurrentConversation(null);
+    nav("/chat");
   };
 
   const openEditDialog = (chat: ConversationItem) => {
@@ -112,34 +106,40 @@ const Sidebar = () => {
     if (!activeConversation) return;
     const nextTitle = editTitle.trim();
     if (!nextTitle) return;
-    try {
-      await updateConversationTitle(activeConversation.id, nextTitle);
-      setGroupConversations((prev) =>
-        prev.map((item) =>
-          item.id === activeConversation.id ? { ...item, title: nextTitle } : item
-        )
-      );
-      if (currentConversation?.id === activeConversation.id) {
-        setCurrentConversation((prev: any) => (prev ? { ...prev, title: nextTitle } : prev));
-      }
-      closeDialog();
-    } catch (err) {
-      console.error(err);
+    const { data, error} = await updateConversationTitle(activeConversation.id, nextTitle);
+    if(data){
+      showInfo(t("common.success"));
     }
+    if(error){
+      showError(t("common.failed") + ": " + error.message);
+      return;
+    }
+    setGroupConversations((prev) =>
+      prev.map((item) =>
+        item.id === activeConversation.id ? { ...item, title: nextTitle } : item
+      )
+    );
+    if (currentConversation?.id === activeConversation.id) {
+      setCurrentConversation((prev: any) => (prev ? { ...prev, title: nextTitle } : prev));
+    }
+    closeDialog();
   };
 
   const handleDeleteConversation = async () => {
     if (!activeConversation) return;
-    try {
-      await deleteConversation(activeConversation.id);
-      setGroupConversations((prev) => prev.filter((item) => item.id !== activeConversation.id));
-      if (currentConversation?.id === activeConversation.id) {
-        setCurrentConversation(null);
-      }
-      closeDialog();
-    } catch (err) {
-      console.error(err);
+    const { data, error } = await deleteConversation(activeConversation.id);
+    if(data){
+      showInfo(t("common.success"));
     }
+    if (error) {
+      showError(t("common.failed") + ": " + error.message);
+      return;
+    }
+    setGroupConversations((prev) => prev.filter((item) => item.id !== activeConversation.id));
+    if (currentConversation?.id === activeConversation.id) {
+      setCurrentConversation(null);
+    }
+    closeDialog();
   };
 
   const navItems = [
@@ -226,7 +226,7 @@ const Sidebar = () => {
 
       {/* CHAT SECTION */}
       <div className={styles.chatSection}>
-        <button className={styles.newConversationBtn} onClick={() => setCurrentConversation(null)}>
+        <button className={styles.newConversationBtn} onClick={() => handleCreateNewChat()}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />

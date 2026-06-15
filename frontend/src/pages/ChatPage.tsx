@@ -170,12 +170,12 @@ const ChatPage = () => {
         let finalMime = fileToSend.type;
         let finalName = fileToSend.name;
         if(fileToSend.type.startsWith("image/")){
-          finalData = await optimizeBase64Image(base64Data, 1024, 0.7);
+          finalData = await optimizeBase64Image(base64Data, 600, 0.6);
           finalMime = "image/jpeg";
           finalName = fileToSend.name.replace(/\.[^/.]+$/, "") + ".jpg";
         }
         uploads=[{
-          data:base64Data,
+          data:finalData,
           fileName: finalName,
           mimeType: finalMime
         }]
@@ -307,7 +307,7 @@ const ChatPage = () => {
                     {msg.fileType?.startsWith("image/") ? (
                       <div className={styles.chatImagePreview}>
                         <img 
-                          src={`${apiUrl}/${msg.fileUrl}`} 
+                          src={msg.fileUrl.startsWith("blob:")?msg.fileUrl: `${apiUrl}${msg.fileUrl}`} 
                           alt={msg.fileName || "image"} 
                           style={{ maxWidth: "240px", maxHeight: "180px", borderRadius: "8px", cursor: "pointer", display: "block" }}
                           onClick={() => window.open(msg.fileUrl, "_blank")}

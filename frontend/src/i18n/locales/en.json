@@ -10,7 +10,13 @@
     "stop": "Stop",
     "loading": "Loading...",
     "noConversations": "No conversations",
-    "noPermission": "You do not have permission to view this content."
+    "noPermission": "You do not have permission to view this content.",
+    "InternalError": "An internal error occurred. Please try again later.",
+    "success": "Success",
+    "failed": "Failed",
+    "dismiss": "Dismiss",
+    "error": "Error",
+    "information": "Information"
   },
 
   "sidebar": {
@@ -52,7 +58,8 @@
     "certified": "ISO 27001 CERTIFIED",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "invalidEmail": "Invalid email address"
+    "invalidEmail": "Invalid email address",
+    "error": "Login failed. Please check your credentials and try again."
   },
 
   "settings": {
@@ -76,7 +83,9 @@
     "clearHistoryConfirmation": "Are you sure you want to clear all chat history? This action cannot be undone.",
     "deleteAccountConfirmation": "Are you sure you want to permanently delete your account? All data will be removed forever.",
     "success": "Success",
-    "failed": "Failed"
+    "failed": "Failed",
+    "emptyError": "This field cannot be empty",
+    "invalidPhone": "Phone number must start with 0 and contain 10 to 11 digits"
   },
 
   "groups": {
@@ -95,7 +104,11 @@
     "addMember": "Add Member",
     "allUsersInGroup": "All users are already in this group",
     "deleteConfirmation": "Are you sure you want to delete this group? This action cannot be undone.",
-    "deleteTitle": "Delete Group"
+    "deleteTitle": "Delete Group",
+    "emptyError": "Group name cannot be empty",
+    "editGroup": "Edit Group",
+    "viewMembers": "View Members",
+    "deleteGroup": "Delete Group"
   },
 
   "users": {
@@ -111,7 +124,7 @@
     "createUser": "Create User",
     "updateUser": "Update User",
     "addNewUser": "Add New User",
-    "sendEmail": "Created user, password is sent to this link: ",
+    "sendEmail": "Created user, temporary password is sent to user email",
     "deletedUser": "Delete user with email: ",
     "deleteConfirmation": "Are you sure you want to delete this user? This action cannot be undone.",
     "deleteWarning": "Warning: Deleting a user will permanently remove their access and data. Please confirm this action."
@@ -138,6 +151,7 @@
     "createTitle": "Create Group",
     "updateTitle": "Update Group",
     "action": "Action",
+    "editTitle": "Edit Group",
     "description": "Description",
     "scope": "Scope",
     "initialMembers": "Initial Members",
@@ -154,6 +168,8 @@
     "createDescription": "Create a new group to collaborate more effectively. Easily add members and manage access permissions.",
     "updateDescription": "Update group information and manage members to maintain effective collaboration.",
     "allUsersInGroup": "All users are already in this group",
-    "initializeGroup": "Initialize Group"
+    "initializeGroup": "Initialize Group",
+    "updateGroup": "Update Group",
+    "editDescription": "Update group information and manage members to maintain effective collaboration."
   }
 }

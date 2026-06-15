@@ -37,6 +37,16 @@ const findUsersRequest = client.createRequest<{queryParams:{input: string}}>()({
     endpoint:"/users/find",
     auth:true
 })
+const updateAddressRequest = client.createRequest<{payload: {address: string}, params: {userId: string|number}}>()({
+    endpoint: "/users/updateAddress/:userId",
+    method:"PUT",
+    auth:true
+});
+const updatePhoneNumberRequest = client.createRequest<{payload: {phoneNumber: string}, params: {userId: string|number}}>()({
+    endpoint: "/users/updatePhoneNumber/:userId",
+    method:"PUT",
+    auth:true
+});
 export const getUsers = async()=>{
     return await getUserRequest.send();
 } 
@@ -54,4 +64,10 @@ export const deleteUser = async(userId:any)=>{
 }
 export const deleteAccount= async()=>{
     return await deleteAccountRequest.send();
+}
+export const updateAddress = async(address:string, userId:any)=>{
+    return await updateAddressRequest.send({payload: {address: address}, params: {userId}});
+}
+export const updatePhoneNumber = async(phoneNumber:string, userId:any)=>{
+    return await updatePhoneNumberRequest.send({payload: {phoneNumber: phoneNumber}, params: {userId}});
 }

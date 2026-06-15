@@ -10,14 +10,12 @@ export interface User {
   active: boolean;
 }
 export const userLoader:LoaderFunction = async ():Promise<User[]> => {
-    try{
-        const response = await getUsers();
-        if(response.data){
-            return response.data;
-        }
-        return [];
-    } catch(err){
-        console.error(err);
-        return [];
+    const { data: users, error } = await getUsers();
+    if(users){
+        return users;
     }
+    if(error){
+        console.error("Failed to fetch users:", error);
+    }
+    return [];
 };

@@ -5,12 +5,13 @@ import { changePassword } from "../api/authApi";
 import { useAuth } from "../hooks/authHook";
 import { useTranslation } from "react-i18next";
 import { setToken } from "../api/apiClient";
+import { useNotificationPopup } from "../context/NotificationPopupContext";
 
 const InitResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const { user, setUser } = useAuth();
-
+  const { showInfo, showError } = useNotificationPopup();
   const [errors, setErrors] = useState<{
     password?: string;
     confirmPassword?: string;
@@ -49,20 +50,19 @@ const InitResetPassword = () => {
 
     if (!validate()) return;
 
-    try {
-      setLoading(true);
-      const response = await changePassword({ newPassword: password });
-      setUser({...user, active: true});
-      if(response.data){
-        console.log("Token setted");
-        setToken(response.data);
-      }
-      alert(t("password.successChange"));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+    setLoading(true);
+    const {data, error} = await changePassword({ newPassword: password });
+    setUser({...user, active: true});
+    if(data){
+      console.log("Token setted");
+      setToken(data);
     }
+    showInfo(t("password.successChange"));
+    if(error){
+      showError(t("password.errorChange"));
+      console.error(error);
+    }
+    setLoading(false);
   };
 
   return (

@@ -8,21 +8,29 @@ import UpdatePasswordModal from "../component/UpdatePasswordModal";
 import { changePassword } from "../api/authApi";
 import { useTranslation } from "react-i18next";
 import { deleteAllConversations } from "../api/conversationApi";
-import { deleteAccount } from "../api/userApi";
+import { deleteAccount, updateAddress, updatePhoneNumber } from "../api/userApi";
 import { useChat } from "../hooks/chatHook";
+import { useNotificationPopup } from "../context/NotificationPopupContext";
 
 type Theme = "dark" | "light";
+type EditableField = "phoneNumber" | "address";
+
+const isValidPhoneNumber = (value: string) => /^0\d{9,10}$/.test(value);
 
 const SettingsPage: React.FC = () => {
   const [theme, setTheme] = useState<Theme>(localStorage.getItem("app-theme") as Theme || "dark");
   const [language, setLanguage] = useState(localStorage.getItem("app-lang")||"en");
   const [openPasswordModal, setOpenPasswordModal] = useState(false);
+  const [editableField, setEditableField] = useState<EditableField | null>(null);
+  const [editableValue, setEditableValue] = useState("");
+  const [savingField, setSavingField] = useState(false);
   const [dialogType, setDialogType] = useState<"clear-history" | "delete-account" | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { setGroupConversations } = useChat();
   const nav = useNavigate();
   const { user, setUser } = useAuth();
   const { t, i18n } = useTranslation();
+  const { showError, showInfo } = useNotificationPopup();
   const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
     localStorage.setItem("app-lang", lang);
@@ -43,9 +51,86 @@ const SettingsPage: React.FC = () => {
     setDialogOpen(true);
   };
 
+  const openFieldDialog = (field: EditableField) => {
+    setEditableField(field);
+    setEditableValue(field === "phoneNumber" ? (user?.phoneNumber ?? "") : (user?.address ?? ""));
+  };
+
+  const closeFieldDialog = () => {
+    setEditableField(null);
+    setEditableValue("");
+    setSavingField(false);
+  };
+
   const closeDialog = () => {
     setDialogOpen(false);
     setDialogType(null);
+  };
+
+  const handleSaveField = async () => {
+    if (!editableField || !user?.id) {
+      return;
+    }
+
+    const nextValue = editableValue.trim();
+
+    if (!nextValue) {
+      showError(t("settings.emptyError"));
+      return;
+    }
+
+    if (editableField === "phoneNumber") {
+      const normalizedPhoneNumber = nextValue.replace(/\s+/g, "");
+
+      if (!isValidPhoneNumber(normalizedPhoneNumber)) {
+        showError(t("settings.invalidPhone"));
+        return;
+      }
+
+      setSavingField(true);
+
+      try {
+        const { data, error } = await updatePhoneNumber(normalizedPhoneNumber, user.id);
+        if (error) {
+          showError(t("common.failed") + ": " + error.message);
+          return;
+        }
+        if (data) {
+          setUser((prev) => (prev ? { ...prev, phoneNumber: normalizedPhoneNumber } : prev));
+          showInfo(t("common.success"));
+        }
+
+        closeFieldDialog();
+      } catch (error) {
+        showError(error instanceof Error ? error.message : t("common.failed"));
+      } finally {
+        setSavingField(false);
+      }
+
+      return;
+    }
+
+    setSavingField(true);
+
+    try {
+      if (editableField === "address") {
+        const { data, error } = await updateAddress(nextValue, user.id);
+        if (error) {
+          showError(t("common.failed") + ": " + error.message);
+          return;
+        }
+        if (data) {
+          setUser((prev) => (prev ? { ...prev, address: nextValue } : prev));
+          showInfo(t("common.success"));
+        }
+      }
+
+      closeFieldDialog();
+    } catch (error) {
+      showError(error instanceof Error ? error.message : t("common.failed"));
+    } finally {
+      setSavingField(false);
+    }
   };
 
   const handleConfirmDialog = async () => {
@@ -54,10 +139,10 @@ const SettingsPage: React.FC = () => {
         const { data, error } = await deleteAllConversations();
         setGroupConversations([]);
         if (data) {
-          alert(t("settings.success"));
+          showInfo(t("common.success"));
         }
         if (error) {
-          alert(t("settings.failed"));
+          showError(t("common.failed") + ": " + error.message);
         }
       }
 
@@ -70,7 +155,7 @@ const SettingsPage: React.FC = () => {
           nav("/");
         }
         if (error) {
-          alert(t("settings.failed"));
+          showError(t("common.failed") + ": " + error.message);
         }
       }
 
@@ -99,16 +184,16 @@ const SettingsPage: React.FC = () => {
           <SettingRow
             icon={<PhoneIcon />}
             title={t("settings.phone")}
-            description={user?.fullname}
+            description={user?.phoneNumber}
             actionLabel={t("settings.update")}
-            onAction={() => console.log("Update phone")}
+            onAction={() => openFieldDialog("phoneNumber")}
           />
           <SettingRow
             icon={<LocationIcon />}
             title={t("settings.address")}
-            description={t("settings.address")}
+            description={user?.address}
             actionLabel={t("settings.update")}
-            onAction={() => console.log("Update address")}
+            onAction={() => openFieldDialog("address")}
           />
         </div>
       </section>
@@ -220,6 +305,45 @@ const SettingsPage: React.FC = () => {
           />
         </div>
       </section>
+      {editableField && (
+        <div className={styles["dialog-overlay"]} onClick={closeFieldDialog}>
+          <div className={styles["dialog"]} onClick={(e) => e.stopPropagation()}>
+            <div className={styles["dialog-header"]}>
+              <h2 className={styles["dialog-title"]}>
+                {editableField === "phoneNumber" ? t("settings.phone") : t("settings.address")}
+              </h2>
+
+              <button className={styles["dialog-close"]} onClick={closeFieldDialog}>
+                ×
+              </button>
+            </div>
+
+            <div className={styles["dialog-body"]}>
+              <div className={styles["dialog-field"]}>
+                <label className={styles["dialog-label"]}>
+                  {editableField === "phoneNumber" ? t("settings.phone") : t("settings.address")}
+                </label>
+                <input
+                  className={styles["dialog-input"]}
+                  value={editableValue}
+                  onChange={(event) => setEditableValue(event.target.value)}
+                  placeholder={editableField === "phoneNumber" ? t("settings.phone") : t("settings.address")}
+                />
+              </div>
+            </div>
+
+            <div className={styles["dialog-footer"]}>
+              <button className={styles["dialog-cancel"]} onClick={closeFieldDialog}>
+                {t("common.cancel")}
+              </button>
+
+              <button className={styles["dialog-danger"]} onClick={handleSaveField} disabled={savingField}>
+                {savingField ? "Saving..." : t("settings.update")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {dialogOpen && (
       <div
         className={styles["dialog-overlay"]}
@@ -236,10 +360,7 @@ const SettingsPage: React.FC = () => {
                 : t("settings.deleteAccount")}
             </h2>
 
-            <button
-              className={styles["dialog-close"]}
-              onClick={closeDialog}
-            >
+            <button type="button" className={styles["dialog-close"]} onClick={closeDialog}>
               ×
             </button>
           </div>
@@ -253,17 +374,11 @@ const SettingsPage: React.FC = () => {
           </div>
 
           <div className={styles["dialog-footer"]}>
-            <button
-              className={styles["dialog-cancel"]}
-              onClick={closeDialog}
-            >
+            <button type="button" className={styles["dialog-cancel"]} onClick={closeDialog}>
               {t("common.cancel")}
             </button>
 
-            <button
-              className={styles["dialog-danger"]}
-              onClick={handleConfirmDialog}
-            >
+            <button type="button" className={styles["dialog-danger"]} onClick={handleConfirmDialog}>
               {dialogType === "clear-history"
                 ? t("settings.clearHistory")
                 : t("settings.deleteAccount")}
@@ -277,13 +392,13 @@ const SettingsPage: React.FC = () => {
         onClose={() => setOpenPasswordModal(false)}
         onSubmit={async (formData) => {
                 console.log(formData);
-                const {data, error, status } = await changePassword(formData);
+                const { error, status } = await changePassword(formData);
                 if (status === 200) {
-                    alert(t("settings.success"));
+                    showInfo(t("settings.success"));
                     setOpenPasswordModal(false);
                 }
                 if (error) {
-                    alert(error.message);
+                    showError(t("common.failed") + ": " + error.message);
                 }
             }}
       />

@@ -83,3 +83,31 @@ export const deleteAccount = async(req:Request, res:Response, next:NextFunction)
         next(error);
     }
 }
+export const updateAddress = async(req:Request, res:Response, next:NextFunction)=>{
+    try{
+        if(req.user){
+            const userId = req.user.id;
+            const {address} = req.body;
+            const response = await userService.updateAddress(userId, address);
+            res.status(201).json(response);
+            return;
+        }
+        throw new MyError("Unauthorized", 401);
+    }catch(error){
+        next(error);
+    }
+}
+export const updatePhoneNumber = async(req:Request, res:Response, next:NextFunction)=>{
+    try{
+        if(req.user){
+            const userId = req.user.id;
+            const {phoneNumber} = req.body;
+            const response = await userService.updatePhoneNumber(userId, phoneNumber);
+            res.status(201).json(response);
+            return;
+        }
+        throw new MyError("Unauthorized", 401);
+    }catch(error){
+        next(error);
+    }
+}

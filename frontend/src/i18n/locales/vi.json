@@ -10,7 +10,13 @@
     "stop": "Dừng",
     "loading": "Đang tải...",
     "noConversations": "Không có cuộc trò chuyện",
-    "noPermission": "Bạn không có quyền đọc nội dung này."
+    "noPermission": "Bạn không có quyền đọc nội dung này.",
+    "InternalError": "Đã xảy ra lỗi nội bộ. Vui lòng thử lại sau.",
+    "success": "Thành công",
+    "failed": "Thất bại",
+    "dismiss": "Đóng",
+    "error": "Lỗi",
+    "information": "Thông tin"
   },
 
   "sidebar": {
@@ -52,7 +58,8 @@
     "certified": "CHỨNG NHẬN ISO 27001",
     "showPassword": "Hiện mật khẩu",
     "hidePassword": "Ẩn mật khẩu",
-    "invalidEmail": "Địa chỉ email không hợp lệ"
+    "invalidEmail": "Địa chỉ email không hợp lệ",
+    "error": "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập và thử lại."
   },
 
   "settings": {
@@ -76,7 +83,9 @@
     "clearHistoryConfirmation": "Bạn có chắc muốn xóa toàn bộ lịch sử trò chuyện? Hành động này không thể hoàn tác.",
     "deleteAccountConfirmation": "Bạn có chắc muốn xóa tài khoản vĩnh viễn? Tất cả dữ liệu sẽ bị xóa vĩnh viễn.",
     "success": "Thành công",
-    "failed": "Thất bại"
+    "failed": "Thất bại",
+    "emptyError": "Trường này không được để trống",
+    "invalidPhone": "Số điện thoại phải bắt đầu bằng 0 và có từ 10 đến 11 chữ số"
   },
 
   "groups": {
@@ -95,7 +104,11 @@
     "addMember": "Thêm thành viên",
     "allUsersInGroup": "Tất cả người dùng đã có trong nhóm này",
     "deleteConfirmation": "Bạn có chắc muốn xóa nhóm này? Hành động này không thể hoàn tác.",
-    "deleteTitle": "Xóa nhóm"
+    "deleteTitle": "Xóa nhóm",
+    "emptyError": "Tên nhóm không được để trống",
+    "editGroup": "Chỉnh sửa nhóm",
+    "viewMembers": "Xem thành viên",
+    "deleteGroup": "Xóa nhóm"
   },
 
   "users": {
@@ -111,7 +124,7 @@
     "createUser": "Tạo người dùng",
     "updateUser": "Cập nhật người dùng",
     "addNewUser": "Thêm người dùng mới",
-    "sendEmail": "Đã tạo người dùng và gửi đến đường link này: ",
+    "sendEmail": "Đã tạo người dùng và gửi mật khẩu tạm thời đến email của người dùng",
     "deletedUser": "Xóa người dùng với email: ",
     "deleteConfirmation": "Bạn có chắc muốn xóa người dùng này? Hành động này không thể hoàn tác.",
     "deleteWarning": "Cảnh báo: Việc xóa người dùng sẽ loại bỏ vĩnh viễn quyền truy cập và dữ liệu của họ. Vui lòng xác nhận hành động này."
@@ -153,6 +166,7 @@
     "currentMembers": "Thành viên hiện tại",
     "searchMembers": "Tìm kiếm theo tên hoặc email...",
     "grant": "Cho phép",
-    "initializeGroup": "Khởi tạo nhóm"
+    "initializeGroup": "Khởi tạo nhóm",
+    "updateGroup": "Cập nhật nhóm"
   }
 }

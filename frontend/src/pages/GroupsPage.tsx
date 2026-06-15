@@ -10,6 +10,7 @@ import ReusableDialog from "../component/ReusableDialogProps";
 import { createGroup, deleteGroup, updateGroupData } from "../api/groupApi";
 import stylesDialog from "../styles/sidebar.module.css";
 import { getGroupUsers } from "../api/userApi";
+import { useNotificationPopup } from "../context/NotificationPopupContext";
 /* ─── Dialog state shape ─────────────────────── */
 type DialogState =
   | { open: false }
@@ -29,6 +30,7 @@ const GroupsPage: React.FC = () => {
   const [selectedGroupForMembers, setSelectedGroupForMembers] =
     useState<Group | null>(null);
   const [members, setMembers] = useState<Member[]|undefined>(undefined);
+  const { showError, showInfo } = useNotificationPopup();
 
   if (!user?.groupAccess) {
     nav("/chat");
@@ -60,41 +62,46 @@ const GroupsPage: React.FC = () => {
     permissions: { action: string; description: string; granted: boolean; value: string }[];
     members: { id: number; fullname: string }[];
   }) => {
-    try{
-      if(!data.groupName.trim()){
-        alert("Group name cannot be empty");
-        return;
+    if(!data.groupName.trim()){
+      showError(t("groups.emptyError"));
+      return;
+    }
+    const permissionList = data.permissions.filter((per)=>per.granted===true).map((per)=>per.value);
+    const userList = data.members.map((mem)=>mem.id);
+    if (dialog.open && dialog.mode === "create") {
+      console.log("Create group:", data);
+      const { data: newGroup , error: createError } = await createGroup({groupName: data.groupName, permissions: permissionList, userIds: userList});
+      if(newGroup){
+        setGroups([...groups, newGroup])
+        showInfo(t("common.success"));
       }
-      const permissionList = data.permissions.filter((per)=>per.granted===true).map((per)=>per.value);
-      const userList = data.members.map((mem)=>mem.id);
-      if (dialog.open && dialog.mode === "create") {
-        console.log("Create group:", data);
-        const response = await createGroup({groupName: data.groupName, permissions: permissionList, userIds: userList});
-        if(response.data){
-          setGroups([...groups, response.data])
-        }
-        alert(response.data);
-      } else if (dialog.open && dialog.mode === "update") {
-        console.log("Update group:", data);
-        const response = await updateGroupData(dialog.group.id, permissionList, userList, data.groupName);
-        if(response.data){
-          console.log(response.data);
-          const newGroup = response.data;
-          setGroups(groups.map((group) => 
-            group.id === dialog.group.id ? newGroup : group
-          ));
-        }
-        alert(response.data);
+      if(createError){
+        showError(t("common.failed") + ":" + createError.message);
       }
-    }catch(error){
-      console.error(error);
+    } else if (dialog.open && dialog.mode === "update") {
+      console.log("Update group:", data);
+      const { data: updatedGroup, error: updateError } = await updateGroupData(dialog.group.id, permissionList, userList, data.groupName);
+      if(updatedGroup){
+        console.log(updatedGroup);
+        showInfo(t("common.success"));
+        setGroups(groups.map((group) => 
+          group.id === dialog.group.id ? updatedGroup : group
+        ));
+      }
+      if(updateError){
+        showError(t("common.failed") + ":" + updateError.message);
+      }
     }
   };
   const handleDeleteGroup = async () => {
     if(selectedGroup === null) return;
-    await deleteGroup(selectedGroup);
-    setDeleteDialogOpen(false);
-    setSelectedGroup(null);
+    const { error } = await deleteGroup(selectedGroup);
+    if (!error) {
+      setDeleteDialogOpen(false);
+      setSelectedGroup(null);
+    } else {
+      showError(t("common.failed") + ":" + error.message);
+    }
   };
   if(groupsLoaded.length===0) return <h1>{t("common.noPermission")}</h1>
   return (
@@ -141,6 +148,7 @@ const GroupsPage: React.FC = () => {
                     className={styles.iconButton}
                     onClick={() => openMembers(group)}
                     aria-label={`View members of ${group.groupName}`}
+                    title={t("groups.viewMembers")}
                   >
                     <UsersIcon />
                   </button>
@@ -150,6 +158,7 @@ const GroupsPage: React.FC = () => {
                     className={styles.iconButton}
                     onClick={async() => await openUpdate(group)}
                     aria-label={`Edit ${group.groupName}`}
+                    title={t("groups.editGroup")}
                   >
                     <SettingsIcon />
                   </button>
@@ -159,6 +168,7 @@ const GroupsPage: React.FC = () => {
                     className={`${styles.iconButton} ${styles.deleteButton}`}
                     onClick={() => openDelete(group.id)}
                     aria-label={`Delete ${group.groupName}`}
+                    title={t("groups.deleteGroup")}
                   >
                     <TrashIcon />
                   </button>

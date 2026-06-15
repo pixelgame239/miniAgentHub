@@ -5,12 +5,15 @@ import styles from "../styles/login.module.css"; // Changed to CSS Module
 import { useAuth } from "../hooks/authHook";
 import { getToken } from "../api/apiClient";
 import { useTranslation } from "react-i18next";
+import { useNotificationPopup } from "../context/NotificationPopupContext";
+import NotificationPopup from "../component/NotificationPopup";
 
 const LoginPage = () => {
   const nav = useNavigate();
   const id = useId(); // unique ID prefix for accessibility
   const { user, setUser } = useAuth();
   const [emailError, setEmailError] = useState("");
+  const { error, errorMessage, closePopup, showError } = useNotificationPopup();
   const validateEmail = (email: string) => {
     return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/.test(email);
   };
@@ -47,9 +50,9 @@ const LoginPage = () => {
       setUser(data.userData);
       nav("/chat");
     } else if (error) {
-      alert(error.message);
+      showError(t("login.error"));
     } else {
-      alert("An unexpected error occurred. Please try again.");
+      showError(t("common.InternalError"));
     }
   };
 
@@ -187,6 +190,7 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
+      <NotificationPopup error={error} errorMessage={errorMessage} onClose={closePopup} info={false} infoMessage={""} />
     </div>
   );
 };

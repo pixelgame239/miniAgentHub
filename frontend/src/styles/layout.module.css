@@ -53,3 +53,109 @@ body,
 .page-scroll-container::-webkit-scrollbar-thumb:hover {
   background: var(--border-hover);
 }
+
+.error-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(8, 12, 20, 0.58);
+  backdrop-filter: blur(8px);
+}
+
+.error-popup {
+  width: min(100%, 480px);
+  border-radius: 22px;
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-subtle) 100%);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  padding: 24px;
+  color: var(--text-primary);
+}
+
+.error-popup--error {
+  --popup-accent: var(--danger);
+}
+
+.error-popup--info {
+  --popup-accent: var(--accent);
+}
+
+.error-popup-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.error-popup-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  color: var(--popup-accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.error-popup-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.error-popup-message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+.error-popup-close {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.error-popup-close:hover {
+  background: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.error-popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.error-popup-button {
+  height: 42px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 12px;
+  background: var(--popup-accent);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.error-popup-button:hover {
+  opacity: 0.92;
+}

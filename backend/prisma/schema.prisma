@@ -19,6 +19,8 @@ model User {
   conversations Conversation[]
   groups      Group[]
   active    Boolean @default(false)
+  phoneNumber  String?
+  address   String?
 }
 model Group {
   id            Int    @id @default(autoincrement())

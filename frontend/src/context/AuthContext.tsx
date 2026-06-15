@@ -10,6 +10,8 @@ interface UserType{
     fullname?: string;
     active?: boolean;
     groups?: {id: number, groupName: string}[];
+    address?: string;
+    phoneNumber?: string;
 }
 interface AuthContextType{
     user: UserType|null;
@@ -28,15 +30,16 @@ export const AuthProvider = ({children}:AuthProviderProps) =>{
     useEffect(()=>{
         const token = getToken();
         const getUserData = async()=>{
-            try{
-                const response = await getMe();
-                setUser(response.data)
-            }catch(err){
-                console.error(err);
-                removeToken();
-            } finally{
-                setLoading(false);
+            const {data, error} = await getMe();
+            if(data){
+                setUser(data);
             }
+            if(error){
+                console.error("Failed to fetch user data:", error);
+                removeToken();
+                throw new Error(error.message);
+            }
+            setLoading(false);
         }
         if(token){
             setLoading(true);
