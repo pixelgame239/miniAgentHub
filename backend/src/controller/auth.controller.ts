@@ -47,7 +47,7 @@ export const changePassword = async(req:Request, res: Response, next:NextFunctio
       if(req.user){
       const response = await authService.authChangePassword({id: req.user.id, currentPassword: req.body.currentPassword? req.body.currentPassword : null, newPassword: req.body.newPassword});
       if(response){
-        const newToken = generateAccessToken(req.user.id, req.user.email, req.user.userAccess, req.user.groupAccess, req.user.fullname,true, req.user.groups);
+        const newToken = generateAccessToken(req.user.id, req.user.email, req.user.address, req.user.phoneNumber, req.user.userAccess, req.user.groupAccess, req.user.fullname, true, req.user.groups);
         res.status(200).json(newToken);
       } else{
         res.status(500).json({message: "Unexpected Error"});

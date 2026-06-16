@@ -13,6 +13,11 @@ export class ConversationService {
             id: true,
             title: true,
             AIModel:true,
+            messages: {
+                orderBy: {
+                    createdAt:"asc"
+                }
+            }
         }});
         return response;
     }

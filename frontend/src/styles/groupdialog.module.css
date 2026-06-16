@@ -524,3 +524,149 @@
 .submitBtn:active {
   transform: translateY(0);
 }
+/* =========================================================
+   BỔ SUNG RESPONSIVE TOÀN DIỆN CHO THIẾT BỊ DI ĐỘNG (< 768px)
+========================================================= */
+@media (max-width: 768px) {
+  /* 1. Đẩy overlay bám sát đáy màn hình */
+  .overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  /* 2. Biến đổi Dialog thành Bottom Sheet trượt lên */
+  .dialog {
+    max-width: 100%;
+    max-height: 92vh; /* Không chiếm toàn bộ để chừa không gian vuốt tắt */
+    border-radius: 24px 24px 0 0;
+    animation: slideUpMobile 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideUpMobile {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  /* 3. Thu nhỏ không gian đệm của Header */
+  .header {
+    padding: 20px 20px 16px;
+    gap: 12px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .closeBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  /* 4. Tối ưu Scrollable body trên mobile */
+  .body {
+    padding: 16px 20px 32px;
+    gap: 24px;
+  }
+
+  /* Thu nhỏ chiều cao của input và tabs để tăng không gian hiển thị khi mở bàn phím ảo */
+  .input, 
+  .tabGroup {
+    height: 46px;
+  }
+
+  .tab {
+    font-size: 13px;
+  }
+
+  /* 5. TÁI CẤU TRÚC BẢNG PHÂN QUYỀN (RBAC) THÀNH DẠNG KHỐI DỌC */
+  .permissionsTable {
+    border: none;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .permHead {
+    display: none; /* Ẩn dòng tiêu đề cột (Action | Scope | Grant) vì không còn phù hợp */
+  }
+
+  .permRow {
+    display: grid;
+    grid-template-columns: 1fr 40px; /* Cột bên trái là nội dung, cột phải là checkbox */
+    grid-template-areas: 
+      "action checkbox"
+      "desc checkbox";
+    padding: 14px 16px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border) !important;
+    border-radius: 14px;
+    min-height: auto;
+    gap: 4px 12px;
+  }
+
+  .permAction {
+    grid-area: action;
+    font-size: 14px;
+  }
+
+  .permDesc {
+    grid-area: desc;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .grantCol {
+    grid-area: checkbox;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+  /* 6. KHU VỰC TÌM KIẾM THÀNH VIÊN & SUGGESTIONS */
+  .memberSearchWrapper {
+    height: 48px;
+    padding: 0 12px;
+  }
+
+  .memberInput {
+    font-size: 14px;
+  }
+
+  /* Giới hạn chiều cao hộp gợi ý để tránh đè mất form bên dưới */
+  .suggestions {
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .suggestionItem {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  /* 7. ĐỊNH DẠNG LẠI FOOTER NÚT BẤM */
+  .footer {
+    padding: 12px 20px 20px;
+    background: var(--bg-card);
+    display: grid;
+    grid-template-columns: 1fr 1.2fr; /* Chia hai nút nằm ngang cân đối màn hình */
+    gap: 10px;
+  }
+
+  .cancelBtn,
+  .submitBtn {
+    width: 100%;
+    height: 46px;
+    padding: 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+}

@@ -139,7 +139,10 @@ const GroupsPage: React.FC = () => {
             {groups.map((group) => (
               <div key={group.id} className={styles.tableRow}>
                 <div className={styles.groupName}>{group.groupName}</div>
-                <div className={styles.memberCount}>{group.totalUsers}</div>
+                <div className={styles.memberCount}>
+                  <span className={styles.mobileLabel}>{t("groups.members")}: </span>
+                  {group.totalUsers}
+                </div>
 
                 <div className={styles.actions}>
 

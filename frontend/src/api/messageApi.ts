@@ -22,13 +22,14 @@ export type SSEHandlers = {
 // Defensive: if the chunk is still JSON (Flowise quirk), extract the text
 const extractChunkText = (payload: string): string => {
   try {
-    const parsed = JSON.parse(payload);
+    const parsed = JSON.parse(payload.trim()); 
+    if (parsed.event === "token" && typeof parsed.data === "string") return parsed.data;
+    if (parsed.event) return "";
     if (typeof parsed.text === "string") return parsed.text;
-    if (typeof parsed.data === "string") return parsed.data;
   } catch {
-    // plain text — already extracted by backend
+    // already plain text from backend
   }
-  return payload;
+  return payload; // plain text passthrough
 };
 export const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -74,31 +75,30 @@ export const streamPrompt = async (
 
       for (const line of lines) {
         if (!line.startsWith("data:")) continue;
-        const payload = line.replace(/^data:\s*/, "").trim();
-        if (!payload) continue;
 
-        if (payload === "[DONE]") {
-          // Fire onDone with what we have so far, then stop — don't touch accumulated after this
+        // ✅ Only strip the "data:" prefix — do NOT .trim() the value
+        const payload = line.slice("data:".length);
+        if (payload === "") continue;
+
+        if (payload.trim() === "[DONE]") {
           handlers.onDone(accumulated);
           return;
         }
-
-        if (payload.startsWith("[ERROR]")) {
-          handlers.onError?.(new Error(payload.replace("[ERROR]", "").trim()));
+        if (payload.trim().startsWith("[ERROR]")) {
+          handlers.onError?.(new Error(payload.trim().replace("[ERROR]", "").trim()));
           return;
         }
 
         const text = extractChunkText(payload);
-        if (!text) continue;
+        if (text === "") continue; // skip non-token events (metadata, agentReasoning…)
 
         accumulated += text;
-        handlers.onChunk(accumulated); // pass full accumulated so display is always correct
+        handlers.onChunk(accumulated);
       }
     }
   } finally {
     reader.releaseLock();
   }
 
-  // Stream ended without [DONE] — still resolve cleanly
   handlers.onDone(accumulated);
 };

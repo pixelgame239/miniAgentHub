@@ -55,8 +55,11 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
   };
 
   const handleRemoveUser = async (userId: number) => {
+      const previousMembers = [...members];
+      setMembers(members.filter((u) => u.id !== userId));
       const { data, error, status } = await removeUser(group.id, userId);
       if(error){
+        setMembers(previousMembers); // Rollback UI change
         showError(t("common.failed") + ": " + error.message);
         return;
       } 
@@ -68,19 +71,26 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
 
   const handleAddUsers = async () => {
     if (selectedUsersToAdd.length === 0) return;
-      const { data, error } = await addUser(group.id, selectedUsersToAdd);
-      if(error){
-        console.error("Failed to add users to group:", error);
-        showError(t("common.failed") + ": " + error.message);
-        return;
+    setLoading(true);
+    const { data, error } = await addUser(group.id, selectedUsersToAdd);
+    if(error){
+      console.error("Failed to add users to group:", error);
+      showError(t("common.failed") + ": " + error.message);
+      setLoading(false);
+      return;
+    }
+    if(data){
+    // Reload members
+      const { data: updatedMembers } = await getGroupUsers(group.id);
+      if (updatedMembers) {
+        setMembers(updatedMembers);
       }
-      if(data){
-      // Reload members
-        await loadMembers();
-        setSelectedUsersToAdd([]);
-        setShowAddDialog(false);
-        showInfo(t("common.success"));
-      }
+      
+      setSelectedUsersToAdd([]);
+      setShowAddDialog(false);
+      showInfo(t("common.success"));
+    }
+    setLoading(false);
   };
 
   if (!open) return null;

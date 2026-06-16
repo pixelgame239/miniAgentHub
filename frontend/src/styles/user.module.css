@@ -92,14 +92,14 @@
 ========================================================= */
 
 .tableWrapper {
-  overflow-x: auto;
-
+  width: 100%;
+  overflow-x: auto; /* BẮT BUỘC: Cho phép vuốt ngang độc lập vùng bảng trên mobile */
+  -webkit-overflow-scrolling: touch; /* Giúp thao tác vuốt mượt hơn trên iOS */
   border-radius: 22px;
   border: 1px solid var(--border);
-
   background: var(--bg-card);
-
   backdrop-filter: blur(12px);
+  margin-bottom: 1.5rem; /* Tạo khoảng cách an toàn với phần phân trang bên dưới */
 }
 
 /* =========================================================
@@ -109,7 +109,7 @@
 .userTable {
   width: 100%;
   border-collapse: collapse;
-  min-width: 900px;
+  min-width: 850px; /* Hạ nhẹ xuống 850px để vuốt vừa tầm mắt trên mobile */
 }
 
 .userTable thead {
@@ -398,8 +398,8 @@ input[type="checkbox"] {
 ========================================================= */
 
 @media (max-width: 1024px) {
-  .userContent {
-    padding: 2rem;
+.userContent {
+    padding: 2rem 1.5rem;
   }
 
   .userHeader {
@@ -414,24 +414,59 @@ input[type="checkbox"] {
 
 @media (max-width: 768px) {
   .userContent {
-    padding: 1.25rem;
-  }
+      padding: 4rem 1rem 1.5rem 1rem; /* Padding top 4rem (khoảng 64px) để nhường chỗ cho nút Hamburger lơ lửng */
+    }
 
+  /* Đưa Header về dạng cấu trúc mượt mà hơn */
+  .userHeader {
+    flex-direction: column;
+    align-items: flex-start; /* Giữ các phần tử thẳng hàng từ trái sang */
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
   .userHeader h1 {
-    font-size: 2rem;
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
   }
-
   .userDescription {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
+    line-height: 1.5;
   }
 
+  /* Biến nút Add User thành nút bấm full chiều rộng trên Mobile để dễ bấm bằng ngón cái */
+  .addUserBtn {
+    width: 100%; 
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  /* Tối ưu hóa phân trang khi bị xếp hàng dọc */
   .pagination {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center; /* Căn giữa để cân đối mắt nhìn */
+    gap: 0.8rem;
+    margin-top: 1rem;
   }
 
   .userTable {
     min-width: 760px;
+  }
+  .dialog {
+    width: calc(100% - 24px); /* Cách đều 2 bên mép màn hình di động 12px */
+    border-radius: 20px;
+  }
+  
+  .dialogHeader, .dialogBody, .dialogFooter {
+    padding: 16px 20px; /* Thu hẹp padding của popup trên mobile */
+  }
+
+  .dialogHeader h2 {
+    font-size: 18px;
+  }
+
+  .cancelBtn, .confirmDeleteBtn {
+    height: 40px; /* Hạ chiều cao nút bấm popup cho thanh thoát */
+    font-size: 0.88rem;
   }
 }
 .dialogOverlay {

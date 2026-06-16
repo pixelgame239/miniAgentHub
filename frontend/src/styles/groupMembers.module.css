@@ -409,32 +409,61 @@
     display: none;
   }
 
-  .tableRow {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 20px;
-    min-height: auto;
-  }
-
-  .nameCol,
-  .emailCol,
-  .groupsCol,
-  .actionsCol {
-    width: 100%;
-  }
-
-  .tableHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 20px;
-  }
-
   .tableHeaderActions {
     width: 100%;
   }
 
   .addUserBtn {
     width: 100%;
+  }
+  .tableRow {
+    grid-template-columns: 1fr;
+    gap: 8px; /* Giảm gap từ 12px xuống 8px cho khít */
+    padding: 16px; /* Thu bớt padding */
+    min-height: auto;
+    position: relative; /* Tạo điểm neo cho nút xóa */
+  }
+
+  .nameCol,
+  .emailCol,
+  .groupsCol {
+    width: 100%;
+  }
+
+  .userName {
+    font-size: 15px; /* Giảm nhẹ size chữ tên */
+  }
+
+  /* BIẾN NÚT TRASH (XÓA) THÀNH NÚT FLOATING BOX Ở GÓC PHẢI */
+  .actionsCol {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: auto;
+  }
+  
+  .iconButton {
+    width: 36px;
+    height: 36px; /* Thu nhỏ một chút trên mobile để đỡ thô */
+  }
+
+  .tableHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+
+  .tableHeaderActions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr; /* Badge ôm gọn, nút Add chiếm phần còn lại */
+    gap: 12px;
+  }
+
+  .addUserBtn {
+    width: 100%;
+    height: 36px; /* Đồng bộ chiều cao */
   }
 }

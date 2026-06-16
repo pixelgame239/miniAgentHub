@@ -112,6 +112,7 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
               }`}
               placeholder={t("password.currentPassword")}
               value={currentPassword}
+              required
               onChange={(e) => setCurrentPassword(e.target.value)}
             />
 
@@ -130,6 +131,7 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
               }`}
               placeholder="Enter new password"
               value={newPassword}
+              required
               onChange={(e) => setNewPassword(e.target.value)}
             />
 
@@ -148,6 +150,7 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
               }`}
               placeholder="Confirm new password"
               value={confirmPassword}
+              required
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
 

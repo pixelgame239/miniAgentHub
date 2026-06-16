@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import styles from "../styles/groupdialog.module.css";
 import { useTranslation } from "react-i18next";
-import { findUsers, getUsers } from "../api/userApi";
-import { useAuth } from "../hooks/authHook";
+import { findUsers } from "../api/userApi";
 
 /* ─── Types ─────────────────────────────────── */
 export type DialogMode = "create" | "update";
@@ -209,6 +208,7 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
                   placeholder="e.g. Quantum Research Team"
                   value={groupName}
                   onChange={(e) => setGroupName(e.target.value)}
+                  required
                 />
               </div>
 

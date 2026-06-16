@@ -14,6 +14,9 @@
 }
 
 /* HERO */
+.mobileLabel {
+  display: none; /* Desktop giấu đi vì đã có thanh Table Head */
+}
 
 .heroSection {
   display: flex;
@@ -214,49 +217,114 @@
 @media (max-width: 1200px) {
   .heroSection {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch; /* Ép các phần tử giãn đều */
+    gap: 20px;
   }
 
   .createButton {
-    width: 100%;
+    width: 100%; /* Nút bấm full-width để ngón cái dễ thao tác */
   }
 }
 
 @media (max-width: 900px) {
   .groupsPage {
-    padding: 28px;
+    /* Đệm top 4.5rem (khoảng 72px) để né nút Hamburger lơ lửng của Layout */
+    padding: 4.5rem 1.5rem 2rem 1.5rem; 
   }
 
   .pageTitle {
-    font-size: 44px;
+    font-size: 42px; /* Hạ size chữ tiêu đề siêu to khổng lồ */
+    margin-bottom: 10px;
+  }
+
+  .pageDescription {
+    font-size: 16px;
+  }
+
+  /* Thu nhỏ nút tạo nhóm một chút cho vừa mắt */
+  .createButton {
+    height: 56px;
+    font-size: 18px;
+    border-radius: 14px;
+  }
+  
+  .createButton svg {
+    width: 20px;
+    height: 20px;
   }
 
   .tableHead,
   .tableRow {
-    grid-template-columns: 1.5fr 1fr 180px;
+    grid-template-columns: 1.4fr 1fr 160px; /* Thu hẹp cột action */
+    padding: 0 20px;
+  }
+  
+  .tableHeader {
+    padding: 20px;
   }
 }
 
+/* MÀN HÌNH DI ĐỘNG THỰC TẾ (< 700px) */
 @media (max-width: 700px) {
-  .tableHead {
-    display: none;
-  }
-
-  .tableRow {
-    grid-template-columns: 1fr;
-    gap: 18px;
-    padding: 24px;
-  }
-
-  .actions {
-    justify-content: flex-start;
+  .groupsPage {
+    padding: 4.5rem 1rem 1.5rem 1rem;
   }
 
   .pageTitle {
-    font-size: 36px;
+    font-size: 28px; /* Kích thước chữ chuẩn mobile */
   }
 
   .pageDescription {
-    font-size: 15px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Ẩn hẳn thanh đầu bảng vì không còn phù hợp dạng cột dọc */
+  .tableHead {
+    display: none; 
+  }
+
+  /* Biến các hàng thành một chiếc Card độc lập */
+  .tableRow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 20px;
+    min-height: auto;
+    align-items: flex-start;
+  }
+
+  .groupName {
+    font-size: 16px;
+    border-bottom: 1px dashed var(--border); /* Tạo đường gạch nhẹ phân cách tên nhóm */
+    padding-bottom: 8px;
+    width: 100%;
+  }
+
+  /* Hiện nhãn "Thành viên:" đi kèm với con số */
+  .mobileLabel {
+    display: inline;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .memberCount {
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+
+  /* Đẩy các nút chức năng (Xem, Sửa, Xóa) rộng ra cho dễ chạm trúng */
+  .actions {
+    justify-content: flex-end;
+    width: 100%;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .iconButton {
+    width: 44px; /* Tăng nhẹ diện tích bề mặt nút bấm trên mobile chống bấm nhầm */
+    height: 44px;
+    background: var(--bg-subtle); /* Thêm nền nhẹ cho nút dễ nhận biết */
+    border-radius: 10px;
   }
 }

@@ -189,3 +189,13 @@ body {
     background 0.25s ease,
     color 0.25s ease;
 }
+/* Tìm bất kỳ thẻ label nào mà bên trong block cha của nó có chứa một ô input/select bắt buộc */
+*:has(> label) :has(> input:required) ~ label::after,
+*:has(> label) :has(> select:required) ~ label::after,
+.form-group:has(input:required) label::after,
+div:has(input:required) label::after {
+  content: " *";
+  color: #ef4444 !important; /* Ép màu đỏ tươi */
+  font-weight: 600 !important;
+  display: inline-block;
+}

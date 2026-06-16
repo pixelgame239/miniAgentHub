@@ -108,6 +108,7 @@ const InitResetPassword = () => {
               className={
                 errors.password ? styles.inputError : ""
               }
+              required
             />
 
             {errors.password && (
@@ -132,6 +133,7 @@ const InitResetPassword = () => {
                   ? styles.inputError
                   : ""
               }
+              required
             />
 
             {errors.confirmPassword && (

@@ -154,3 +154,83 @@
 .primary-btn:hover {
   opacity: 0.92;
 }
+/* =========================================================
+   RESPONSIVE CHO MÀN HÌNH DI ĐỘNG (< 576px)
+========================================================= */
+@media (max-width: 576px) {
+  .modal-overlay {
+    padding: 12px; /* Thu hẹp lề ngoài để tăng không gian hiển thị cho modal */
+    align-items: flex-end; /* Đẩy modal sát đáy màn hình giúp ngón cái dễ thao tác nhập liệu */
+  }
+
+  .password-modal {
+    padding: 20px;
+    border-radius: 20px 20px 0 0; /* Bo tròn góc trên dạng Bottom Sheet giống app native */
+    max-height: calc(100vh - 40px);
+    overflow-y: auto; /* Cho phép tự cuộn nội dung bên trong nếu bàn phím ảo chiếm chỗ */
+    margin-bottom: -12px; /* Triệt tiêu phần đệm overlay ở đáy */
+    animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Hiệu ứng trượt từ dưới lên mượt mà cho mobile */
+  @keyframes modalSlideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .modal-header {
+    margin-bottom: 16px;
+    align-items: center;
+  }
+
+  .modal-title {
+    font-size: 20px; /* Hạ nhẹ size chữ tiêu đề */
+  }
+
+  .modal-close {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  /* Ép nhỏ khoảng cách các ô input để tiết kiệm diện tích đứng */
+  .modal-form {
+    gap: 12px;
+  }
+
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .form-input {
+    height: 44px; /* Hạ chiều cao input từ 52px xuống 44px (Kích thước vàng tối ưu cho ngón tay di động) */
+    font-size: 13.5px;
+    border-radius: 10px;
+    padding: 0 12px;
+  }
+
+  .form-error {
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  /* Biến các nút Cancel/Cập nhật thành hàng dọc full-width để tránh bị kích thước chữ dài đè lên nhau */
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .secondary-btn,
+  .primary-btn {
+    width: 100%;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+}

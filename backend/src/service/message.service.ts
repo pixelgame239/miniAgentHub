@@ -7,8 +7,20 @@ import fs from "fs";
 
 const aiService = new AIService();
 
+
 export class MessageService {
+  private readonly SKIP_EVENTS = new Set([
+    "start", "end", "metadata",
+    "agentReasoning", "sourceDocuments", "usedTools",
+    "fileAnnotations", "artifact",
+  ]);
   private extractText(parsed: any): string {
+    const eventType = parsed.event ?? parsed.type ?? "";
+    if (eventType && this.SKIP_EVENTS.has(eventType)) return "";
+    if (parsed.event === "token" || parsed.type === "token") {
+      return typeof parsed.data === "string" ? parsed.data : "";
+    }
+    if (typeof parsed.token === "string") return parsed.token;
     if (typeof parsed.text === "string") return parsed.text;
     if (typeof parsed.data === "string") return parsed.data;
     return "";
@@ -99,14 +111,15 @@ export class MessageService {
           if (!jsonStr) continue;
 
           if (jsonStr === "[DONE]") {
-            if (!res.writableEnded) {
-              res.write("data: [DONE]\n\n");
-            }
+            // if (!res.writableEnded) {
+            //   res.write("data: [DONE]\n\n");
+            // }
             continue;
           }
 
           try {
             const parsed = JSON.parse(jsonStr);
+            console.log("[FLOWISE RAW]", JSON.stringify(parsed));
             const text = this.extractText(parsed);
             if (!text) continue;
 

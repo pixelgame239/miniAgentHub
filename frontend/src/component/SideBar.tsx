@@ -19,8 +19,12 @@ type ConversationItem = {
   id: number;
   title: string;
 };
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
   const { AIModels, conversations } = useRouteLoaderData("layout-data-loader") as {
     AIModels: AIModels[];
     conversations: Conversation[];
@@ -65,6 +69,7 @@ const Sidebar = () => {
   }, [menuOpenId]);
 
   const openConversation = async (convId: number) => {
+    if(onClose) onClose(); // Đóng sidebar nếu đang ở chế độ mobile
     const {data, error} = await getConversationDetail(convId);
     if (data) {
       setCurrentConversation(data);
@@ -77,6 +82,7 @@ const Sidebar = () => {
 
   const handleCreateNewChat = () => {
     setCurrentConversation(null);
+    if(onClose) onClose(); // Đóng sidebar nếu đang ở chế độ mobile
     nav("/chat");
   };
 
@@ -186,7 +192,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarMobileOpen : ""}`}>
       {/* HEADER */}
       <header className={styles.sidebarHeader}>
         <div className={styles.appTitle}>
@@ -197,8 +203,15 @@ const Sidebar = () => {
           </span>
           <span className={styles.appName}>Agent Hub</span>
         </div>
-      </header>
 
+        {/* Nút Đóng nhanh Sidebar chỉ lộ diện trên Mobile */}
+        <button className={styles.sidebarCloseBtn} onClick={onClose} aria-label="Close menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </header>
       {/* NAVIGATION */}
       <nav className={styles.sidebarNav}>
         {user &&
@@ -215,6 +228,7 @@ const Sidebar = () => {
                 className={({ isActive }) =>
                   `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
                 }
+                onClick={onClose} // Đóng sidebar khi click vào link (chỉ có tác dụng trên mobile)
               >
                 {item.icon}
                 <span className={styles.navLabel}>{item.label}</span>

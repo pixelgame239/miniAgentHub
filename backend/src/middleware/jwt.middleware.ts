@@ -8,6 +8,8 @@ declare global{
             user?:{
                 id: number,
                 email: string,
+                address: string|null,
+                phoneNumber: string|null,
                 userAccess: boolean,
                 groupAccess: boolean,
                 fullname: string,

@@ -17,13 +17,14 @@ body {
 /* ---------- MAIN CONTAINER ---------- */
 .login-container {
   position: relative;
-  min-height: 100vh;
+  min-height: 100svh; /* Sử dụng svh (small viewport height) để tính chính xác khi có thanh công cụ mobile */
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 2rem 1rem; /* Giảm padding ngang mặc định để chừa chỗ cho card trên mobile */
   background: var(--bg-primary);
   color: var(--text-primary);
+  overflow-y: auto; /* Cho phép cuộn trang nếu card login dài hơn màn hình */
 }
 
 /* ---------- BACKGROUND CIRCLES ---------- */
@@ -286,31 +287,30 @@ body {
 
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 480px) {
+  .login-container {
+    padding: 1.5rem 1rem; /* Thu nhỏ không gian đệm khi màn hình quá bé */
+    align-items: flex-start; /* Đẩy card lên phía trên một chút để không bị bàn phím ảo che khuất dữ liệu */
+  }
+
   .login-card {
-    padding: 2rem 1.5rem;
+    padding: 2rem 1.25rem; /* Thu nhỏ padding trong card */
+    border-radius: 20px; /* Bo cong vừa vặn với màn hình nhỏ */
   }
 
   .back-to-site {
-    top: 1rem;
-    left: 1rem;
+    position: static; /* Biến nút back thành một khối đứng tự nhiên thay vì absolute đè chữ */
+    margin-bottom: 1.5rem;
+    align-self: flex-start;
   }
 
   .login-header h1 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
   }
-}
-.input-error {
-  border-color: #ef4444;
-}
-
-.input-error:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
-}
-
-.error-message {
-  display: block;
-  margin-top: 6px;
-  font-size: 0.85rem;
-  color: #ef4444;
+  
+  /* Chuyển footer bảo mật thành hàng ngang hoặc co giãn thông minh */
+  .login-footer {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
 }

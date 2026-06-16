@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../styles/user.module.css";
 import UserFormDialog from "../component/UserFormDialog";
 import { getAllGroups } from "../api/groupApi";
@@ -25,9 +25,11 @@ const UserPage = () => {
   const { user } = useAuth();
   const { showInfo, showError } = useNotificationPopup();
   const nav = useNavigate();
-  if(!user?.userAccess){
-    nav("/chat");
-  }
+  useEffect(() => {
+    if (user && !user.userAccess) {
+      nav("/chat");
+    }
+  }, [user, nav]);
 
   const openCreateDialog = async () => {
     const response = await getAllGroups();

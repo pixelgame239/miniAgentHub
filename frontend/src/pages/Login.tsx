@@ -17,12 +17,12 @@ const LoginPage = () => {
   const validateEmail = (email: string) => {
     return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/.test(email);
   };
-  useEffect(() => {
+useEffect(() => {
     const token = getToken();
     if (user || token) {
       nav("/chat");
     }
-  }, []);
+  }, [user, nav]);
   const [formData, setFormData] = useState({
     email: "",
     userPassword: "",

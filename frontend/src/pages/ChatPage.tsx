@@ -9,6 +9,7 @@ import type { Group } from "../loader/groupLoader";
 import { useTranslation } from "react-i18next";
 import { useSSEStream } from "../hooks/streamHook";
 import { fileToBase64, type FileUpload } from "../api/messageApi";
+import { useNotificationPopup } from "../context/NotificationPopupContext";
 
 const ChatPage = () => {
   const { AIModels } = useRouteLoaderData("layout-data-loader") as {
@@ -40,6 +41,7 @@ const ChatPage = () => {
 
   const isModelLocked = !!activeConvId || chatMessages.length > 0;
   const apiUrl = import.meta.env.VITE_API_URL;
+  const { showError } = useNotificationPopup();
   useEffect(() => {
     activeConversationRef.current = currentConversation;
     if (currentConversation) {
@@ -73,10 +75,6 @@ const ChatPage = () => {
 
   const getFileIcon = (file: File) => {
     if (file.type.startsWith("image/")) return "🖼️";
-    if (file.type === "application/pdf") return "📄";
-    if (file.type.includes("word") || file.name.endsWith(".docx") || file.name.endsWith(".doc")) return "📝";
-    if (file.type.includes("sheet") || file.name.endsWith(".xlsx") || file.name.endsWith(".csv")) return "📊";
-    if (file.type.includes("text")) return "📃";
     return "📎";
   };
   async function optimizeBase64Image(base64Str: string, maxEdge: number = 1024, quality: number = 0.75): Promise<string> {
@@ -140,13 +138,19 @@ const ChatPage = () => {
       let conversation: any = activeConversationRef.current;
 
       if (!conversation) {
-        const response = await createConversation(content, selectedModel.id);
-        if (response.data) {
-          conversation = response.data;
+        const {data, error} = await createConversation(content, selectedModel.id);
+        if (data) {
+          setCurrentConversation(data);
+          conversation = data;
           activeConversationRef.current = conversation;
           setActiveConvId(conversation.id);
           setGroupConversations([conversation, ...groupConversations]);
           initConvMessages(conversation.id, []);
+        }
+        if (error) {
+          showError(t("common.failed"+":"+error.message));
+          console.error("Failed to create conversation:", error);
+          return;
         }
       }
 
@@ -354,18 +358,21 @@ const ChatPage = () => {
             </div>
           </div>
         ))}
-
-        {(streaming || liveText) && (
+        {streaming && (
           <div className={`${styles.messageRow} ${styles.modelRow}`}>
             <AIAvatar />
             <div className={styles.messageBubbleWrapper}>
               <div className={styles.messageBubble}>
-                <div className={styles.messageText}>{formatMessageText(liveText)}</div>
+                <div className={styles.messageText}>
+                  {liveText
+                    ? formatMessageText(liveText)
+                    : <span>●</span>
+                  }
+                </div>
               </div>
             </div>
           </div>
         )}
-
         <div ref={messagesEndRef} />
       </div>
 

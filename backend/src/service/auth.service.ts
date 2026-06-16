@@ -75,11 +75,13 @@ export class AuthService{
             }
             return{
                 message: "Logged in!",
-                token: generateAccessToken(existingUser.id, existingUser.email, userAccess, groupAccess, existingUser.fullname, existingUser.active, existingUser.groups.map((group: any) => ({ id: group.id, groupName: group.groupName }))),
+                token: generateAccessToken(existingUser.id, existingUser.email, existingUser.address, existingUser.phoneNumber, userAccess, groupAccess, existingUser.fullname, existingUser.active, existingUser.groups.map((group: any) => ({ id: group.id, groupName: group.groupName }))),
                 userData: {
                     id: existingUser.id,
                     fullname: existingUser.fullname,
                     email: existingUser.email,
+                    address: existingUser.address,
+                    phoneNumber: existingUser.phoneNumber,
                     userAccess: userAccess,
                     groupAccess: groupAccess,
                     active: existingUser.active,

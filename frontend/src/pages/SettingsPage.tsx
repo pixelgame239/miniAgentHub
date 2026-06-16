@@ -328,6 +328,7 @@ const SettingsPage: React.FC = () => {
                   value={editableValue}
                   onChange={(event) => setEditableValue(event.target.value)}
                   placeholder={editableField === "phoneNumber" ? t("settings.phone") : t("settings.address")}
+                  required
                 />
               </div>
             </div>
@@ -337,7 +338,7 @@ const SettingsPage: React.FC = () => {
                 {t("common.cancel")}
               </button>
 
-              <button className={styles["dialog-danger"]} onClick={handleSaveField} disabled={savingField}>
+              <button className={styles["dialog-save-btn"]} onClick={handleSaveField} disabled={savingField}>
                 {savingField ? "Saving..." : t("settings.update")}
               </button>
             </div>

@@ -187,3 +187,57 @@
   box-shadow: 0 8px 20px var(--dialog-accent-glow);
   transform: translateY(-1px);
 }
+/* =========================================================
+   RESPONSIVE CHO USER FORM DIALOG (< 576px)
+========================================================= */
+@media (max-width: 576px) {
+  .dialog-overlay {
+    padding: 0;
+    align-items: flex-end; /* Biến đổi thành dạng Bottom Sheet tiện lợi */
+  }
+
+  .dialog-card {
+    padding: 1.5rem;
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+
+  .dialog-title {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .dialog-form {
+    gap: 1.2rem;
+  }
+
+  .form-field input,
+  .group-select {
+    padding: 0.75rem 0.85rem;
+    font-size: 0.9rem;
+  }
+
+  /* Tối ưu hiển thị các nhãn thẻ nhóm đã chọn không bị tràn hàng */
+  .selected-tags {
+    gap: 0.4rem;
+  }
+
+  .tag {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse; /* Nút Submit nằm trên nút Cancel để dễ bấm */
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .cancel-btn,
+  .submit-btn {
+    width: 100%;
+    padding: 0.75rem;
+    text-align: center;
+  }
+}

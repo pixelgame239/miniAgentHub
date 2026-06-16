@@ -399,37 +399,84 @@
 
 /* ── MOBILE ──────────────────────────────────── */
 
+/* ── MOBILE RESPONSIVE DESIGN TRANSITION ──────────────── */
+
+/* Nút đóng Sidebar mặc định ẩn ở Desktop */
+.sidebarCloseBtn {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .sidebar {
-    width: 72px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px; /* Giữ nguyên kích thước hiển thị đầy đủ chữ */
+    height: 100svh;
+    z-index: 1000;
+    box-shadow: 24px 0 50px rgba(0, 0, 0, 0.6);
+    
+    /* Đẩy sidebar ra ngoài rìa trái màn hình */
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* Khi được kích hoạt trạng thái mở, trượt êm ái vào trong */
+  .sidebar.sidebarMobileOpen {
+    transform: translateX(0);
+  }
+
+  /* Kích hoạt lại hiển thị toàn bộ nội dung chữ chữ */
   .appName,
   .navLabel,
   .chatSection,
   .userInfo {
-    display: none;
+    display: flex !important;
   }
-
+  
   .sidebarNav {
-    align-items: center;
+    align-items: stretch;
   }
 
   .navItem {
-    justify-content: center;
-    padding: 0;
-    width: 48px;
+    justify-content: flex-start;
+    padding: 0 14px;
+    width: auto;
   }
 
   .sidebarFooter {
-    display: flex;
-    justify-content: center;
-    padding: 12px;
+    display: block;
+    padding: 14px 12px 18px;
   }
 
   .userProfile {
-    padding: 8px;
-    gap: 0;
+    padding: 10px 12px;
+    gap: 12px;
+  }
+
+  /* Lộ nút Close nhanh trên header mobile */
+  .sidebarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sidebarCloseBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+
+  .sidebarCloseBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-heading);
   }
 }
 
