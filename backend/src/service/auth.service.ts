@@ -85,7 +85,8 @@ export class AuthService{
                     userAccess: userAccess,
                     groupAccess: groupAccess,
                     active: existingUser.active,
-                    groups: existingUser.groups.map((group: any) => ({id: group.id, groupName: group.groupName}))
+                    groups: existingUser.groups.map((group: any) => ({id: group.id, groupName: group.groupName})),
+                    APIKey: existingUser.APIKey
                 }
             }
         }

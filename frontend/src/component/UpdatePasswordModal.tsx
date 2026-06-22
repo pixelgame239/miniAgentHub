@@ -1,11 +1,12 @@
 // components/UpdatePasswordModal.tsx
 import React, { useEffect, useState } from "react";
-import styles from "../styles/modal.module.css"; // Changed to CSS Module
+import styles from "../styles/modal.module.css"; 
 import { useTranslation } from "react-i18next";
 
 interface UpdatePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
+  error?: string; // 1. Thêm prop error nhận từ API của SettingsPage
   onSubmit?: (data: {
     currentPassword: string;
     newPassword: string;
@@ -16,23 +17,41 @@ interface UpdatePasswordModalProps {
 const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
   isOpen,
   onClose,
+  error, // Nhận prop error ở đây
   onSubmit,
 }) => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const { t } = useTranslation();
+  
   const [errors, setErrors] = useState<{
     currentPassword?: string;
     newPassword?: string;
     confirmPassword?: string;
   }>({});
 
+  // 2. Lắng nghe nếu có lỗi từ Server/API gửi xuống thì map vào ô currentPassword
+  useEffect(() => {
+    if (error) {
+      setErrors((prev) => ({
+        ...prev,
+        currentPassword: error,
+      }));
+    }
+  }, [error]);
+
+  // Reset form khi đóng/mở modal
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
+      // Clear data khi đóng modal
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setErrors({});
     }
 
     return () => {
@@ -64,27 +83,21 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
     }
 
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.SubmitEvent) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validate()) return;
 
+    // 3. CHỈ gọi onSubmit. KHÔNG tự động onClose() hay xóa dữ liệu ở đây nữa.
+    // Việc đóng form & clear data sẽ do SettingsPage quyết định sau khi kiểm tra API (status === 200).
     onSubmit?.({
       currentPassword,
       newPassword,
       confirmPassword,
     });
-
-    onClose();
-
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setErrors({});
   };
 
   return (
@@ -102,9 +115,10 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className={styles["modal-form"]}>
+          
+          {/* Ô MẬT KHẨU HIỆN TẠI (Sẽ hiển thị lỗi nếu gõ sai hoặc API trả về lỗi) */}
           <div className={styles["form-group"]}>
             <label className={styles["form-label"]}>{t("password.currentPassword")}</label>
-
             <input
               type="password"
               className={`${styles["form-input"]} ${
@@ -113,17 +127,19 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
               placeholder={t("password.currentPassword")}
               value={currentPassword}
               required
-              onChange={(e) => setCurrentPassword(e.target.value)}
+              onChange={(e) => {
+                setCurrentPassword(e.target.value);
+                if (errors.currentPassword) setErrors((prev) => ({ ...prev, currentPassword: undefined }));
+              }}
             />
-
             {errors.currentPassword && (
               <span className={styles["form-error"]}>{errors.currentPassword}</span>
             )}
           </div>
 
+          {/* Ô MẬT KHẨU MỚI */}
           <div className={styles["form-group"]}>
             <label className={styles["form-label"]}>{t("password.newPassword")}</label>
-
             <input
               type="password"
               className={`${styles["form-input"]} ${
@@ -132,17 +148,19 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
               placeholder="Enter new password"
               value={newPassword}
               required
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                if (errors.newPassword) setErrors((prev) => ({ ...prev, newPassword: undefined }));
+              }}
             />
-
             {errors.newPassword && (
               <span className={styles["form-error"]}>{errors.newPassword}</span>
             )}
           </div>
 
+          {/* Ô XÁC NHẬN MẬT KHẨU */}
           <div className={styles["form-group"]}>
             <label className={styles["form-label"]}>{t("password.confirmPassword")}</label>
-
             <input
               type="password"
               className={`${styles["form-input"]} ${
@@ -151,9 +169,11 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
               placeholder="Confirm new password"
               value={confirmPassword}
               required
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+              }}
             />
-
             {errors.confirmPassword && (
               <span className={styles["form-error"]}>{errors.confirmPassword}</span>
             )}

@@ -30,6 +30,7 @@ export class MessageService {
     convId: number,
     content: string,
     model: string,
+    APIKey: string,
     res: Response,
     files?: { data: string; fileName: string; mimeType: string }[]
   ): Promise<void> {
@@ -90,7 +91,7 @@ export class MessageService {
 //         await aiService.upsertFile(convId.toString(), file);
 //     }
 // }
-    const stream = await aiService.promptStream(content, model, convId, files);
+    const stream = await aiService.promptStream(content, model, convId, APIKey, files);
 
     let fullResponse = "";
     let buffer = "";

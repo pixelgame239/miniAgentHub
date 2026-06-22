@@ -1,23 +1,30 @@
 import { useTranslation } from "react-i18next";
 import styles from "../styles/layout.module.css";
 
-interface ErrorPopupProps {
-  error: boolean;
-  info: boolean;
-  errorMessage: string;
-  infoMessage: string;
+// 1. Thay đổi interface nhận prop tinh gọn, linh hoạt hơn giống như Toast
+interface NotificationPopupProps {
+  isOpen: boolean;
+  message: string;
+  type: "success" | "error";
   onClose: () => void;
 }
 
-const NotificationPopup = ({ error, info, errorMessage, infoMessage, onClose }: ErrorPopupProps) => {
-  if (!error && !info) {
+const NotificationPopup = ({ isOpen, message, type, onClose }: NotificationPopupProps) => {
+  // 2. Kiểm tra trạng thái đóng mở ngay từ đầu
+  if (!isOpen) {
     return null;
   }
+
   const { t } = useTranslation();
-  const isError = error;
+  
+  // Xác định trạng thái dựa trên prop type truyền vào
+  const isError = type === "error";
+  
   const title = isError ? t("common.error") : t("common.information");
   const badge = isError ? t("common.error") : t("common.information");
-  const message = isError ? errorMessage : infoMessage;
+  
+  // Fallback text nếu message truyền vào bị rỗng
+  const displayMessage = message || (isError ? "An unexpected error occurred." : "Here is some information.");
 
   return (
     <div className={styles["error-overlay"]} onClick={onClose} role="presentation">
@@ -37,13 +44,13 @@ const NotificationPopup = ({ error, info, errorMessage, infoMessage, onClose }: 
             type="button"
             className={styles["error-popup-close"]}
             onClick={onClose}
-            aria-label="Close error popup"
+            aria-label="Close popup"
           >
             ×
           </button>
         </div>
 
-        <p className={styles["error-popup-message"]}>{message || (isError ? "An unexpected error occurred." : "Here is some information.")}</p>
+        <p className={styles["error-popup-message"]}>{displayMessage}</p>
 
         <div className={styles["error-popup-actions"]}>
           <button type="button" className={styles["error-popup-button"]} onClick={onClose}>

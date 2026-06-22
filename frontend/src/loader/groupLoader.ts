@@ -40,7 +40,12 @@ export const groupLoader:LoaderFunction = async():Promise<Group[]>=>{
 // }
 export const layoutLoader: LoaderFunction = async():Promise<{conversations: Conversation[], AIModels: AIModels[]}> => {
         // const userGroups = await getUserGroups();
-    const { data: aiModels, error: aiModelsError } = await getGroqModels();
+    const APIKey = localStorage.getItem("APIKey");
+    if(!APIKey){
+        console.error("API key not found in localStorage");
+        return {AIModels: [], conversations: []};
+    }
+    const { data: aiModels, error: aiModelsError } = await getGroqModels(APIKey);
     const { data: conversations, error: conversationsError } = await getConversations();
     if(aiModels&&conversations){
         return {AIModels: aiModels||[], conversations: conversations||[]};

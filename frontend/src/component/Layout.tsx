@@ -5,21 +5,21 @@ import Sidebar from "./SideBar.tsx";
 import styles from "../styles/layout.module.css"; 
 import ErrorBoundary from "./ErrorBoundary.tsx";
 import NotificationPopup from "./NotificationPopup.tsx";
+import Toast from "./Toast.tsx"; 
 import { useNotificationPopup } from "../context/NotificationPopupContext.tsx";
 
 const Layout = () => {
-  const { error, info, errorMessage, infoMessage, closePopup } = useNotificationPopup();
-  // State quản lý trạng thái đóng/mở sidebar trên Mobile
+  // Lấy chính xác cụm dữ liệu phân tách từ Context mới
+  const { popup, toast, closePopup, closeToast } = useNotificationPopup();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Tự động đóng sidebar mobile khi người dùng chuyển trang (route thay đổi)
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [Outlet]);
 
   return (
     <div className={styles["chat-container"]}>
-      {/* Nút Hamburger chỉ hiển thị trên Mobile */}
+      {/* Nút Hamburger mở menu trên Mobile */}
       <button 
         className={styles["hamburger-btn"]} 
         onClick={() => setIsSidebarOpen(true)}
@@ -32,7 +32,7 @@ const Layout = () => {
         </svg>
       </button>
 
-      {/* Lớp nền mờ overlay phía sau Sidebar khi mở trên Mobile */}
+      {/* Nền mờ overlay */}
       {isSidebarOpen && (
         <div 
           className={styles["sidebar-overlay"]} 
@@ -41,7 +41,6 @@ const Layout = () => {
       )}
 
       <ErrorBoundary fallback={<div className={styles["sidebar-error"]}>Sidebar isn't available now</div>}>
-         {/* Truyền trạng thái và hàm đóng vào Sidebar */}
          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       </ErrorBoundary>
 
@@ -52,7 +51,22 @@ const Layout = () => {
           </ErrorBoundary>
         </div>
       </main>
-      <NotificationPopup error={error} info={info} errorMessage={errorMessage} infoMessage={infoMessage} onClose={closePopup} />
+
+      {/* ── TOAST THÔNG BÁO TẠM THỜI (Hỗ trợ cả Đỏ/Xanh linh hoạt) ── */}
+      <Toast 
+        isOpen={toast.isOpen} 
+        message={toast.message} 
+        type={toast.type} 
+        onClose={closeToast} 
+      />
+
+      {/* ── POPUP BẮT NGƯỜI DÙNG XÁC NHẬN (Hỗ trợ cả Đỏ/Xanh linh hoạt) ── */}
+      <NotificationPopup 
+        isOpen={popup.isOpen}
+        message={popup.message}
+        type={popup.type}
+        onClose={closePopup} 
+      />
     </div>
   );
 };

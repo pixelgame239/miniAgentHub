@@ -9,6 +9,8 @@ import SettingsPage from "./pages/SettingsPage";
 import GroupsPage from "./pages/GroupsPage";
 import { userLoader } from "./loader/userLoader";
 import { groupLoader, layoutLoader } from "./loader/groupLoader";
+import SharedChatPage from "./pages/SharedChatPage";
+import { sharedLoader } from "./loader/sharedLoader";
 
 export const router = createBrowserRouter([
   {
@@ -18,6 +20,11 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <LoginPage />,
+      },
+      {
+        element: <SharedChatPage />,
+        path: "sharedChat/:shareId",
+        loader: sharedLoader
       },
       {
         element: <ProtectedRoute></ProtectedRoute>,

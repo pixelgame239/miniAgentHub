@@ -24,7 +24,7 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedUsersToAdd, setSelectedUsersToAdd] = useState<number[]>([]);
-  const { showError, showInfo } = useNotificationPopup();
+  const { showError, showToast } = useNotificationPopup();
 
   useEffect(() => {
     if (open) {
@@ -45,11 +45,11 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
     }
     setLoading(false);
     if(error) {
-      showError(t("common.failed") + ": " + error.message);
+      showError(t("common.failed"));
       return;
     }
     if(allUserError){
-      showError(t("common.failed") + ": " + allUserError.message);
+      showError(t("common.failed"));
       return;
     }
   };
@@ -60,11 +60,11 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
       const { data, error, status } = await removeUser(group.id, userId);
       if(error){
         setMembers(previousMembers); // Rollback UI change
-        showError(t("common.failed") + ": " + error.message);
+        showError(t("common.failed"));
         return;
       } 
       if(data){
-        showInfo(t("common.success"));
+        showToast(t("common.success"), "success");
       }
       setMembers(members.filter((u) => u.id !== userId));
   };
@@ -75,7 +75,7 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
     const { data, error } = await addUser(group.id, selectedUsersToAdd);
     if(error){
       console.error("Failed to add users to group:", error);
-      showError(t("common.failed") + ": " + error.message);
+      showError(t("common.failed"));
       setLoading(false);
       return;
     }
@@ -88,7 +88,7 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
       
       setSelectedUsersToAdd([]);
       setShowAddDialog(false);
-      showInfo(t("common.success"));
+      showToast(t("common.success"), "success");
     }
     setLoading(false);
   };

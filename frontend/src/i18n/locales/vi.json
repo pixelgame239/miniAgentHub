@@ -16,7 +16,19 @@
     "failed": "Thất bại",
     "dismiss": "Đóng",
     "error": "Lỗi",
-    "information": "Thông tin"
+    "information": "Thông tin",
+    "copy": "Sao chép",
+    "share": "Chia sẻ",
+    "export": "Xuất",
+    "noAPIKey": "Groq API Key không hợp lệ. Vui lòng truy cập cài đặt để cập nhật API Key của bạn.",
+    "shared": "Chia sẻ"
+  },
+  "initAPIKey": {
+    "title": "Nhập Groq API Key của bạn",
+    "description": "Để truy cập các tính năng AI, vui lòng nhập khóa API của bạn bên dưới. Khóa này cần thiết để xác thực các yêu cầu của bạn và đảm bảo giao tiếp an toàn với các dịch vụ AI.",
+    "inputPlaceholder": "Nhập khóa API của bạn ở đây...",
+    "submitButton": "Xác minh và lưu",
+    "errorMessage": "Vui lòng nhập một khóa API hợp lệ."
   },
 
   "sidebar": {
@@ -33,7 +45,15 @@
     "aiModel": "Mô hình AI",
     "createChat": "Tạo chat",
     "back": "Quay lại",
-    "recent": "Cuộc trò chuyện gần đây"
+    "recent": "Cuộc trò chuyện gần đây",
+    "noRecent": "Không có cuộc trò chuyện gần đây",
+    "createNew": "Tạo cuộc trò chuyện mới để bắt đầu cộng tác với AI.",
+    "rename":"Đổi tên",
+    "delete":"Xóa",
+    "deleteConfirmation": "Bạn có chắc muốn xóa cuộc trò chuyện này? Hành động này không thể hoàn tác.",
+    "deleteTitle": "Xóa cuộc trò chuyện",
+    "share": "Chia sẻ",
+    "export": "Xuất"
   },
 
   "chat": {
@@ -85,7 +105,15 @@
     "success": "Thành công",
     "failed": "Thất bại",
     "emptyError": "Trường này không được để trống",
-    "invalidPhone": "Số điện thoại phải bắt đầu bằng 0 và có từ 10 đến 11 chữ số"
+    "invalidPhone": "Số điện thoại phải bắt đầu bằng 0 và có từ 10 đến 11 chữ số",
+    "updateAPIKey": "Cập nhật API Key",
+    "apiKeyDescription": "Nhập API Key của bạn để truy cập các tính năng AI. API Key này cần thiết để xác thực các yêu cầu và đảm bảo giao tiếp an toàn với các dịch vụ AI.",
+    "passwordDescription": "Bảo mật tài khoản của bạn bằng mật khẩu mạnh. Đảm bảo mật khẩu có ít nhất 6 ký tự",
+    "deleteChatDescription": "Xóa cuộc trò chuyện sẽ xóa vĩnh viễn tất cả các tin nhắn và không thể hoàn tác. Vui lòng xác nhận trước khi tiếp tục.",
+    "deleteAccountDescription": "Xóa tài khoản của bạn sẽ xóa vĩnh viễn tất cả dữ liệu của bạn, bao gồm các cuộc trò chuyện và thông tin cá nhân. Hành động này không thể hoàn tác. Vui lòng xác nhận trước khi tiếp tục.",
+    "logoutDescription": "Đăng xuất sẽ kết thúc phiên làm việc hiện tại. Bạn sẽ cần đăng nhập lại để truy cập tài khoản của mình. Đảm bảo lưu tất cả công việc chưa lưu trước khi đăng xuất.",
+    "noAPIKey": "Không tìm thấy API Key"
+
   },
 
   "groups": {
@@ -142,7 +170,8 @@
     "passwordMin": "Mật khẩu tối thiểu 6 ký tự",
     "confirmRequired": "Vui lòng xác nhận mật khẩu",
     "passwordMismatch": "Mật khẩu không khớp",
-    "successChange": "Mật khẩu reset thành công"
+    "successChange": "Mật khẩu reset thành công",
+    "wrongOldPassword": "Mật khẩu hiện tại không chính xác. Vui lòng thử lại."
   },
   "userGroupModal":{
     "description": "Quản lý thành viên nhóm và quyền hạn của họ."

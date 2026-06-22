@@ -23,8 +23,11 @@ const UserPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { showInfo, showError } = useNotificationPopup();
+  const { showInfo, showError, showToast } = useNotificationPopup();
   const nav = useNavigate();
+  useEffect(()=>{
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "light");
+  },[]);
   useEffect(() => {
     if (user && !user.userAccess) {
       nav("/chat");
@@ -81,6 +84,7 @@ const UserPage = () => {
           return;
         }
         if(updatedUser){
+        showToast(t("common.success"), "success");
         setUsers(prevUsers => 
             prevUsers.map(user => 
                 user.id === editingUser?.id ? updatedUser : user
@@ -93,6 +97,9 @@ const UserPage = () => {
   const handledeletedUser = async () => {
     if (!deletedUser) return;
     const { data, error } = await deleteUser(deletedUser.id);
+    if (data) {
+      showToast(t("common.success"), "success");
+    }
     if (error) {
       showError(t("common.failed"+":"+error.message));
       console.error(error);
@@ -104,28 +111,28 @@ const UserPage = () => {
     );
     closeDeleteDialog();
   };
-  const toggleSelectAll = () => {
-    if (selectedIds.length === users.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(users.map((u) => u.id));
-    }
-  };
+  // const toggleSelectAll = () => {
+  //   if (selectedIds.length === users.length) {
+  //     setSelectedIds([]);
+  //   } else {
+  //     setSelectedIds(users.map((u) => u.id));
+  //   }
+  // };
 
-  const toggleUser = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id]
-    );
-  };
+  // const toggleUser = (id: number) => {
+  //   setSelectedIds((prev) =>
+  //     prev.includes(id)
+  //       ? prev.filter((x) => x !== id)
+  //       : [...prev, id]
+  //   );
+  // };
 
-  const isAllSelected =
-    users.length > 0 &&
-    selectedIds.length === users.length;
-  if (users.length === 0) {
-    return <h1>{t("common.noPermission")}</h1>
-  }
+  // const isAllSelected =
+  //   users.length > 0 &&
+  //   selectedIds.length === users.length;
+  // if (users.length === 0) {
+  //   return <h1>{t("common.noPermission")}</h1>
+  // }
   return (
     <div className={styles.userContent}>
       <header className={styles.userHeader}>
@@ -149,12 +156,8 @@ const UserPage = () => {
         <table className={styles.userTable}>
           <thead>
             <tr>
-              <th className={styles.checkboxCol}>
-                <input
-                  type="checkbox"
-                  checked={isAllSelected}
-                  onChange={toggleSelectAll}
-                />
+              <th>
+                ID
               </th>
 
               <th>{t("users.fullName")}</th>
@@ -170,19 +173,17 @@ const UserPage = () => {
                 key={user.id}
                 className={
                   selectedIds.includes(user.id)
-                    ? styles.selectedRow
-                    : ""
+                    ? `${styles.userRow} ${styles.selectedRow}`
+                    : styles.userRow
                 }
               >
-                <td className={styles.checkboxCol}>
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(user.id)}
-                    onChange={() => toggleUser(user.id)}
-                  />
+                {/* Thêm class responsive riêng cho ô checkbox */}
+                <td data-label="ID">
+                  {user.id}
                 </td>
 
-                <td>
+                {/* Thêm data-label tương ứng với thẻ dịch t() */}
+                <td data-label={t("users.fullName")}>
                   <div className={styles.userCell}>
                     <div className={styles.userAvatar}>
                       {user.fullname
@@ -190,14 +191,13 @@ const UserPage = () => {
                         .map((n) => n[0])
                         .join("")}
                     </div>
-
                     <span>{user.fullname}</span>
                   </div>
                 </td>
 
-                <td>{user.email}</td>
+                <td data-label={t("users.email")}>{user.email}</td>
 
-                <td>
+                <td data-label={t("users.groups")}>
                   <div className={styles.groupList}>
                     {user.groups.map((group) => (
                       <span
@@ -210,7 +210,8 @@ const UserPage = () => {
                   </div>
                 </td>
 
-                <td className={styles.actionsCol}>
+                {/* Ô hành động gán class riêng cho mobile */}
+                <td className={`${styles.actionsCol} ${styles.mobileActions}`}>
                   <div className={styles.actions}>
                     <button
                       className={styles.actionBtn}

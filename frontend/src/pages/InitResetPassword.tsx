@@ -1,5 +1,5 @@
 // pages/InitResetPassword.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../styles/initResetPassword.module.css";
 import { changePassword } from "../api/authApi";
 import { useAuth } from "../hooks/authHook";
@@ -11,12 +11,14 @@ const InitResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const { user, setUser } = useAuth();
-  const { showInfo, showError } = useNotificationPopup();
+  const { showToast, showError } = useNotificationPopup();
   const [errors, setErrors] = useState<{
     password?: string;
     confirmPassword?: string;
   }>({});
-
+  useEffect(()=>{
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "light");
+  },[]);
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
 
@@ -52,12 +54,12 @@ const InitResetPassword = () => {
 
     setLoading(true);
     const {data, error} = await changePassword({ newPassword: password });
+    showToast(t("password.successChange"), "success");
     setUser({...user, active: true});
     if(data){
       console.log("Token setted");
       setToken(data);
     }
-    showInfo(t("password.successChange"));
     if(error){
       showError(t("password.errorChange"));
       console.error(error);

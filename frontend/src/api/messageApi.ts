@@ -10,6 +10,7 @@ export type ChatRequest = {
   conversationId?: number;
   content?: string;
   model?: string;
+  APIKey?: string;
   files?: FileUpload[]; 
 };
 

@@ -16,9 +16,20 @@
     "failed": "Failed",
     "dismiss": "Dismiss",
     "error": "Error",
-    "information": "Information"
+    "information": "Information",
+    "copy": "Copy",
+    "share": "Share",
+    "export": "Export",
+    "noAPIKey": "Groq API Key is invalid. Please visit settings to update your API Key.",
+    "shared": "Shared"
   },
-
+  "initAPIKey": {
+    "title": "Enter Your Groq API Key",
+    "description": "To access the AI features, please enter your API key below. This key is required to authenticate your requests and ensure secure communication with the AI services.",
+    "inputPlaceholder": "Enter your API key here...",
+    "submitButton": "Verify and Save",
+    "errorMessage": "Please enter a valid API key."
+  },
   "sidebar": {
     "chat": "Chat",
     "users": "Users",
@@ -33,7 +44,15 @@
     "aiModel": "AI Model",
     "createChat": "Create Chat",
     "back": "Back",
-    "recent": "Recent Conversations"
+    "recent": "Recent Conversations",
+    "noRecent": "No recent conversations",
+    "createNew": "Create a new conversation to start collaborating with AI.",
+    "rename":"Rename",
+    "delete":"Delete",
+    "deleteConfirmation": "Are you sure you want to delete this conversation? This action cannot be undone.",
+    "deleteTitle": "Delete Conversation",
+    "share": "Share",
+    "export": "Export"
   },
 
   "chat": {
@@ -85,7 +104,14 @@
     "success": "Success",
     "failed": "Failed",
     "emptyError": "This field cannot be empty",
-    "invalidPhone": "Phone number must start with 0 and contain 10 to 11 digits"
+    "invalidPhone": "Phone number must start with 0 and contain 10 to 11 digits",
+    "updateAPIKey": "Update API Key",
+    "apiKeyDescription": "Enter your Groq API key to enable AI features. This key is required for authentication and secure communication with the AI services.",
+    "passwordDescription": "Secure your account with a strong password. Ensure it is at least 6 characters long",
+    "deleteChatDescription": "Deleting a conversation will permanently remove all messages and cannot be undone. Please confirm before proceeding.",
+    "deleteAccountDescription": "Deleting your account will permanently remove all your data, including conversations and personal information. This action cannot be undone. Please confirm before proceeding.",
+    "logoutDescription": "Logging out will end your current session. You will need to log in again to access your account. Make sure to save any unsaved work before logging out.",
+    "noAPIKey": "No API Key Found"
   },
 
   "groups": {
@@ -142,7 +168,8 @@
     "passwordMin": "Password must be at least 6 characters",
     "confirmRequired": "Please confirm your password",
     "passwordMismatch": "Passwords do not match",
-    "successChange": "Password changed successfully"
+    "successChange": "Password changed successfully",
+    "wrongOldPassword": "Incorrect current password. Please try again."
   },
   "userGroupModal":{
     "description":"Manage users, permissions and collaborative groups across Agent Hub."

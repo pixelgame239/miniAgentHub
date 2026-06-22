@@ -1,0 +1,146 @@
+/* Khung định vị của hệ thống Toast - Đẩy lên TOP */
+.toast-container {
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Khối Toast căn bản - TĂNG KÍCH THƯỚC */
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px; /* Tăng khoảng cách giữa icon và chữ */
+  min-width: 360px; /* Tăng từ 320px -> 360px */
+  max-width: 480px; /* Tăng từ 420px -> 480px để chứa được câu dài hơn */
+  padding: 16px 22px; /* Tăng padding để khối toast nhìn to và thoáng hơn */
+  border-radius: 16px; /* Bo góc mượt hơn phù hợp với size lớn */
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: 
+    0 16px 40px rgba(0, 0, 0, 0.16),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Toast Thành Công */
+.toast-success {
+  border-left: 5px solid var(--accent); /* Tăng độ dày vạch màu */
+}
+.toast-success .toast-icon {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* Toast Thất Bại */
+.toast-error {
+  border-left: 5px solid var(--danger); /* Tăng độ dày vạch màu */
+}
+.toast-error .toast-icon {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+/* Tăng size vòng tròn chứa Icon */
+.toast-icon {
+  width: 36px; /* Tăng từ 32px -> 36px */
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.toast-icon svg {
+  width: 20px; /* Tăng từ 18px -> 20px */
+  height: 20px;
+}
+
+.toast-content {
+  flex: 1;
+}
+
+/* TĂNG CỠ CHỮ TIN NHẮN */
+.toast-message {
+  margin: 0;
+  font-size: 15px; /* Tăng từ 14px -> 15px để dễ đọc hơn */
+  font-weight: 600; /* Tăng độ đậm của chữ */
+  color: var(--text-heading);
+  text-align: left;
+}
+
+/* Tăng kích thước nút tắt nhanh */
+.toast-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 18px; /* Tăng từ 16px -> 18px để dễ bấm */
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.toast-close:hover {
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   ⚡ RESPONSIVE & ANIMATIONS - ĐỔI HIỆU ỨNG TỪ TRÊN XUỐNG CẢ ĐÔI MÀN HÌNH
+   ========================================================================== */
+
+/* ── LAYOUT TRÊN DESKTOP: Góc trên cùng bên phải (Top-Right) ── */
+@media (min-width: 769px) {
+  .toast-container {
+    top: 24px;   /* Đổi từ bottom -> top */
+    right: 24px;
+  }
+  .toast {
+    /* Hiệu ứng trượt từ phải sang và hạ nhẹ từ trên xuống */
+    animation: slideInTopRight 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+/* ── LAYOUT TRÊN MOBILE: Trên cùng chính giữa (Top-Center) ── */
+@media (max-width: 768px) {
+  .toast-container {
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    align-items: center;
+  }
+  .toast {
+    width: 100%;
+    max-width: 100%;
+    /* Hiệu ứng rơi từ đỉnh màn hình xuống */
+    animation: slideDownTopMobile 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+/* Keyframes hoạt họa cho Desktop (Góc trên phải) */
+@keyframes slideInTopRight {
+  from { 
+    transform: translateY(-20px) scale(0.95); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0) scale(1); 
+    opacity: 1; 
+  }
+}
+
+/* Keyframes hoạt họa cho Mobile (Chính giữa trên) */
+@keyframes slideDownTopMobile {
+  from { 
+    transform: translateY(-40px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}

@@ -164,9 +164,10 @@ body {
 }
 
 .form-group {
-  display: flex;
+display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
 }
 
 .form-label {
@@ -312,5 +313,36 @@ body {
     flex-direction: column;
     gap: 0.5rem;
     align-items: center;
+  }
+}
+.error-message {
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: left;
+  margin-top: 0.4rem;
+  line-height: 1.4;
+  display: block;
+  animation: slideDown 0.2s ease-in-out;
+}
+
+/* Biến đổi viền ô input sang màu đỏ khi gặp lỗi */
+.input-error {
+  border-color: var(--danger) !important;
+}
+
+.input-error:focus {
+  box-shadow: 0 0 0 4px var(--danger-dim) !important;
+}
+
+/* Hiệu ứng hoạt họa đổ nhẹ xuống */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

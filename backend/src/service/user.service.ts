@@ -95,4 +95,11 @@ export class UserService{
         });
         return response;
     }
+    public async setAPIKey(userId: number, APIKey: string){
+        const response = await prisma.user.update({
+            where: { id: userId },
+            data: { APIKey }
+        });
+        return response;
+    }
 }

@@ -21,11 +21,11 @@ export class AIService{
             proxy: false
         };
     }
-    public async getGroqModels(){
+    public async getGroqModels(APIKey:string){
         try{
             const response = await axios.get(groqAPI, {
                 headers:{
-                    "Authorization": `Bearer ${groqAPIKey}`,
+                    "Authorization": `Bearer ${APIKey}`,
                 },
                 ...this.getAxiosProxyConfig()
             })
@@ -82,7 +82,7 @@ export class AIService{
 //         throw new MyError("Unexpected Error during file upsert", 500);
 //     }
 // }
-    public async promptStream(content: string, model: string, convId: any, files?: { data: string; fileName: string; mimeType: string }[]) {
+    public async promptStream(content: string, model: string, convId: any, APIKey: string, files?: { data: string; fileName: string; mimeType: string }[]) {
         const sessionId = convId.toString();
         const uploads = files?.map(f => ({
             data: f.data,        
@@ -98,6 +98,7 @@ export class AIService{
                 overrideConfig: {
                     modelName: model,
                     sessionId: sessionId,
+                    groqApiKey: APIKey,
                 },
                 ...(uploads && uploads.length > 0 ? { uploads } : {}),
             },

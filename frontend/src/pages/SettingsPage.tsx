@@ -1,6 +1,6 @@
 // pages/SettingsPage.tsx
 import React, { useEffect, useState } from "react";
-import styles from "../styles/settings.module.css"; // Changed to CSS Module
+import styles from "../styles/settings.module.css"; 
 import { useNavigate } from "react-router";
 import { useAuth } from "../hooks/authHook";
 import { removeToken } from "../api/apiClient";
@@ -8,12 +8,14 @@ import UpdatePasswordModal from "../component/UpdatePasswordModal";
 import { changePassword } from "../api/authApi";
 import { useTranslation } from "react-i18next";
 import { deleteAllConversations } from "../api/conversationApi";
-import { deleteAccount, updateAddress, updatePhoneNumber } from "../api/userApi";
+import { deleteAccount, updateAddress, updatePhoneNumber, updateUserAPIKey } from "../api/userApi";
 import { useChat } from "../hooks/chatHook";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
+import { getGroqModels } from "../api/aiApi";
 
 type Theme = "dark" | "light";
-type EditableField = "phoneNumber" | "address";
+// Mở rộng thêm trường APIKey vào danh sách có thể chỉnh sửa trực tiếp qua Dialog
+type EditableField = "phoneNumber" | "address" | "APIKey";
 
 const isValidPhoneNumber = (value: string) => /^0\d{9,10}$/.test(value);
 
@@ -21,26 +23,35 @@ const SettingsPage: React.FC = () => {
   const [theme, setTheme] = useState<Theme>(localStorage.getItem("app-theme") as Theme || "dark");
   const [language, setLanguage] = useState(localStorage.getItem("app-lang")||"en");
   const [openPasswordModal, setOpenPasswordModal] = useState(false);
+  const [passwordError, setPasswordError] = useState(""); // State lưu lỗi mật khẩu cũ sai
+  
   const [editableField, setEditableField] = useState<EditableField | null>(null);
   const [editableValue, setEditableValue] = useState("");
+  const [phoneError, setPhoneError] = useState(""); // State báo lỗi inline cho riêng số điện thoại
   const [savingField, setSavingField] = useState(false);
+  
   const [dialogType, setDialogType] = useState<"clear-history" | "delete-account" | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  
   const { setGroupConversations } = useChat();
   const nav = useNavigate();
   const { user, setUser } = useAuth();
   const { t, i18n } = useTranslation();
-  const { showError, showInfo } = useNotificationPopup();
+  const { showError, showToast } = useNotificationPopup();
+
   const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
     localStorage.setItem("app-lang", lang);
     setLanguage(lang);
   };
+
   const handleLogout = () => {
     removeToken();
     setUser(null);
+    localStorage.removeItem("APIKey"); 
     nav("/");
   };
+
   const openClearHistoryDialog = () => {
     setDialogType("clear-history");
     setDialogOpen(true);
@@ -53,12 +64,16 @@ const SettingsPage: React.FC = () => {
 
   const openFieldDialog = (field: EditableField) => {
     setEditableField(field);
-    setEditableValue(field === "phoneNumber" ? (user?.phoneNumber ?? "") : (user?.address ?? ""));
+    setPhoneError(""); // Reset lỗi cũ
+    if (field === "phoneNumber") setEditableValue(user?.phoneNumber ?? "");
+    else if (field === "address") setEditableValue(user?.address ?? "");
+    else if (field === "APIKey") setEditableValue("");
   };
 
   const closeFieldDialog = () => {
     setEditableField(null);
     setEditableValue("");
+    setPhoneError("");
     setSavingField(false);
   };
 
@@ -68,66 +83,85 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleSaveField = async () => {
-    if (!editableField || !user?.id) {
-      return;
-    }
+    if (!editableField) return;
 
     const nextValue = editableValue.trim();
 
     if (!nextValue) {
-      showError(t("settings.emptyError"));
+      setPhoneError(t("settings.emptyError"));
       return;
     }
 
+    // Xử lý riêng logic Số điện thoại
     if (editableField === "phoneNumber") {
       const normalizedPhoneNumber = nextValue.replace(/\s+/g, "");
 
       if (!isValidPhoneNumber(normalizedPhoneNumber)) {
-        showError(t("settings.invalidPhone"));
+        setPhoneError(t("settings.invalidPhone")); // Đưa lỗi vào dòng chữ đỏ inline dưới input
         return;
       }
 
       setSavingField(true);
-
       try {
+        if (!user?.id) return;
         const { data, error } = await updatePhoneNumber(normalizedPhoneNumber, user.id);
         if (error) {
-          showError(t("common.failed") + ": " + error.message);
+          setPhoneError(t("common.failed"));
           return;
         }
         if (data) {
           setUser((prev) => (prev ? { ...prev, phoneNumber: normalizedPhoneNumber } : prev));
-          showInfo(t("common.success"));
+          showToast(t("common.success"), "success"); // Lưu thành công bắn Toast thông báo nhẹ nhàng
+          closeFieldDialog();
         }
-
-        closeFieldDialog();
       } catch (error) {
-        showError(error instanceof Error ? error.message : t("common.failed"));
+        setPhoneError(t("common.failed"));
       } finally {
         setSavingField(false);
       }
-
       return;
     }
 
-    setSavingField(true);
+    // Xử lý riêng logic cập nhật API Key
+    if (editableField === "APIKey") {
+      setSavingField(true);
+      const {data, error} = await getGroqModels(nextValue);
+      if(data){
+        localStorage.setItem("APIKey", nextValue);
+        const { data:updateAPIKeyData, error:updateAPIKeyError } = await updateUserAPIKey(nextValue, user?.id);
+        if(updateAPIKeyError){
+          setPhoneError(t("common.failed"));
+          return;
+        }
+        showToast(t("common.success"), "success");
+        closeFieldDialog();
+        setSavingField(false);
+      }
+      if(error){
+        setPhoneError(t("initAPIKey.errorMessage"));
+        setSavingField(false);
+      }
+      return;
+    }
 
+    // Xử lý logic Địa chỉ
+    setSavingField(true);
     try {
+      if (!user?.id) return;
       if (editableField === "address") {
         const { data, error } = await updateAddress(nextValue, user.id);
         if (error) {
-          showError(t("common.failed") + ": " + error.message);
+          setPhoneError(t("common.failed"));
           return;
         }
         if (data) {
           setUser((prev) => (prev ? { ...prev, address: nextValue } : prev));
-          showInfo(t("common.success"));
+          showToast(t("common.success"), "success");
+          closeFieldDialog();
         }
       }
-
-      closeFieldDialog();
     } catch (error) {
-      showError(error instanceof Error ? error.message : t("common.failed"));
+      setPhoneError(t("common.failed"));
     } finally {
       setSavingField(false);
     }
@@ -135,36 +169,30 @@ const SettingsPage: React.FC = () => {
 
   const handleConfirmDialog = async () => {
       if (dialogType === "clear-history") {
-        console.log("Clear chat history");
         const { data, error } = await deleteAllConversations();
         setGroupConversations([]);
-        if (data) {
-          showInfo(t("common.success"));
-        }
-        if (error) {
-          showError(t("common.failed") + ": " + error.message);
-        }
+        if (data) showToast(t("common.success"), "success");
+        if (error) showError(t("common.failed"));
       }
 
       if (dialogType === "delete-account") {
-        console.log("Delete account");
         const { data, error } = await deleteAccount();
         if (data) {
           localStorage.removeItem("accessToken");
+          localStorage.removeItem("APIKey");
           setUser(null);
           nav("/");
         }
-        if (error) {
-          showError(t("common.failed") + ": " + error.message);
-        }
+        if (error) showError(t("common.failed"));
       }
-
       closeDialog();
   };
-  useEffect(()=>{
+
+  useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("app-theme", theme);
-  },[theme])
+  }, [theme]);
+
   return (
     <div className={styles["settings-page"]}>
       <header className={styles["settings-header"]}>
@@ -174,6 +202,7 @@ const SettingsPage: React.FC = () => {
         </div>
       </header>
 
+      {/* SECTION 1: PERSONAL INFO */}
       <section className={styles["settings-section"]}>
         <h2 className={styles["section-title"]}>
           <span className={styles["section-icon"]}>👤</span>
@@ -198,6 +227,7 @@ const SettingsPage: React.FC = () => {
         </div>
       </section>
 
+      {/* SECTION 2: PERSONALIZATION */}
       <section className={styles["settings-section"]}>
         <h2 className={styles["section-title"]}>
           <span className={styles["section-icon"]}>🎨</span>
@@ -209,17 +239,13 @@ const SettingsPage: React.FC = () => {
             <div className={styles["panel-head"]}>
               <p className={styles["panel-eyebrow"]}>{t("settings.theme")}</p>
               <h3 className={styles["panel-title"]}>{t("settings.theme")}</h3>
-              <p className={styles["panel-description"]}>
-                {t("settings.themeDescription")}
-              </p>
+              <p className={styles["panel-description"]}>{t("settings.themeDescription")}</p>
             </div>
 
             <div className={styles["theme-toggle"]}>
               <button
                 type="button"
-                className={`${styles["theme-option"]} ${
-                  theme === "dark" ? styles["selected"] : ""
-                }`}
+                className={`${styles["theme-option"]} ${theme === "dark" ? styles["selected"] : ""}`}
                 onClick={() => setTheme("dark")}
               >
                 <MoonIcon />
@@ -228,9 +254,7 @@ const SettingsPage: React.FC = () => {
 
               <button
                 type="button"
-                className={`${styles["theme-option"]} ${
-                  theme === "light" ? styles["selected"] : ""
-                }`}
+                className={`${styles["theme-option"]} ${theme === "light" ? styles["selected"] : ""}`}
                 onClick={() => setTheme("light")}
               >
                 <SunIcon />
@@ -243,9 +267,7 @@ const SettingsPage: React.FC = () => {
             <div className={styles["panel-head"]}>
               <p className={styles["panel-eyebrow"]}>{t("settings.language")}</p>
               <h3 className={styles["panel-title"]}>{t("settings.language")}</h3>
-              <p className={styles["panel-description"]}>
-                {t("settings.languageDescription")}
-              </p>
+              <p className={styles["panel-description"]}>{t("settings.languageDescription")}</p>
             </div>
 
             <label className={styles["select-wrap"]}>
@@ -263,6 +285,7 @@ const SettingsPage: React.FC = () => {
         </div>
       </section>
 
+      {/* SECTION 3: SECURITY */}
       <section className={styles["settings-section"]}>
         <h2 className={styles["section-title"]}>
           <span className={styles["section-icon"]}>🛡️</span>
@@ -273,15 +296,27 @@ const SettingsPage: React.FC = () => {
           <SettingRow
             icon={<KeyIcon />}
             title={t("settings.passwordSecurity")}
-            description="Last updated 14 days ago. Enable 2FA for better security."
+            description={t("settings.passwordDescription")}
             actionLabel={t("settings.update")}
-            onAction={() => setOpenPasswordModal(true)}
+            onAction={() => {
+              setPasswordError(""); // Reset lỗi mật khẩu cũ trước khi mở
+              setOpenPasswordModal(true);
+            }}
+          />
+
+          {/* VÙNG THAY THẾ API KEY MỚI THÊM */}
+          <SettingRow
+            icon={<CodeIcon />}
+            title="Groq API Key"
+            description={localStorage.getItem("APIKey") ? "••••••••••••" + localStorage.getItem("APIKey")?.slice(-4) : t("settings.noAPIKey")}
+            actionLabel={t("settings.update")}
+            onAction={() => openFieldDialog("APIKey")}
           />
 
           <SettingRow
             icon={<TrashIcon />}
             title={t("settings.clearHistory")}
-            description="Permanently delete all your conversation data across the system."
+            description={t("settings.deleteChatDescription")}
             actionLabel={t("settings.clearHistory")}
             danger
             onAction={openClearHistoryDialog}
@@ -290,7 +325,7 @@ const SettingsPage: React.FC = () => {
           <SettingRow
             icon={<UserMinusIcon />}
             title={t("settings.deleteAccount")}
-            description="Permanently remove your account and all associated data. This action cannot be undone."
+            description={t("settings.deleteAccountDescription")}
             actionLabel={t("settings.deleteAccount")}
             destructive
             onAction={openDeleteAccountDialog}
@@ -299,37 +334,46 @@ const SettingsPage: React.FC = () => {
           <SettingRow
             icon={<LogoutIcon />}
             title={t("settings.signOut")}
-            description="End your current session and securely log out of the interface."
+            description={t("settings.logoutDescription")}
             actionLabel={t("settings.signOut")}
             onAction={() => handleLogout()}
           />
         </div>
       </section>
+
+      {/* EDITABLE FIELD DIALOG (SĐT / ĐỊA CHỈ / API KEY) */}
       {editableField && (
         <div className={styles["dialog-overlay"]} onClick={closeFieldDialog}>
           <div className={styles["dialog"]} onClick={(e) => e.stopPropagation()}>
             <div className={styles["dialog-header"]}>
               <h2 className={styles["dialog-title"]}>
-                {editableField === "phoneNumber" ? t("settings.phone") : t("settings.address")}
+                {editableField === "phoneNumber" && t("settings.phone")}
+                {editableField === "address" && t("settings.address")}
+                {editableField === "APIKey" && t("settings.updateAPIKey")}
               </h2>
-
-              <button className={styles["dialog-close"]} onClick={closeFieldDialog}>
-                ×
-              </button>
+              <button className={styles["dialog-close"]} onClick={closeFieldDialog}>×</button>
             </div>
 
             <div className={styles["dialog-body"]}>
               <div className={styles["dialog-field"]}>
                 <label className={styles["dialog-label"]}>
-                  {editableField === "phoneNumber" ? t("settings.phone") : t("settings.address")}
+                  {editableField === "phoneNumber" && t("settings.phone")}
+                  {editableField === "address" && t("settings.address")}
+                  {editableField === "APIKey" && t("settings.updateAPIKey")}
                 </label>
                 <input
-                  className={styles["dialog-input"]}
+                  className={`${styles["dialog-input"]} ${phoneError ? styles["input-error"] : ""}`}
                   value={editableValue}
-                  onChange={(event) => setEditableValue(event.target.value)}
-                  placeholder={editableField === "phoneNumber" ? t("settings.phone") : t("settings.address")}
+                  type={editableField === "APIKey" ? "password" : "text"}
+                  onChange={(event) => {
+                    setEditableValue(event.target.value);
+                    if (phoneError) setPhoneError(""); // User gõ lại thì xóa chữ đỏ báo lỗi mượt mà chuẩn UX
+                  }}
+                  placeholder={editableField === "APIKey" ? t("initAPIKey.inputPlaceholder") : ""}
                   required
                 />
+                {/* DÒNG BÁO LỖI CHỮ ĐỎ INLINE DƯỚI INPUT DIALOG */}
+                {phoneError && <span className={styles["dialog-error-msg"]}>{phoneError}</span>}
               </div>
             </div>
 
@@ -337,7 +381,6 @@ const SettingsPage: React.FC = () => {
               <button className={styles["dialog-cancel"]} onClick={closeFieldDialog}>
                 {t("common.cancel")}
               </button>
-
               <button className={styles["dialog-save-btn"]} onClick={handleSaveField} disabled={savingField}>
                 {savingField ? "Saving..." : t("settings.update")}
               </button>
@@ -345,68 +388,62 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* DIALOG XÁC NHẬN CLEAR HISTORY / DELETE ACCOUNT */}
       {dialogOpen && (
-      <div
-        className={styles["dialog-overlay"]}
-        onClick={closeDialog}
-      >
-        <div
-          className={styles["dialog"]}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className={styles["dialog-header"]}>
-            <h2 className={styles["dialog-title"]}>
-              {dialogType === "clear-history"
-                ? t("settings.clearHistory")
-                : t("settings.deleteAccount")}
-            </h2>
-
-            <button type="button" className={styles["dialog-close"]} onClick={closeDialog}>
-              ×
-            </button>
-          </div>
-
-          <div className={styles["dialog-body"]}>
-            <p className={styles["dialog-text"]}>
-              {dialogType === "clear-history"
-                ? t("settings.clearHistoryConfirmation")
-                : t("settings.deleteAccountConfirmation")}
-            </p>
-          </div>
-
-          <div className={styles["dialog-footer"]}>
-            <button type="button" className={styles["dialog-cancel"]} onClick={closeDialog}>
-              {t("common.cancel")}
-            </button>
-
-            <button type="button" className={styles["dialog-danger"]} onClick={handleConfirmDialog}>
-              {dialogType === "clear-history"
-                ? t("settings.clearHistory")
-                : t("settings.deleteAccount")}
-            </button>
+        <div className={styles["dialog-overlay"]} onClick={closeDialog}>
+          <div className={styles["dialog"]} onClick={(e) => e.stopPropagation()}>
+            <div className={styles["dialog-header"]}>
+              <h2 className={styles["dialog-title"]}>
+                {dialogType === "clear-history" ? t("settings.clearHistory") : t("settings.deleteAccount")}
+              </h2>
+              <button type="button" className={styles["dialog-close"]} onClick={closeDialog}>×</button>
+            </div>
+            <div className={styles["dialog-body"]}>
+              <p className={styles["dialog-text"]}>
+                {dialogType === "clear-history" ? t("settings.clearHistoryConfirmation") : t("settings.deleteAccountConfirmation")}
+              </p>
+            </div>
+            <div className={styles["dialog-footer"]}>
+              <button type="button" className={styles["dialog-cancel"]} onClick={closeDialog}>
+                {t("common.cancel")}
+              </button>
+              <button type="button" className={styles["dialog-danger"]} onClick={handleConfirmDialog}>
+                {dialogType === "clear-history" ? t("settings.clearHistory") : t("settings.deleteAccount")}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
+
+      {/* UPDATE PASSWORD MODAL */}
       <UpdatePasswordModal
         isOpen={openPasswordModal}
         onClose={() => setOpenPasswordModal(false)}
+        error={passwordError}
         onSubmit={async (formData) => {
-                console.log(formData);
-                const { error, status } = await changePassword(formData);
-                if (status === 200) {
-                    showInfo(t("settings.success"));
-                    setOpenPasswordModal(false);
-                }
-                if (error) {
-                    showError(t("common.failed") + ": " + error.message);
-                }
-            }}
+          const { data, error } = await changePassword(formData);
+          if (data) {
+            showToast(t("password.successChange"), "success"); // Thành công chỉ dùng Toast thông báo, tắt modal
+            setOpenPasswordModal(false);
+          }
+          if (error) {
+            // Nếu API báo mật khẩu cũ sai, set chữ đỏ ngay dưới input của modal
+            setPasswordError(t("password.wrongOldPassword"));
+          }
+        }}
       />
     </div>
   );
 };
-
+function CodeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="16 18 22 12 16 6" />
+      <polyline points="8 6 2 12 8 18" />
+    </svg>
+  );
+}
 interface SettingRowProps {
   icon: React.ReactNode;
   title: string;

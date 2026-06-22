@@ -5,7 +5,17 @@ export interface AIModels{
     id: string
 }
 export const aiLoader: LoaderFunction = async():Promise<AIModels[]>=>{
-    const {data, error} = await getGroqModels();
+    const APIKey = localStorage.getItem("APIKey");
+    if(!APIKey){
+        console.error("Missing API Key");
+        return [];
+    }
+    const userAPIKey = APIKey.trim();
+    if(userAPIKey.length === 0){
+        console.error("Empty API Key");
+        return [];
+    }
+    const {data, error} = await getGroqModels(userAPIKey);
     if(data){
         return data;
     }

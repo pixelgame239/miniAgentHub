@@ -4,7 +4,17 @@ import { AIService } from "../service/ai.service";
 const aiService = new AIService();
 export const getAIModels = async(req:Request, res: Response, next:NextFunction) =>{
     try{
-        const response = await aiService.getGroqModels();
+        const { APIKey } = req.body;
+        if(!APIKey){
+            res.status(400).json({message: "Missing API Key"});
+            return;
+        }
+        const userAPIKey = APIKey.trim();
+        if(userAPIKey.length === 0){
+            res.status(400).json({message: "Empty API Key"});
+            return;
+        }
+        const response = await aiService.getGroqModels(userAPIKey);
         res.status(200).json(response);
         return;
     }catch(error){

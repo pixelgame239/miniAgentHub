@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "../styles/groups.module.css";
 import { useLoaderData, useNavigate } from "react-router";
 import type { Group } from "../loader/groupLoader";
@@ -30,8 +30,10 @@ const GroupsPage: React.FC = () => {
   const [selectedGroupForMembers, setSelectedGroupForMembers] =
     useState<Group | null>(null);
   const [members, setMembers] = useState<Member[]|undefined>(undefined);
-  const { showError, showInfo } = useNotificationPopup();
-
+  const { showError, showToast } = useNotificationPopup();
+  useEffect(()=>{
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "light");
+  },[]);
   if (!user?.groupAccess) {
     nav("/chat");
   }
@@ -73,7 +75,7 @@ const GroupsPage: React.FC = () => {
       const { data: newGroup , error: createError } = await createGroup({groupName: data.groupName, permissions: permissionList, userIds: userList});
       if(newGroup){
         setGroups([...groups, newGroup])
-        showInfo(t("common.success"));
+        showToast(t("common.success"), "success");
       }
       if(createError){
         showError(t("common.failed") + ":" + createError.message);
@@ -83,7 +85,7 @@ const GroupsPage: React.FC = () => {
       const { data: updatedGroup, error: updateError } = await updateGroupData(dialog.group.id, permissionList, userList, data.groupName);
       if(updatedGroup){
         console.log(updatedGroup);
-        showInfo(t("common.success"));
+        showToast(t("common.success"), "success");
         setGroups(groups.map((group) => 
           group.id === dialog.group.id ? updatedGroup : group
         ));

@@ -119,7 +119,7 @@
 .userTable th {
   padding: 1.1rem 1.4rem;
 
-  text-align: left;
+  text-align: center;
   vertical-align: middle;
 
   font-size: 0.72rem;
@@ -140,6 +140,7 @@
   color: var(--text-primary);
 
   border-bottom: 1px solid var(--border);
+  text-align: center;
 }
 
 .userTable tbody tr {
@@ -414,50 +415,152 @@ input[type="checkbox"] {
 
 @media (max-width: 768px) {
   .userContent {
-      padding: 4rem 1rem 1.5rem 1rem; /* Padding top 4rem (khoảng 64px) để nhường chỗ cho nút Hamburger lơ lửng */
-    }
+    padding: 4rem 1rem 1.5rem 1rem;
+  }
 
-  /* Đưa Header về dạng cấu trúc mượt mà hơn */
   .userHeader {
     flex-direction: column;
-    align-items: flex-start; /* Giữ các phần tử thẳng hàng từ trái sang */
+    align-items: flex-start;
     gap: 1rem;
     margin-bottom: 1.5rem;
   }
+  
   .userHeader h1 {
     font-size: 1.8rem;
     margin-bottom: 0.5rem;
   }
+  
   .userDescription {
     font-size: 0.88rem;
     line-height: 1.5;
   }
 
-  /* Biến nút Add User thành nút bấm full chiều rộng trên Mobile để dễ bấm bằng ngón cái */
   .addUserBtn {
     width: 100%; 
     height: 48px;
     border-radius: 12px;
   }
 
-  /* Tối ưu hóa phân trang khi bị xếp hàng dọc */
+  /* =========================================================
+     BIẾN BẢNG THÀNH CARD LAYOUT (RESPONSIVE CHÍNH)
+  ========================================================= */
+  
+  /* Hủy bỏ bo viền bao quanh bảng vì giờ mỗi dòng là 1 card độc lập */
+  .tableWrapper {
+    background: transparent;
+    border: none;
+    backdrop-filter: none;
+    overflow-x: visible; 
+  }
+
+  .userTable {
+    display: block;
+    width: 100%;
+    min-width: 100% !important; /* Triệt tiêu cuộn ngang */
+  }
+
+  /* Ẩn hoàn toàn thanh tiêu đề gốc của Table */
+  .userTable thead {
+    display: none;
+  }
+
+  .userTable tbody {
+    display: block;
+    width: 100%;
+  }
+
+  /* Biến mỗi dòng (tr) thành một khối hộp - Card */
+  .userRow {
+    display: block;
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border) !important;
+    border-radius: 16px;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    position: relative; /* Làm điểm neo cho checkbox hoặc action nếu cần */
+  }
+
+  /* Biến mỗi ô (td) thành một hàng dọc chứa Label bên trái, Dữ liệu bên phải */
+  .userTable td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0 !important; /* Thu gọn padding dọc */
+    border-bottom: 1px dashed var(--border) !important; /* Đường gạch nhẹ phân cách trường dữ liệu */
+    font-size: 0.88rem;
+    text-align: right;
+  }
+
+  /* Loại bỏ gạch chân cho ô cuối cùng */
+  .userTable td:last-child {
+    border-bottom: none !important;
+  }
+
+  /* Sử dụng data-label để tự động sinh ra tiêu đề cột */
+  .userTable td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    text-align: left;
+    padding-right: 1rem;
+  }
+
+  /* Xử lý căn lề các khối đặc biệt bên trong ô */
+  .userCell {
+    justify-content: flex-end; /* Đẩy Avatar và tên về bên phải màn hình */
+  }
+
+  .groupList {
+    justify-content: flex-end; /* Đẩy các tag nhóm về bên phải */
+  }
+
+  /* Tối ưu hóa ô Checkbox trên Mobile */
+  .mobileCheckbox {
+    display: none; /* Ẩn checkbox trên mobile để tránh rối mắt */
+  }
+
+  /* Tối ưu hóa ô Action (Các nút Edit/Delete) */
+  .mobileActions {
+    flex-direction: column;
+    align-items: stretch !important; /* Dàn nút bấm rộng hết cỡ cho dễ chạm */
+    padding-top: 0.8rem !important;
+    margin-top: 0.4rem;
+  }
+  
+  .actions {
+    width: 100%;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .actionBtn {
+    flex: 1; /* Chia đôi không gian đều cho 2 nút Edit và Delete */
+    height: 40px;
+    justify-content: center;
+  }
+
+  /* =========================================================
+     CÁC THÀNH PHẦN KHÁC
+  ========================================================= */
   .pagination {
     flex-direction: column;
-    align-items: center; /* Căn giữa để cân đối mắt nhìn */
+    align-items: center;
     gap: 0.8rem;
     margin-top: 1rem;
   }
 
-  .userTable {
-    min-width: 760px;
-  }
   .dialog {
-    width: calc(100% - 24px); /* Cách đều 2 bên mép màn hình di động 12px */
+    width: calc(100% - 24px);
     border-radius: 20px;
   }
   
   .dialogHeader, .dialogBody, .dialogFooter {
-    padding: 16px 20px; /* Thu hẹp padding của popup trên mobile */
+    padding: 16px 20px;
   }
 
   .dialogHeader h2 {
@@ -465,7 +568,7 @@ input[type="checkbox"] {
   }
 
   .cancelBtn, .confirmDeleteBtn {
-    height: 40px; /* Hạ chiều cao nút bấm popup cho thanh thoát */
+    height: 40px;
     font-size: 0.88rem;
   }
 }

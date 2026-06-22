@@ -1,5 +1,5 @@
 // ChatPage.tsx
-import { useEffect, useRef, useState, type JSX } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "../styles/chat.module.css";
 import { useRouteLoaderData } from "react-router";
 import type { AIModels } from "../loader/aiLoader";
@@ -10,13 +10,21 @@ import { useTranslation } from "react-i18next";
 import { useSSEStream } from "../hooks/streamHook";
 import { fileToBase64, type FileUpload } from "../api/messageApi";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
+import { shareMessage } from "../api/shareApi";
 
 const ChatPage = () => {
   const { AIModels } = useRouteLoaderData("layout-data-loader") as {
     userGroups: Group[];
     AIModels: AIModels[];
   };
+  const { showError, showInfo } = useNotificationPopup();
 
+  useEffect(()=>{
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "light");
+    if(!AIModels || AIModels.length === 0){
+      showError(t("common.noAPIKey"));
+    }
+  },[]);
   const { t } = useTranslation();
   const {
     currentConversation, setCurrentConversation,
@@ -34,14 +42,12 @@ const ChatPage = () => {
   const activeConversationRef = useRef(currentConversation);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const chatMessages = activeConvId ? (convMessagesMap.get(activeConvId) ?? []) : [];
 
   const { liveText, streaming, start, abort } = useSSEStream(activeConvId);
 
   const isModelLocked = !!activeConvId || chatMessages.length > 0;
   const apiUrl = import.meta.env.VITE_API_URL;
-  const { showError } = useNotificationPopup();
   useEffect(() => {
     activeConversationRef.current = currentConversation;
     if (currentConversation) {
@@ -77,6 +83,14 @@ const ChatPage = () => {
     if (file.type.startsWith("image/")) return "🖼️";
     return "📎";
   };
+  const handleShareMessage = async(messageId: number) =>{
+      const { data, error } = await shareMessage(messageId);
+      if (data) {
+        showInfo(t("common.success") + ":" + window.location.origin + data);
+      } else if (error) {
+      showError(t("common.failed"));
+      }
+    }
   async function optimizeBase64Image(base64Str: string, maxEdge: number = 1024, quality: number = 0.75): Promise<string> {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -230,7 +244,23 @@ const ChatPage = () => {
       <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
     </svg>
   );
-
+  
+  const ExportIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+      <polyline points="16 6 12 2 8 6"/>
+      <line x1="12" y1="2" x2="12" y2="15"/>
+    </svg>
+  );
+  const ShareIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="18" cy="5" r="3"/>
+      <circle cx="6" cy="12" r="3"/>
+      <circle cx="18" cy="19" r="3"/>
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+    </svg>
+  );
   const CopyIcon = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
@@ -350,8 +380,9 @@ const ChatPage = () => {
                     {msg.createdAt ? formatMessageTime(msg.createdAt) : ""}
                   </span>
                   <div className={styles.modelActions}>
-                    <button className={styles.actionBtn} title={t("common.like")}><ThumbsUpIcon /></button>
                     <button className={styles.actionBtn} title={t("common.copy")} onClick={() => navigator.clipboard?.writeText(msg.content)}><CopyIcon /></button>
+                    <button className={styles.actionBtn} title={t("common.share")} onClick={async() => await handleShareMessage(msg.id as number)}><ShareIcon /></button>
+                    <button className={styles.actionBtn} title={t("common.export")} onClick={() => alert(t("common.export")+": "+formatMessageTime(msg.createdAt))}><ExportIcon /></button>
                   </div>
                 </div>
               )}

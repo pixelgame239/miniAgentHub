@@ -522,3 +522,36 @@
 .dialog-save-btn:hover {
   background: var(--accent-hover);
 }
+/* Style cho dòng chữ báo lỗi inline bên trong Dialog */
+.dialog-error-msg {
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: left;
+  margin-top: 0.2rem;
+  line-height: 1.4;
+  display: block;
+  animation: slideInDialog 0.2s ease-in-out;
+}
+
+/* Đổi viền input sang màu đỏ danger của hệ thống khi có lỗi */
+.input-error {
+  border-color: var(--danger) !important;
+}
+
+.input-error:focus {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px var(--danger-dim) !important;
+}
+
+/* Hiệu ứng hoạt họa đổ nhẹ xuống cho thông báo lỗi */
+@keyframes slideInDialog {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

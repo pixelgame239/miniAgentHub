@@ -47,6 +47,11 @@ const updatePhoneNumberRequest = client.createRequest<{payload: {phoneNumber: st
     method:"PUT",
     auth:true
 });
+const updateUserAPIKeyRequest = client.createRequest<{payload: {APIKey: string}, params: {userId: string|number}}>()({
+    endpoint: "/users/setAPIKey/:userId",
+    method:"PUT",
+    auth:true
+});
 export const getUsers = async()=>{
     return await getUserRequest.send();
 } 
@@ -70,4 +75,7 @@ export const updateAddress = async(address:string, userId:any)=>{
 }
 export const updatePhoneNumber = async(phoneNumber:string, userId:any)=>{
     return await updatePhoneNumberRequest.send({payload: {phoneNumber: phoneNumber}, params: {userId}});
+}
+export const updateUserAPIKey = async(APIKey:string, userId:any)=>{
+    return await updateUserAPIKeyRequest.send({payload: {APIKey: APIKey}, params: {userId}});
 }

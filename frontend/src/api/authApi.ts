@@ -26,7 +26,10 @@ type UserData = {
     userAccess: boolean,
     groupAccess: boolean,
     active: boolean,
-    groups: {id: number, groupName: string}[]
+    groups: {id: number, groupName: string}[],
+    address?: string;
+    phoneNumber?: string;
+    APIKey?: string;
 }
 type ChangePasswordData ={
     currentPassword?: string,

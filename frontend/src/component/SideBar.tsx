@@ -14,6 +14,9 @@ import { useTranslation } from "react-i18next";
 import ReusableDialog from "./ReusableDialogProps";
 import type { Conversation } from "../loader/groupLoader";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
+import { shareConversation } from "../api/shareApi";
+import { exportAllMessages } from "../api/exportApi";
+import ExportModal from "./ExportModal";
 
 type ConversationItem = {
   id: number;
@@ -41,8 +44,10 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
   const [activeConversation, setActiveConversation] = useState<ConversationItem | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const { user } = useAuth();
-  const { showError , showInfo } = useNotificationPopup();
+  const { showError, showToast, showInfo } = useNotificationPopup();
   const nav = useNavigate();
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const curTheme = localStorage.getItem("app-theme") || "light";
   // Tạo ref để theo dõi vùng bao quanh danh sách menu hành động
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -85,6 +90,16 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
     if(onClose) onClose(); // Đóng sidebar nếu đang ở chế độ mobile
     nav("/chat");
   };
+  const handleShareConversation = async (conversationId: number) => {
+    const { data, error } = await shareConversation(conversationId);
+    if (data) {
+      showInfo(t("common.success") + ": " + window.location.origin + data);
+    }
+    if (error) {
+      showError(t("common.failed"));
+      console.error("Failed to share conversation:", error);
+    }
+  };
 
   const openEditDialog = (chat: ConversationItem) => {
     setActiveConversation(chat);
@@ -114,10 +129,11 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
     if (!nextTitle) return;
     const { data, error} = await updateConversationTitle(activeConversation.id, nextTitle);
     if(data){
-      showInfo(t("common.success"));
+      showToast(t("common.success"), "success");
     }
     if(error){
-      showError(t("common.failed") + ": " + error.message);
+      showError(t("common.failed"));
+      console.error("Failed to update conversation title:", error);
       return;
     }
     setGroupConversations((prev) =>
@@ -130,12 +146,14 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
     }
     closeDialog();
   };
-
+  const handleExport = async (conversationId: number) => {
+    setIsExportOpen(true);
+  };
   const handleDeleteConversation = async () => {
     if (!activeConversation) return;
     const { data, error } = await deleteConversation(activeConversation.id);
     if(data){
-      showInfo(t("common.success"));
+      showToast(t("common.success"), "success");
     }
     if (error) {
       showError(t("common.failed") + ": " + error.message);
@@ -282,17 +300,30 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
                         className={styles.chatActionMenu}
                         onClick={(e) => e.stopPropagation()}
                       >
+                        <button className={styles.chatActionMenuItem} onClick={async() => await handleShareConversation(chat.id)}>
+                          <div>
+                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill={curTheme==="dark" ? "#fff": "#000"}><path d="M648-96q-50 0-85-35t-35-85q0-9 4-29L295-390q-16 14-36.05 22-20.04 8-42.95 8-50 0-85-35t-35-85q0-50 35-85t85-35q23 0 43 8t36 22l237-145q-2-7-3-13.81-1-6.81-1-15.19 0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-23 0-43-8t-36-22L332-509q2 7 3 13.81 1 6.81 1 15.19 0 8.38-1 15.19-1 6.81-3 13.81l237 145q16-14 36.05-22 20.04-8 42.95-8 50 0 85 35t35 85q0 50-35 85t-85 35Zm0-72q20.4 0 34.2-13.8Q696-195.6 696-216q0-20.4-13.8-34.2Q668.4-264 648-264q-20.4 0-34.2 13.8Q600-236.4 600-216q0 20.4 13.8 34.2Q627.6-168 648-168ZM216-432q20.4 0 34.2-14 13.8-14 13.8-34t-13.8-34q-13.8-14-34.2-14-20.4 0-34.2 14-13.8 14-13.8 34t13.8 34q13.8 14 34.2 14Zm466-277.8q14-13.8 14-34.2 0-20.4-13.8-34.2Q668.4-792 648-792q-20.4 0-34.2 13.8Q600-764.4 600-744q0 20.4 14 34.2 14 13.8 34 13.8t34-13.8ZM648-216ZM216-480Zm432-264Z"/></svg>
+                            {t("sidebar.share")}
+                          </div>
+                        </button>
                         <button
                           className={styles.chatActionMenuItem}
                           onClick={() => openEditDialog(chat)}
                         >
-                          Edit
+                          <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill={curTheme==="dark" ? "#fff": "#000"}><path d="M216-216h51l375-375-51-51-375 375v51Zm-72 72v-153l498-498q11-11 23.84-16 12.83-5 27-5 14.16 0 27.16 5t24 16l51 51q11 11 16 24t5 26.54q0 14.45-5.02 27.54T795-642L297-144H144Zm600-549-51-51 51 51Zm-127.95 76.95L591-642l51 51-25.95-25.05Z"/></svg>
+                          {t("sidebar.rename")}
+                        </button>
+                        <button className={styles.chatActionMenuItem}
+                        onClick={async()=> await handleExport(chat.id)}>
+                          <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill={curTheme==="dark" ? "#fff": "#000"}><path d="M444-336v-342L339-573l-51-51 192-192 192 192-51 51-105-105v342h-72ZM263.72-192Q234-192 213-213.15T192-264v-72h72v72h432v-72h72v72q0 29.7-21.16 50.85Q725.68-192 695.96-192H263.72Z"/></svg>
+                          {t("sidebar.export")}
                         </button>
                         <button
                           className={`${styles.chatActionMenuItem} ${styles.chatActionMenuItemDanger}`}
                           onClick={() => openDeleteDialog(chat)}
                         >
-                          Delete
+                          <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#ff0000"><path d="M312-144q-29.7 0-50.85-21.15Q240-186.3 240-216v-480h-48v-72h192v-48h192v48h192v72h-48v479.57Q720-186 698.85-165T648-144H312Zm336-552H312v480h336v-480ZM384-288h72v-336h-72v336Zm120 0h72v-336h-72v336ZM312-696v480-480Z"/></svg>
+                          {t("sidebar.delete")}
                         </button>
                       </div>
                     )}
@@ -304,8 +335,8 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
         ) : (
           <div className={styles.emptyChats}>
             <div className={styles.emptyIcon}>💬</div>
-            <h4>No conversations yet</h4>
-            <p>Create your first chat to get started.</p>
+            <h4>{t("sidebar.noRecent")}</h4>
+            <p>{t("sidebar.createNew")}</p>
           </div>
         )}
       </div>
@@ -313,25 +344,25 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
       {/* EDIT / DELETE DIALOG */}
       <ReusableDialog
         open={dialogOpen}
-        title={dialogMode === "edit" ? "Edit conversation" : "Delete conversation"}
+        title={dialogMode === "edit" ? t("sidebar.rename") : t("sidebar.deleteTitle")}
         onClose={closeDialog}
         footer={
           dialogMode === "edit" ? (
             <>
               <button className={styles.cancelBtn} onClick={closeDialog}>
-                Cancel
+                {t("common.cancel")}
               </button>
               <button className={styles.createBtn} onClick={handleEditConversation}>
-                Save changes
+                {t("common.save")}
               </button>
             </>
           ) : (
             <>
               <button className={styles.cancelBtn} onClick={closeDialog}>
-                Cancel
+                {t("common.cancel")}
               </button>
               <button className={styles.dangerBtn} onClick={handleDeleteConversation}>
-                Delete
+                {t("sidebar.delete")}
               </button>
             </>
           )
@@ -339,21 +370,26 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
       >
         {dialogMode === "edit" ? (
           <div className={styles.formGroup}>
-            <label>Conversation title</label>
+            <label>{t("sidebar.conversationTitle")}</label>
             <input
               className={styles.formInput}
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              placeholder="Enter conversation title"
+              placeholder={t("sidebar.enterConversationTitle")}
             />
           </div>
         ) : (
           <p className={styles.deleteText}>
-            Are you sure you want to delete this conversation? This action cannot be undone.
+            {t("sidebar.deleteConfirmation")}
           </p>
         )}
       </ReusableDialog>
+      <ExportModal 
+        isOpen={isExportOpen} 
+        onClose={() => setIsExportOpen(false)} 
+        onExport={null} 
+      />
 
       {/* NEW CHAT MODAL */}
       {showNewChatModal && (

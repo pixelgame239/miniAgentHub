@@ -21,6 +21,7 @@ model User {
   active    Boolean @default(false)
   phoneNumber  String?
   address   String?
+  APIKey  String?
 }
 model Group {
   id            Int    @id @default(autoincrement())
@@ -46,5 +47,12 @@ model Message{
   conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   type String @default("prompt")
   createdAt      DateTime     @default(now())
+}
+model SharedConversation{
+  id String @id @default(uuid())
+  title String
+  originalId Int
+  snapShotData Json 
+  @@index([id])
 }
     

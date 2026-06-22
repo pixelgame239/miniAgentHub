@@ -234,3 +234,33 @@
     font-size: 14px;
   }
 }
+/* Viền đỏ cho ô input khi có lỗi */
+.form-input.error {
+  border-color: var(--danger) !important;
+}
+
+.form-input.error:focus {
+  box-shadow: 0 0 0 3px var(--danger-dim) !important;
+}
+
+/* Chữ báo lỗi màu đỏ inline đổ mượt mà bên dưới input */
+.form-error {
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: left;
+  margin-top: 0.25rem;
+  display: block;
+  animation: slideDownModalError 0.2s ease-in-out;
+}
+
+@keyframes slideDownModalError {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

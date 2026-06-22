@@ -1,12 +1,12 @@
 import { client } from "./apiClient";
 
-const getGroqModelsRequest = client.createRequest<{}>()(
+const getGroqModelsRequest = client.createRequest<{ payload: { APIKey: string } }>()(
     {
-        method:"GET",
+        method:"POST",
         endpoint: "/ai/groqModels",
         auth: true
     }
 )
-export const getGroqModels = async()=>{
-    return await getGroqModelsRequest.send();
+export const getGroqModels = async(APIKey: string)=>{
+    return await getGroqModelsRequest.send({ payload: { APIKey: APIKey } });
 }
