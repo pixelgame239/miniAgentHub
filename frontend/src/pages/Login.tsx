@@ -24,7 +24,7 @@ const LoginPage = () => {
   };
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "light");
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "dark");
   }, []);
 
   useEffect(() => {

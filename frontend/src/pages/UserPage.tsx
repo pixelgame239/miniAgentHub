@@ -10,6 +10,7 @@ import { deleteUser, updateUser } from "../api/userApi";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/authHook";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
+import { SettingsIcon, TrashIcon } from "./GroupsPage";
 
 
 const UserPage = () => {
@@ -26,7 +27,7 @@ const UserPage = () => {
   const { showInfo, showError, showToast } = useNotificationPopup();
   const nav = useNavigate();
   useEffect(()=>{
-    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "light");
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "dark");
   },[]);
   useEffect(() => {
     if (user && !user.userAccess) {
@@ -66,7 +67,7 @@ const UserPage = () => {
     groups: number[];
   }) => {
     if (dialogMode === "create") {
-      const { data, error } = await register({...formData, lang: localStorage.getItem("app-lang") || "en"});
+      const { data, error } = await register({...formData, lang: localStorage.getItem("app-lang") || "vi"});
       if(data){
         setUsers([...users,data.userData]);
         showInfo(t("users.sendEmail"));
@@ -217,14 +218,14 @@ const UserPage = () => {
                       className={styles.actionBtn}
                       onClick={() => openEditDialog(user)}
                     >
-                      {t("users.edit")}
+                      <SettingsIcon />
                     </button>
 
                     <button
                       className={`${styles.actionBtn} ${styles.deleteBtn}`}
                       onClick={() => openDeleteDialog(user)}
                     >
-                      {t("users.delete")}
+                      <TrashIcon />
                     </button>
                   </div>
                 </td>

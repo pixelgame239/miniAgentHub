@@ -14,29 +14,28 @@ import { shareMessage } from "../api/shareApi";
 import { exportMessage } from "../api/exportApi";
 import { generateDocx, generatePdf} from "../utils/export";
 import ExportModal from "../component/ExportModal";
+import { SettingsIcon } from "./GroupsPage";
 
 const ChatPage = () => {
-  const { AIModels } = useRouteLoaderData("layout-data-loader") as {
-    userGroups: Group[];
-    AIModels: AIModels[];
-  };
   const { showError, showInfo, showToast } = useNotificationPopup();
-
-  useEffect(()=>{
-    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "light");
-    if(!AIModels || AIModels.length === 0){
-      showError(t("common.noAPIKey"));
-    }
-  },[]);
   const { t } = useTranslation();
+  
   const {
     currentConversation, setCurrentConversation,
     groupConversations, setGroupConversations,
     convMessagesMap, initConvMessages, appendMessage,
   } = useChat();
 
+  // Định nghĩa mảng providers cố định kèm danh sách model chính xác
+  const providers = [
+    { id: "flowise", name: "Flowise", icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/flowise.png", models: ["Flowise Agent Flow"] },
+    { id: "deepseek", name: "DeepSeek", icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Deepseek-logo-icon.svg/960px-Deepseek-logo-icon.svg.png", models: ["deepseek-v4-flash", "deepseek-v4-pro"] },
+    { id: "groq", name: "Groq", icon: "https://images.seeklogo.com/logo-png/60/1/groq-icon-logo-png_seeklogo-605779.png", models: ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "groq/compound"] },
+  ];
+
+  // Khởi tạo state selectedModel bằng giá trị đầu tiên trong mảng models của provider đầu tiên ("flowise")
   const [inputText, setInputText] = useState("");
-  const [selectedModel, setSelectedModel] = useState<AIModels | null>(AIModels[0] ?? null);
+  const [selectedModel, setSelectedModel] = useState<{ id: string } | null>({ id: providers[0].models[0] });
   const [attachedFiles, setAttachedFiles] = useState<File|null>(null);
 
   const [activeConvId, setActiveConvId] = useState<number | undefined>(
@@ -46,6 +45,16 @@ const ChatPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatMessages = activeConvId ? (convMessagesMap.get(activeConvId) ?? []) : [];
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  const [activeProvider, setActiveProvider] = useState<string | null>("flowise");
+
+  // Cập nhật hàm lấy icon động bằng cách duyệt qua mảng cấu hình providers cố định
+  const getActiveModelIcon = () => {
+    if (!selectedModel) return "🤖";
+    const matchedProvider = providers.find(p => p.models.includes(selectedModel.id));
+    return matchedProvider ? matchedProvider.icon : "🤖";
+  };
+
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exportID, setExportID] = useState<number | null>(null);
   const handleOpenExport = (messageId: number) => {
@@ -70,9 +79,12 @@ const ChatPage = () => {
   }
 
   const { liveText, streaming, start, abort } = useSSEStream(activeConvId);
-
-  const isModelLocked = !!activeConvId || chatMessages.length > 0;
   const apiUrl = import.meta.env.VITE_API_URL;
+  
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "dark");
+  }, []);
+
   useEffect(() => {
     activeConversationRef.current = currentConversation;
     if (currentConversation) {
@@ -95,7 +107,7 @@ const ChatPage = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
       if (files && files.length > 0) {
-        setAttachedFiles(files[0]); // Chỉ lấy file đầu tiên
+        setAttachedFiles(files[0]);
       }
       e.target.value = "";
   };
@@ -125,7 +137,6 @@ const ChatPage = () => {
             let width = img.width;
             let height = img.height;
 
-            // Maintain the geometric aspect ratio while checking maximum dimensions
             if (width > height) {
                 if (width > maxEdge) {
                     height = Math.round((height * maxEdge) / width);
@@ -138,7 +149,6 @@ const ChatPage = () => {
                 }
             }
 
-            // Create an off-screen HTML5 Canvas container
             const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
@@ -148,10 +158,8 @@ const ChatPage = () => {
                 return reject(new Error('Failed to acquire a 2D Canvas Context pipeline.'));
             }
 
-            // Draw the large image elements into the downscaled canvas dimensions
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Transcode the active pixel frame buffer into a small compressed JPEG string 
             const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
             resolve(compressedBase64);
         };
@@ -341,18 +349,80 @@ const ChatPage = () => {
       {/* Header */}
       <header className={styles.chatHeader}>
         <h2 className={styles.chatTitle}>Agent Hub</h2>
-        <div className={styles.modelSelector}>
-          <select
-            value={selectedModel?.id || ""}
-            onChange={(e) => setSelectedModel(AIModels.find(m => m.id === e.target.value) ?? null)}
-            className={styles.modelDropdown}
-            disabled={isModelLocked}
+        <div className={styles.modelSelectorWrapper}>
+          {/* Nút trigger chính */}
+          <div 
+            className={styles.customDropdownTrigger}
+            onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
           >
-            {AIModels.map(model => (
-              <option key={model.id} value={model.id}>{model.id}</option>
-            ))}
-          </select>
-          <span className={styles.modelDropdownChevron}>▾</span>
+            <span className={styles.modelIcon}>
+              {getActiveModelIcon()?.startsWith("http") ? (
+                <img src={getActiveModelIcon()} alt="Selected Model Icon" className={styles.providerImgIcon} />
+              ) : (
+                <span className={styles.defaultRobotIcon}>{getActiveModelIcon()}</span>
+              )}
+            </span>
+            <span className={styles.modelNameText}>
+              {selectedModel?.id || "Chọn Model"}
+            </span>
+            <span className={styles.modelDropdownChevron}>▾</span>
+          </div>
+
+          {/* Menu Dropdown Phân Cấp từ danh sách fix cứng */}
+          {isModelDropdownOpen && (
+            <div 
+              className={styles.customDropdownMenu}
+              onMouseLeave={() => setActiveProvider(null)} 
+            >
+              {providers.map((provider) => {
+                return (
+                  <div 
+                    key={provider.id} 
+                    className={`${styles.providerItemRow} ${activeProvider === provider.id ? styles.providerRowHovered : ""}`}
+                    onMouseEnter={() => setActiveProvider(provider.id)}
+                  >
+                    {/* Phần thông tin Provider (bên trái) */}
+                    <div className={styles.providerInfoWrapper}>
+                      <div className={styles.providerInfo}>
+                        <img src={provider.icon} alt={provider.name} className={styles.providerImgIcon} />
+                        <span className={styles.providerName}>{provider.name}</span>
+                      </div>
+                    </div>
+                    {/* Nút răng cưa riêng cho từng AI Provider */}
+                    <button 
+                      className={styles.providerSettingsBtn}
+                      title={`Cấu hình ${provider.name}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        alert(`Mở cài đặt riêng cho: ${provider.name}`);
+                      }}
+                    >
+                      <SettingsIcon />
+                    </button>
+
+                    {/* Menu con lấy trực tiếp từ provider.models */}
+                    {activeProvider === provider.id && provider.models.length > 0 && (
+                      <div className={styles.subModelMenuLeft}>
+                        {provider.models.map((modelName) => (
+                          <div 
+                            key={modelName} 
+                            className={`${styles.subModelItem} ${selectedModel?.id === modelName ? styles.activeSubModel : ""}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedModel({ id: modelName });
+                              setIsModelDropdownOpen(false);
+                            }}
+                          >
+                            {modelName}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </header>
 
@@ -445,7 +515,6 @@ const ChatPage = () => {
 
       {/* Input */}
       <div className={styles.chatInputWrapper}>
-        {/* File chips shown above the input bar */}
         {attachedFiles && (
           <div className={styles.fileChipsRow}>
             <div className={styles.fileChip}>
@@ -466,7 +535,6 @@ const ChatPage = () => {
         )}
 
         <div className={styles.chatInputContainer}>
-          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"
@@ -474,7 +542,6 @@ const ChatPage = () => {
             className={styles.hiddenFileInput}
             onChange={handleFileChange}
           />
-          {/* Plus / attach button */}
           <button
             className={styles.attachBtn}
             onClick={() => fileInputRef.current?.click()}

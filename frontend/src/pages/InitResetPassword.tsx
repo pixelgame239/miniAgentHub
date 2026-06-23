@@ -17,7 +17,7 @@ const InitResetPassword = () => {
     confirmPassword?: string;
   }>({});
   useEffect(()=>{
-    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "light");
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "dark");
   },[]);
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();

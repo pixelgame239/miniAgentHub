@@ -21,7 +21,7 @@ const isValidPhoneNumber = (value: string) => /^0\d{9,10}$/.test(value);
 
 const SettingsPage: React.FC = () => {
   const [theme, setTheme] = useState<Theme>(localStorage.getItem("app-theme") as Theme || "dark");
-  const [language, setLanguage] = useState(localStorage.getItem("app-lang")||"en");
+  const [language, setLanguage] = useState(localStorage.getItem("app-lang")||"vi");
   const [openPasswordModal, setOpenPasswordModal] = useState(false);
   const [passwordError, setPasswordError] = useState(""); // State lưu lỗi mật khẩu cũ sai
   

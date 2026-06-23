@@ -7,10 +7,8 @@
 .chatPage {
   height: 100%;
   min-height: 100vh;
-
   display: flex;
   flex-direction: column;
-
   background: var(--bg-primary);
   color: var(--text-primary);
   overflow: hidden;
@@ -23,16 +21,12 @@
 .chatHeader {
   height: 60px;
   min-height: 60px;
-
   padding: 0 28px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   border-bottom: 1px solid var(--border);
   background: var(--bg-primary);
-
   position: sticky;
   top: 0;
   z-index: 20;
@@ -46,55 +40,188 @@
 }
 
 /* ========================================
-   MODEL SELECTOR
+   MODEL SELECTOR (CUSTOM)
 ======================================== */
 
-.modelSelector {
-  position: relative;
+.modelSelectorWrapper {
   display: flex;
   align-items: center;
+  gap: 8px;
+  position: relative;
 }
 
-.modelDropdown {
-  appearance: none;
-  -webkit-appearance: none;
-
-  height: 36px;
-  padding: 0 36px 0 14px;
-
+.customDropdownTrigger {
+  height: 38px;
+  padding: 0 14px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg-secondary);
   color: var(--text-primary);
-
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
-
-  outline: none;
+  display: flex;
+  align-items: center; 
+  gap: 10px;          
   cursor: pointer;
-
-  transition: border-color 0.15s ease;
+  user-select: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  min-width: 180px;   
 }
 
-.modelDropdown:hover {
+.customDropdownTrigger:hover {
   border-color: var(--border-strong);
+  background: var(--bg-hover);
 }
 
-.modelDropdown:focus {
-  border-color: var(--accent);
+.modelIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;     
 }
 
-.modelDropdown:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.modelNameText {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .modelDropdownChevron {
-  position: absolute;
-  right: 12px;
-  pointer-events: none;
   font-size: 11px;
   color: var(--text-secondary);
+}
+
+/* Menu chính đổ xuống */
+.customDropdownMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0; /* Đổi thành right: 0 để menu chính mở neo theo lề phải của trigger */
+  width: 220px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  animation: dropIn 0.15s ease;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Container của mỗi hàng Provider */
+.providerItemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  padding: 6px 10px 6px 14px;     
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s ease, color 0.15s ease;
+  color: var(--text-secondary);
+}
+
+.providerRowHovered {
+  background: var(--bg-hover);
+  color: var(--text-primary) !important;
+}
+
+/* Vùng chứa thông tin chính của Provider */
+.providerInfoWrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding-right: 8px; /* Khoảng cách an toàn né nút răng cưa bên phải */
+}
+.providerInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.providerName {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.subMenuChevron {
+  font-size: 10px;
+  color: var(--text-dimmed);
+  margin-left: 6px;
+}
+
+/* Nút răng cưa nhỏ bên trong từng hàng AI Provider */
+.providerSettingsBtn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-dimmed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.providerSettingsBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* MENU CON - XUẤT HIỆN SANG BÊN TRÁI */
+.subModelMenuLeft {
+  position: absolute;
+  top: -6px;
+  right: 100%; 
+  padding-right: 6px; /* Vùng đệm kết nối hover chuột */
+  width: 220px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 0;
+  box-shadow: -10px 10px 25px rgba(0, 0, 0, 0.2); 
+  z-index: 110;
+}
+
+.subModelItem {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.subModelItem:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.activeSubModel {
+  color: var(--accent);
+  font-weight: 600;
+  background: rgba(var(--accent-rgb, 99, 102, 241), 0.08);
+}
+
+/* Icon toàn cục */
+.providerImgIcon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  display: block;
+  border-radius: 4px;
+}
+
+.defaultRobotIcon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 /* ========================================
@@ -125,7 +252,6 @@
   flex-direction: row;
 }
 
-/* AI Avatar */
 .aiAvatar {
   width: 36px;
   height: 36px;
@@ -162,8 +288,6 @@
 }
 
 .userRow .messageBubble {
-  background: var(--bg-card);
-  border-color: var(--border);
   border-bottom-right-radius: 4px;
 }
 
@@ -192,7 +316,7 @@
 }
 
 /* ========================================
-   MESSAGE META (timestamp, model name)
+   MESSAGE META
 ======================================== */
 
 .messageMeta {
@@ -205,7 +329,6 @@
   color: var(--text-dimmed);
 }
 
-/* AI model meta row */
 .modelMeta {
   display: flex;
   align-items: center;
@@ -297,25 +420,6 @@
   color: var(--text-dimmed);
 }
 
-.attachBtn {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
-}
-
-.attachBtn:hover {
-  color: var(--text-primary);
-  background: var(--bg-hover);
-}
-
 .sendBtn {
   width: 38px;
   height: 38px;
@@ -369,114 +473,6 @@
 }
 
 /* ========================================
-   RESPONSIVE
-======================================== */
-
-@media (max-width: 768px) {
-  /* ── 1. HEADER CHUẨN ĐIỆN THOẠI ── */
-  .chatHeader {
-    padding: 0 12px 0 56px; /* Chừa 56px bên trái để né nút Hamburger menu trên mobile */
-    height: 56px;
-    min-height: 56px;
-  }
-
-  .chatTitle {
-    font-size: 15px; /* Hạ size chữ tiêu đề hệ thống */
-  }
-
-  .modelDropdown {
-    height: 32px;
-    padding: 0 24px 0 10px;
-    font-size: 12px;
-    width: 120px; /* Giới hạn độ rộng dropdown để tránh đè chữ */
-  }
-
-  /* ── 2. VÙNG TIN NHẮN (MESSAGES) ── */
-  .chatMessages {
-    padding: 16px 12px;
-    gap: 16px; /* Thu hẹp khoảng cách giữa các bong bóng chat */
-  }
-
-  .aiAvatar {
-    width: 32px; /* Thu nhỏ avatar AI */
-    height: 32px;
-  }
-
-  .messageBubbleWrapper {
-    max-width: calc(100% - 44px); /* Giới hạn tuyệt đối chống tràn biên màn hình */
-  }
-
-  .messageBubble {
-    padding: 10px 14px; /* Thu nhỏ padding trong lòng bong bóng chat */
-    border-radius: 14px;
-  }
-
-  .userRow .messageBubble {
-    border-bottom-right-radius: 4px;
-  }
-
-  .modelRow .messageBubble {
-    border-bottom-left-radius: 4px;
-  }
-
-  .messageText {
-    font-size: 13.5px; /* Giảm nhẹ size chữ để đọc được nhiều thông tin hơn */
-  }
-
-  /* Khống chế ảnh đính kèm không bao giờ phá vỡ khung chat di động */
-  .chatImagePreview img {
-    max-width: 100% !important;
-    max-height: 140px !important;
-    object-fit: cover;
-  }
-
-  /* ── 3. KHUNG NHẬP LIỆU (INPUT BAR) ── */
-  .chatInputWrapper {
-    padding: 10px 12px 14px 12px; /* Thu gọn khoảng đệm an toàn dưới đáy */
-    gap: 8px;
-  }
-
-  .chatInputContainer {
-    height: 46px; /* Hạ chiều cao hộp nhập liệu cho thanh thoát */
-    padding: 0 6px 0 12px;
-    border-radius: 12px;
-    gap: 6px;
-  }
-
-  .chatInput {
-    font-size: 13.5px;
-  }
-
-  .attachBtn {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-  }
-
-  .sendBtn {
-    width: 34px;
-    height: 34px; /* Thu nhỏ nút gửi một chút */
-  }
-
-  /* Tối ưu hóa các tag file đính kèm phía trên hộp input */
-  .fileChipsRow {
-    gap: 6px;
-    padding-bottom: 4px;
-  }
-
-  .fileChip {
-    max-width: 100%; /* Cho phép chip co giãn tự do theo màn hình */
-    flex: 1;
-    min-width: 140px;
-    padding: 4px 6px 4px 8px;
-  }
-
-  .fileChipName {
-    max-width: 90px;
-  }
-}
-
-/* ========================================
    FILE ATTACHMENT
 ======================================== */
 
@@ -505,7 +501,6 @@
   border-color: var(--border-strong);
 }
 
-/* File chips row above the input */
 .fileChipsRow {
   display: flex;
   flex-wrap: wrap;
@@ -577,4 +572,100 @@
 .fileChipRemove:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+/* ========================================
+   RESPONSIVE (MOBILE)
+======================================== */
+
+@media (max-width: 768px) {
+  .chatHeader {
+    padding: 0 12px 0 56px; 
+    height: 56px;
+    min-height: 56px;
+  }
+
+  .chatTitle {
+    font-size: 15px; 
+  }
+
+  .chatMessages {
+    padding: 16px 12px;
+    gap: 16px; 
+  }
+
+  .aiAvatar {
+    width: 32px; 
+    height: 32px;
+  }
+
+  .messageBubbleWrapper {
+    max-width: calc(100% - 44px); 
+  }
+
+  .messageBubble {
+    padding: 10px 14px; 
+    border-radius: 14px;
+  }
+
+  .messageText {
+    font-size: 13.5px; 
+  }
+
+  .chatImagePreview img {
+    max-width: 100% !important;
+    max-height: 140px !important;
+    object-fit: cover;
+  }
+
+  .chatInputWrapper {
+    padding: 10px 12px 14px 12px; 
+    gap: 8px;
+  }
+
+  .chatInputContainer {
+    height: 46px; 
+    padding: 0 6px 0 12px;
+    border-radius: 12px;
+    gap: 6px;
+  }
+
+  .chatInput {
+    font-size: 13.5px;
+  }
+
+  .attachBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+  }
+
+  .sendBtn {
+    width: 34px;
+    height: 34px; 
+  }
+
+  .fileChipsRow {
+    gap: 6px;
+    padding-bottom: 4px;
+  }
+
+  .fileChip {
+    max-width: 100%; 
+    flex: 1;
+    min-width: 140px;
+    padding: 4px 6px 4px 8px;
+  }
+
+  .fileChipName {
+    max-width: 90px;
+  }
+  
+  /* Đưa menu con hiển thị đè lên trên mobile để tránh tràn màn hình trái */
+  .subModelMenuLeft {
+    right: auto;
+    left: 0;
+    top: 100%;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  }
 }

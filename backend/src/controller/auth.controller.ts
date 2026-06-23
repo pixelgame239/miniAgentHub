@@ -24,7 +24,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const userData: LoginRequest = {
       email: req.body.email,
       userPassword: req.body.userPassword,
-    };
+    };  
     const result = await authService.authLogin(userData);
     if (result) {
       res.status(200).json(result);

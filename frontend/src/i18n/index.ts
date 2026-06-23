@@ -6,19 +6,19 @@ import en from "./locales/en.json";
 import vi from "./locales/vi.json";
 
 i18n
-  .use(LanguageDetector)
+  // .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
-      en: {
-        translation: en,
-      },
       vi: {
         translation: vi,
       },
+      en: {
+        translation: en,
+      }
     },
-
-    fallbackLng: "en",
+    lng: "vi",
+    fallbackLng: "vi",
 
     interpolation: {
       escapeValue: false,

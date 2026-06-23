@@ -15,7 +15,7 @@ const InitAPIKey = () => {
     // Đảm bảo đồng bộ theme từ localStorage lên thuộc tính HTML
     document.documentElement.setAttribute(
       "data-theme",
-      localStorage.getItem("app-theme") || "light"
+      localStorage.getItem("app-theme") || "dark"
     );
   }, []);
 
