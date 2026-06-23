@@ -17,6 +17,7 @@ import { useNotificationPopup } from "../context/NotificationPopupContext";
 import { shareConversation } from "../api/shareApi";
 import { exportAllMessages } from "../api/exportApi";
 import ExportModal from "./ExportModal";
+import { generateDocx, generatePdf } from "../utils/export";
 
 type ConversationItem = {
   id: number;
@@ -48,6 +49,7 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
   const nav = useNavigate();
   const [isExportOpen, setIsExportOpen] = useState(false);
   const curTheme = localStorage.getItem("app-theme") || "light";
+  const [exportID, setExportID] = useState<number | null>(null);
   // Tạo ref để theo dõi vùng bao quanh danh sách menu hành động
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -146,9 +148,26 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
     }
     closeDialog();
   };
-  const handleExport = async (conversationId: number) => {
+  const handleOpenExport = (conversationId: number) => {
     setIsExportOpen(true);
+    setExportID(conversationId);
   };
+  const handleExport = async (format: "docx" | "pdf") => {
+    if (exportID === null) return;
+    const { data, error } = await exportAllMessages(exportID);
+    if (data) {
+      if (format === "docx") {
+        await generateDocx(data);
+      } else if (format === "pdf") {
+        await generatePdf(data);
+      }
+      showToast(t("common.success"), "success");
+      setIsExportOpen(false);
+    }
+    if (error) {
+      showError(t("common.failed"));
+    }
+  }
   const handleDeleteConversation = async () => {
     if (!activeConversation) return;
     const { data, error } = await deleteConversation(activeConversation.id);
@@ -314,7 +333,7 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
                           {t("sidebar.rename")}
                         </button>
                         <button className={styles.chatActionMenuItem}
-                        onClick={async()=> await handleExport(chat.id)}>
+                        onClick={()=> handleOpenExport(chat.id)}>
                           <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill={curTheme==="dark" ? "#fff": "#000"}><path d="M444-336v-342L339-573l-51-51 192-192 192 192-51 51-105-105v342h-72ZM263.72-192Q234-192 213-213.15T192-264v-72h72v72h432v-72h72v72q0 29.7-21.16 50.85Q725.68-192 695.96-192H263.72Z"/></svg>
                           {t("sidebar.export")}
                         </button>
@@ -388,7 +407,7 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
       <ExportModal 
         isOpen={isExportOpen} 
         onClose={() => setIsExportOpen(false)} 
-        onExport={null} 
+        onExport={async (format: "docx" | "pdf") => await handleExport(format)}
       />
 
       {/* NEW CHAT MODAL */}

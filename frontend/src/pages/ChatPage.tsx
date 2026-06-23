@@ -11,13 +11,16 @@ import { useSSEStream } from "../hooks/streamHook";
 import { fileToBase64, type FileUpload } from "../api/messageApi";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
 import { shareMessage } from "../api/shareApi";
+import { exportMessage } from "../api/exportApi";
+import { generateDocx, generatePdf} from "../utils/export";
+import ExportModal from "../component/ExportModal";
 
 const ChatPage = () => {
   const { AIModels } = useRouteLoaderData("layout-data-loader") as {
     userGroups: Group[];
     AIModels: AIModels[];
   };
-  const { showError, showInfo } = useNotificationPopup();
+  const { showError, showInfo, showToast } = useNotificationPopup();
 
   useEffect(()=>{
     document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "light");
@@ -43,6 +46,28 @@ const ChatPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatMessages = activeConvId ? (convMessagesMap.get(activeConvId) ?? []) : [];
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportID, setExportID] = useState<number | null>(null);
+  const handleOpenExport = (messageId: number) => {
+    setExportID(messageId);
+    setIsExportOpen(true);
+  };
+  const handleExportMessage = async(format: "docx" | "pdf") => {
+    if(exportID === null) return;
+    const { data, error } = await exportMessage(exportID);
+    if (data) {
+      if(format === "docx"){
+        await generateDocx(data);
+      } else if(format === "pdf"){
+        await generatePdf(data);
+      }
+      showToast(t("common.success"), "success");
+    }
+    if (error) {
+      showError(t("common.failed"));
+    }
+    setIsExportOpen(false);
+  }
 
   const { liveText, streaming, start, abort } = useSSEStream(activeConvId);
 
@@ -198,9 +223,14 @@ const ChatPage = () => {
           mimeType: finalMime
         }]
       }
-      start({ conversationId: convId, content, model: conversation.AIModel, files: uploads});
+      if(!localStorage.getItem("APIKey")){
+        showError(t("common.noAPIKey"));
+        return;
+      }
+      start({ conversationId: convId, content, model: conversation.AIModel, APIKey: localStorage.getItem("APIKey"), files: uploads});
 
     } catch (err) {
+      showError(t("common.failed"));
       console.error(err);
     }
   };
@@ -344,7 +374,13 @@ const ChatPage = () => {
                           src={msg.fileUrl.startsWith("blob:")?msg.fileUrl: `${apiUrl}${msg.fileUrl}`} 
                           alt={msg.fileName || "image"} 
                           style={{ maxWidth: "240px", maxHeight: "180px", borderRadius: "8px", cursor: "pointer", display: "block" }}
-                          onClick={() => window.open(msg.fileUrl, "_blank")}
+                          onClick={() => {
+                            if(msg.fileUrl&&msg.fileUrl.startsWith("blob:")){
+                              window.open(msg.fileUrl, "_blank");
+                            } else {
+                              window.open(`${apiUrl}${msg.fileUrl}`, "_blank");
+                            }
+                          }}
                         />
                       </div>
                     ) : (
@@ -382,7 +418,7 @@ const ChatPage = () => {
                   <div className={styles.modelActions}>
                     <button className={styles.actionBtn} title={t("common.copy")} onClick={() => navigator.clipboard?.writeText(msg.content)}><CopyIcon /></button>
                     <button className={styles.actionBtn} title={t("common.share")} onClick={async() => await handleShareMessage(msg.id as number)}><ShareIcon /></button>
-                    <button className={styles.actionBtn} title={t("common.export")} onClick={() => alert(t("common.export")+": "+formatMessageTime(msg.createdAt))}><ExportIcon /></button>
+                    <button className={styles.actionBtn} title={t("common.export")} onClick={() => handleOpenExport(msg.id as number)}><ExportIcon /></button>
                   </div>
                 </div>
               )}
@@ -463,6 +499,11 @@ const ChatPage = () => {
         </div>
         <p className={styles.disclaimer}>Neural Hub may display inaccurate info, so double-check its responses.</p>
       </div>
+        <ExportModal 
+          isOpen={isExportOpen} 
+          onClose={() => setIsExportOpen(false)} 
+          onExport={async (format: "docx" | "pdf") => await handleExportMessage(format)}
+        />
     </div>
   );
 };

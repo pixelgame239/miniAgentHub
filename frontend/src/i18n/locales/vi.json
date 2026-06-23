@@ -23,6 +23,17 @@
     "noAPIKey": "Groq API Key không hợp lệ. Vui lòng truy cập cài đặt để cập nhật API Key của bạn.",
     "shared": "Chia sẻ"
   },
+  "export":{
+    "title": "Xuất cuộc hội thoại",
+    "description": "Bạn có thể xuất cuộc hội thoại ở các định dạng khác nhau để lưu trữ hoặc chia sẻ.",
+    "format": "Chọn định dạng xuất",
+    "docx": "DOCX (Tài liệu Word)",
+    "pdf": "PDF (Định dạng tài liệu di động)",
+    "docxDescription": "Thích hợp để chỉnh sửa tiếp nội dung",
+    "pdfDescription": "Phù hợp để lưu trữ, in ấn hoặc chia sẻ",
+    "exportButton": "Xuất",
+    "closeButton": "Đóng"
+  },
   "initAPIKey": {
     "title": "Nhập Groq API Key của bạn",
     "description": "Để truy cập các tính năng AI, vui lòng nhập khóa API của bạn bên dưới. Khóa này cần thiết để xác thực các yêu cầu của bạn và đảm bảo giao tiếp an toàn với các dịch vụ AI.",

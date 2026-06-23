@@ -23,6 +23,17 @@
     "noAPIKey": "Groq API Key is invalid. Please visit settings to update your API Key.",
     "shared": "Shared"
   },
+  "export":{
+    "title": "Export Conversation",
+    "description": "You can export the conversation in different formats for your records or sharing.",
+    "format": "Select Export Format",
+    "docx": "DOCX (Word Document)",
+    "pdf": "PDF (Portable Document Format)",
+    "docxDescription": "Suitable for further editing of the content",
+    "pdfDescription": "Ideal for archiving, printing, or sharing",
+    "exportButton": "Export",
+    "closeButton": "Close"
+  },
   "initAPIKey": {
     "title": "Enter Your Groq API Key",
     "description": "To access the AI features, please enter your API key below. This key is required to authenticate your requests and ensure secure communication with the AI services.",
