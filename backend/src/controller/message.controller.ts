@@ -9,8 +9,11 @@ export const promptToAI = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { conversationId, content, model, APIKey, files } = req.body;
-
+  const { conversationId, content, model, files } = req.body;
+  const userId = req.user?.id; // Assuming you have user authentication middleware that sets req.user
+  if(!userId){
+    throw new MyError("Unauthorized", 401);
+  }
   // Basic validation before flushing headers — after flushHeaders()
   // you can no longer send error status codes to the client
   if (!conversationId || !content || !model) {
@@ -25,7 +28,7 @@ export const promptToAI = async (
 
   try {
     console.log(req.body.files);
-    await messageService.sendPrompt(conversationId, content, model, APIKey, res, files);
+    await messageService.sendPrompt(conversationId, content, model, res, userId, files);
   } catch (error) {
     // Headers already sent — can't use next(error) for a JSON error response.
     // Write an SSE error event instead so the client knows something went wrong.

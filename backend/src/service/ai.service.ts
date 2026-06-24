@@ -3,13 +3,14 @@ import axios, { type AxiosRequestConfig } from "axios";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import FormData from 'form-data';
 
-const groqAPI = process.env.GROQ_API || "https://api.groq.com/openai/v1/models";
+const groqAPI = process.env.GROQ_API || "https://api.groq.com/openai/v1/chat/completions";
 const groqAPIKey = process.env.GROQ_API_KEY;
 const proxyUri = process.env.HTTP_PROXY || process.env.HTTPS_PROXY || "";
 const proxyAgent = proxyUri ? new HttpsProxyAgent(proxyUri) : undefined;
 const flowiseAPI = process.env.FLOWISE_API||"";
 const flowiseUpsertApi= process.env.FLOWISE_UPSERT_API||"";
 const flowiseAuthorizationAPI = process.env.FLOWISE_AUTHORIZATION_API || "";
+const deepseekAPI = process.env.DEEPSEEK_API || "https://api.deepseek.com/chat/completions";
 // const flowiseAPI = process.env.FLOWISE_BACKUP_API || "";
 export class AIService{
     private getAxiosProxyConfig(): AxiosRequestConfig {
@@ -82,6 +83,71 @@ export class AIService{
 //         throw new MyError("Unexpected Error during file upsert", 500);
 //     }
 // }
+    public async promptToFlowise(content: string, model: string, APIKey: string, APIUrl: string, convId: any, files?: { data: string; fileName: string; mimeType: string }[]) {
+        const sessionId = convId.toString();
+        const uploads = files?.map(f => ({
+            data: f.data,        
+            name: f.fileName,
+            type: "file:full",
+            mime: f.mimeType
+        }));
+        let finalAPIURL = flowiseAPI;
+        if(APIUrl && APIUrl.trim()!==""){
+            finalAPIURL = APIUrl;
+        }
+        let response;
+        response = await axios.post(
+            finalAPIURL,
+            {
+                question: content,
+                streaming: true,
+                overrideConfig: {
+                    modelName: model,
+                    sessionId: sessionId,
+                },
+                ...(uploads && uploads.length > 0 ? { uploads } : {}),
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    ...(APIKey ? { "Authorization": `Bearer ${APIKey}` } : {})
+                },
+                ...this.getAxiosProxyConfig()
+            }
+        );
+        return response.data;
+    }
+    public async promptToAIProvider(content: string, model: string, APIKey: string) {
+        let finalAPIURL;
+        if(!APIKey.trim()){
+            throw new MyError("API Key is required", 400);
+        }
+        if(model.startsWith("deepseek")){
+            finalAPIURL = deepseekAPI;
+        }else{
+            finalAPIURL = groqAPI;
+        }
+        let response;
+        response = await axios.post(
+            finalAPIURL,
+            {
+                messages: [{ role: "system", content: "You are a helpful AI assistant. Please converse with the User. If a message contains <file_content>, use that specific document context to answer the question accurately." }, { role: "user", content }],
+                streaming: true,
+                model: model,
+                response_format: "json_object",
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "Authorization": `Bearer ${APIKey}`
+                },
+                ...this.getAxiosProxyConfig()
+            }
+        );
+        return response.data;
+    }
     public async promptStream(content: string, model: string, convId: any, APIKey: string, files?: { data: string; fileName: string; mimeType: string }[]) {
         const sessionId = convId.toString();
         const uploads = files?.map(f => ({
@@ -90,7 +156,32 @@ export class AIService{
             type: "file:full",
             mime: f.mimeType
         }));
-        const response = await axios.post(
+        let response;
+        if(model.startsWith("flowise")){
+            response = await axios.post(
+                flowiseAPI,
+                {
+                    question: content,
+                    streaming: true,
+                    overrideConfig: {
+                        modelName: model,
+                        sessionId: sessionId,
+                        groqApiKey: APIKey,
+                    },
+                    ...(uploads && uploads.length > 0 ? { uploads } : {}),
+                },
+                {
+                    responseType: "stream",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "text/event-stream",
+                        "Authorization": `Bearer ${flowiseAuthorizationAPI}`
+                    },
+                    ...this.getAxiosProxyConfig()
+                }
+            );
+        }
+        response = await axios.post(
             flowiseAPI,
             {
                 question: content,

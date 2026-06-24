@@ -1,4 +1,6 @@
-import path from "path";
+import mammoth from 'mammoth';
+import { createWorker } from 'tesseract.js';
+import { pdf } from 'pdf-to-img';
 
 export interface FileInput {
   data: string;       // full base64 data URL: "data:mime/type;base64,..."
@@ -144,4 +146,92 @@ export async function buildFileContext(
   }
 
   return parts.join("\n\n");
+}
+/**
+ * Modern OCR function using Tesseract.js (2026 single-line standard)
+ */
+async function ocrImageBuffer(imageBuffer: Buffer): Promise<string> {
+  const worker = await createWorker(['eng', 'vie']);
+  const { data: { text } } = await worker.recognize(imageBuffer);
+  await worker.terminate();
+  return text;
+}
+
+/**
+ * Universal Content Extractor (2026 Production Standard)
+ * Processes: .txt, .docx (text + embedded images OCR), direct images, and .pdf (scanned/text)
+ */
+export async function extractFileContent(fileBuffer: Buffer, fileExt: string): Promise<string> {
+  const ext = fileExt.toLowerCase();
+
+  // 1. Plain Text Files (.txt)
+  if (ext === '.txt') {
+    return fileBuffer.toString('utf-8');
+  }
+
+  // 2. Microsoft Word Files (.docx) - FULLY UPDATED FOR EMBEDDED IMAGES OCR
+  if (ext === '.docx') {
+    let embeddedImagesText = '';
+    let imageCounter = 1;
+
+    // We use convertToHtml because it allows us to intercept and process embedded images
+    const options = {
+      convertImage: mammoth.images.imgElement(async (image) => {
+        try {
+          // Read the embedded image directly into a Node.js Buffer
+          const imgBuffer = await image.readAsBuffer();
+          
+          // Perform OCR on this specific image embedded inside the Word document
+          const ocrText = await ocrImageBuffer(imgBuffer);
+          
+          if (ocrText.trim()) {
+            embeddedImagesText += `\n\n--- [OCR Text from Embedded Image #${imageCounter}] ---\n${ocrText.trim()}`;
+            imageCounter++;
+          }
+        } catch (ocrError) {
+          console.error(`Failed to OCR embedded image #${imageCounter} in DOCX:`, ocrError);
+        }
+        
+        // Return an empty object to avoid inserting giant base64 strings into HTML output
+        return { src: "" };
+      })
+    };
+
+    // Extract both standard text and trigger image OCR hook
+    const htmlResult = await mammoth.convertToHtml({ buffer: fileBuffer }, options);
+    const rawTextResult = await mammoth.extractRawText({ buffer: fileBuffer });
+    
+    // Combine standard text with the text extracted from embedded images
+    const combinedText = `${rawTextResult.value.trim()}${embeddedImagesText}`;
+    return combinedText.trim();
+  }
+
+  // 3. Direct Images (.png, .jpg, .jpeg, .webp)
+  const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
+  if (imageExtensions.includes(ext)) {
+    return await ocrImageBuffer(fileBuffer);
+  }
+
+  // 4. PDF Files (Converts pages to images, then OCR)
+  if (ext === '.pdf') {
+    let fullText = '';
+    let pageCounter = 1;
+
+    try {
+      const document = await pdf(fileBuffer, { scale: 2.0 });
+
+      for await (const pageImageBuffer of document) {
+        const pageText = await ocrImageBuffer(pageImageBuffer);
+        fullText += `--- Page ${pageCounter} ---\n${pageText}\n\n`;
+        pageCounter++;
+      }
+
+      return fullText.trim();
+    } catch (pdfError) {
+      console.error('Error processing PDF:', pdfError);
+      throw pdfError;
+    }
+  }
+
+  throw new Error(`Unsupported file extension: ${fileExt}`);
 }

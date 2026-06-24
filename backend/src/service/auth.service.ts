@@ -86,7 +86,6 @@ export class AuthService{
                     groupAccess: groupAccess,
                     active: existingUser.active,
                     groups: existingUser.groups.map((group: any) => ({id: group.id, groupName: group.groupName})),
-                    APIKey: existingUser.APIKey
                 }
             }
         }
@@ -101,7 +100,8 @@ export class AuthService{
             if(!comparedPassword){
                 throw new MyError("Current password is incorrect", 400);
             }
-
+        }else{
+            throw new MyError("Current password is required", 400);
         }
         if(formData.newPassword.length<6){
             throw new MyError("New password cannot be less than 6 characters", 403);
