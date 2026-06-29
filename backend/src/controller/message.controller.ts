@@ -30,11 +30,14 @@ export const promptToAI = async (
     console.log(req.body.files);
     await messageService.sendPrompt(conversationId, content, model, res, userId, files);
   } catch (error) {
-    // Headers already sent — can't use next(error) for a JSON error response.
-    // Write an SSE error event instead so the client knows something went wrong.
     console.error("promptToAI error:", error);
+        
     if (!res.writableEnded) {
-      res.write("data: [ERROR] Internal server error\n\n");
+      const statusCode = (error as MyError).status || 500;
+      const errorMessage = (error as MyError).message || "Internal server error";
+
+      // 🛠️ BẮN CHUỖI JSON ĐÃ ĐƯỢC ĐỊNH DẠNG ĐÚNG CHUẨN SSE (Bắt đầu bằng data:)
+      res.write(`data: ${JSON.stringify({ error: true, status: statusCode, message: errorMessage })}\n\n`);
       res.end();
     }
   }

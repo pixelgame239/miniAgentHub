@@ -33,7 +33,7 @@ export const fetchConversationDetail = async(req: Request, res: Response, next: 
 export const createNewConversation = async(req: Request, res: Response, next: NextFunction)=>{
     try{
         if(req.user){
-            const response = await conversationService.createNewConversation(req.user.id, req.body.title, req.body.model);
+            const response = await conversationService.createNewConversation(req.user.id, req.body.title);
             res.status(201).json(response);
             return;
         }

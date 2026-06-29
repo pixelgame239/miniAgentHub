@@ -72,7 +72,8 @@
     "model": "Model",
     "you": "You",
     "aiResponse": "AI Response",
-    "promptPlaceholder": "Enter a prompt here..."
+    "promptPlaceholder": "Enter a prompt here...",
+    "wrongConfiguration": "The AI model configuration is incorrect. Please check your settings."
   },
 
   "login": {

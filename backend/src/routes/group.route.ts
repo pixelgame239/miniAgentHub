@@ -1,6 +1,5 @@
 import express, { Router } from "express";
 import { addUserToGroup, createNewGroup, deleteGroup, fetchAllGroups, removeUserFromGroup, updateGroupData, viewGroupDetail } from "../controller/group.controller";
-import { checkAdmin } from "../middleware/admin.middleware";
 import { checkPermission, narrowCheckPermission } from "../utils/checkPermission";
 
 export const groupRouter:Router = express.Router();

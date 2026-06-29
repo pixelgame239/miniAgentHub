@@ -95,10 +95,10 @@ export class UserService{
         });
         return response;
     }
-    public async setAPIKey(userId: number, APIKey: string){
+    public async updateAIConfig(userId: number, config: { FlowiseAPIKey?: string; FlowiseURL?: string; DeepSeekAPIKey?: string; }){
         const response = await prisma.user.update({
             where: { id: userId },
-            data: { APIKey }
+            data: config
         });
         return response;
     }

@@ -1,6 +1,5 @@
 import express, { Router } from 'express';
 import { register, login, getMe, changePassword } from '../controller/auth.controller';
-import { checkAdmin } from '../middleware/admin.middleware';
 import { jwtVerify } from '../middleware/jwt.middleware';
 import { checkPermission, narrowCheckPermission } from '../utils/checkPermission';
 

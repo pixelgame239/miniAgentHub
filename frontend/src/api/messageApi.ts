@@ -56,8 +56,20 @@ export const streamPrompt = async (
     signal,
   });
 
-  if (!response.ok || !response.body) {
-    throw new Error(`Request failed: ${response.status}`);
+  if (!response.ok) {
+    const errorObj = new Error(`Request failed with status ${response.status}`) as any;
+    errorObj.status = response.status; 
+    console.log("Response not ok:", response.status, response.statusText);
+    try {
+      const errBody = await response.json();
+      if (errBody.message) errorObj.message = errBody.message;
+    } catch {
+    }
+    throw errorObj; 
+  }
+
+  if (!response.body) {
+    throw new Error("Response body is non-readable or null");
   }
 
   const reader = response.body.getReader();
@@ -85,10 +97,20 @@ export const streamPrompt = async (
           handlers.onDone(accumulated);
           return;
         }
-        if (payload.trim().startsWith("[ERROR]")) {
-          handlers.onError?.(new Error(payload.trim().replace("[ERROR]", "").trim()));
-          return;
-        }
+        try {
+            const parsedPayload = JSON.parse(payload.trim());
+            
+            // Nếu object nhận được có chứa flag error từ Backend gửi sang
+            if (parsedPayload && parsedPayload.error) {
+              const customError = new Error(parsedPayload.message || "Stream error") as any;
+              customError.status = parsedPayload.status || 500; // Lấy đúng mã 400 hoặc 500 từ Backend
+              
+              handlers.onError?.(customError); // Kích hoạt sự kiện Error ở Hook
+              return;
+            }
+          } catch {
+            // Nếu không parse được JSON, tức là payload này là chuỗi text chunk bình thường từ AI
+          }
 
         const text = extractChunkText(payload);
         if (text === "") continue; // skip non-token events (metadata, agentReasoning…)

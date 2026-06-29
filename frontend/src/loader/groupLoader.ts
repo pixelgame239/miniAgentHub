@@ -38,24 +38,25 @@ export const groupLoader:LoaderFunction = async():Promise<Group[]>=>{
 //         return [];
 //     }
 // }
-export const layoutLoader: LoaderFunction = async():Promise<{conversations: Conversation[], AIModels: AIModels[]}> => {
+export const layoutLoader: LoaderFunction = async():Promise<{conversations: Conversation[]}> => {
         // const userGroups = await getUserGroups();
-    const APIKey = localStorage.getItem("APIKey");
-    if(!APIKey){
-        console.error("API key not found in localStorage");
-        return {AIModels: [], conversations: []};
-    }
-    const { data: aiModels, error: aiModelsError } = await getGroqModels(APIKey);
+    // const APIKey = localStorage.getItem("APIKey");
+    // if(!APIKey){
+    //     console.error("API key not found in localStorage");
+    //     return {AIModels: [], conversations: []};
+    // }
+    // const { data: aiModels, error: aiModelsError } = await getGroqModels(APIKey);
     const { data: conversations, error: conversationsError } = await getConversations();
-    if(aiModels&&conversations){
-        return {AIModels: aiModels||[], conversations: conversations||[]};
-    }
-    if(aiModelsError){
-        console.error("Failed to fetch AI models:", aiModelsError);
-    }
+    // if(aiModels&&conversations){
+    //     return {AIModels: aiModels||[], conversations: conversations||[]};
+    // }
+    // if(aiModelsError){
+    //     console.error("Failed to fetch AI models:", aiModelsError);
+    // }
     if(conversationsError){
         console.error("Failed to fetch conversations:", conversationsError);
+        return { conversations: [] };
     }
-    return {AIModels: [], conversations: []};
+    return { conversations: conversations||[] };
 
 }

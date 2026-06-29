@@ -111,12 +111,12 @@ export const updatePhoneNumber = async(req:Request, res:Response, next:NextFunct
         next(error);
     }
 }
-export const setAPIKey = async(req:Request, res:Response, next:NextFunction)=>{
+export const updateAIConfig = async(req:Request, res:Response, next:NextFunction)=>{
     try{
         if(req.user){
             const userId = req.user.id;
-            const {APIKey} = req.body;
-            const response = await userService.setAPIKey(userId, APIKey);
+            const {FlowiseAPIKey, FlowiseURL, DeepSeekAPIKey} = req.body;
+            const response = await userService.updateAIConfig(userId, {FlowiseAPIKey, FlowiseURL, DeepSeekAPIKey});
             res.status(201).json(response);
             return;
         }

@@ -5,6 +5,7 @@ import path from "path";
 import crypto from "crypto";
 import fs from "fs";
 import { extractFileContent } from "../utils/fileExtractor";
+import { MyError } from "../utils/MyError";
 
 const aiService = new AIService();
 
@@ -89,6 +90,7 @@ export class MessageService {
         conversationId: convId, 
         type: "prompt",
         fileUrl: dbFileUrl,   // Đã chuyển đúng vị trí về đây
+        AIModel: model,
         fileName: dbFileName,
         fileType: dbFileType,
         fileContent: currentFileContent // Lưu nội dung bóc tách vào cột fileContent
@@ -101,12 +103,18 @@ export class MessageService {
 // }
     let stream;
     if(model.startsWith("flowise")){
-       const APIInformation = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { FlowiseAPIKey: true, FlowiseAPIUrl: true }
-      });
+      let APIInformation;
+      if(model.includes("custom")){
+        APIInformation = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { FlowiseAPIKey: true, FlowiseURL: true }
+        });
+      }
+      if(!APIInformation?.FlowiseAPIKey || !APIInformation?.FlowiseURL){
+        throw new MyError("Flowise API key or URL not found",400);
+      }
       const APIKey = APIInformation?.FlowiseAPIKey || "";
-      const APIUrl = APIInformation?.FlowiseAPIUrl || "";
+      const APIUrl = APIInformation?.FlowiseURL || "";
       const finalContent = currentFileContent ? `${content}\n\n[Attached File Data]:\n<file_content>\n${currentFileContent}\n</file_content>` : content;
       stream = await aiService.promptToFlowise(finalContent, model, APIKey, APIUrl, convId, files);
     }
@@ -126,7 +134,7 @@ export class MessageService {
         APIKey = APIInformation?.GroqAPIKey || "";
       }
       if(!APIKey) {
-        throw new Error("API key not found");
+        throw new MyError("API key not found", 400);
       }
       const previousContext = await prisma.message.findMany({
         where: { conversationId: convId },
@@ -196,7 +204,7 @@ export class MessageService {
 
           try {
             const parsed = JSON.parse(jsonStr);
-            console.log("[FLOWISE RAW]", JSON.stringify(parsed));
+            console.log("[RESPONSE RAW]", JSON.stringify(parsed));
             const text = this.extractText(parsed);
             if (!text) continue;
 
@@ -220,6 +228,7 @@ export class MessageService {
                 content: fullResponse,
                 conversationId: convId,
                 type: "response",
+                AIModel: model
               },
             });
           } catch (err) {

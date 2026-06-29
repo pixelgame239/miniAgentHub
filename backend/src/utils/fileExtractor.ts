@@ -1,6 +1,7 @@
 import mammoth from 'mammoth';
 import { createWorker } from 'tesseract.js';
 import { pdf } from 'pdf-to-img';
+import path from 'path';
 
 export interface FileInput {
   data: string;       // full base64 data URL: "data:mime/type;base64,..."
@@ -151,12 +152,21 @@ export async function buildFileContext(
  * Modern OCR function using Tesseract.js (2026 single-line standard)
  */
 async function ocrImageBuffer(imageBuffer: Buffer): Promise<string> {
-  const worker = await createWorker(['eng', 'vie']);
+  // Chỉ định đường dẫn tới thư mục lang-data chứa các file .traineddata của bạn
+  const langDataPath = path.join(process.cwd(), 'lang-data');
+
+  const worker = await createWorker(['eng', 'vie'], 1, {
+    langPath: langDataPath,
+    cacheMethod: 'none', // Không cố gắng check/fetch từ CDN mạng ngoài
+    // Nếu môi trường Node.js chặn hoàn toàn fetch, có thể cần ép worker chạy trực tiếp trên main thread
+    // bằng cách truyền thêm cấu hình nếu phiên bản tesseract.js của bạn hỗ trợ:
+    // workerPath: require.resolve('tesseract.js/src/worker-script/node/index.js')
+  });
+
   const { data: { text } } = await worker.recognize(imageBuffer);
   await worker.terminate();
   return text;
 }
-
 /**
  * Universal Content Extractor (2026 Production Standard)
  * Processes: .txt, .docx (text + embedded images OCR), direct images, and .pdf (scanned/text)

@@ -1,0 +1,217 @@
+/* ==========================================================================
+   API KEY MODAL OVERLAY STYLES
+   Sử dụng chuẩn hệ thống Design Tokens hỗ trợ đa giao diện (Light / Dark)
+   ========================================================================== */
+
+/* Lớp phủ bao toàn màn hình và làm mờ nền phía sau */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bg-overlay);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  z-index: 9999; /* Đảm bảo nổi lên trên các thành phần khác */
+}
+
+/* Khối hộp Card chứa form trong Modal */
+.card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  text-align: left;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--border-hover);
+}
+
+/* Phần Tiêu đề chính của Modal */
+.title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  line-height: 1.3;
+}
+
+/* Dòng mô tả ngắn phụ đề */
+.description {
+  margin: 0 0 2rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Cấu trúc từng cụm Form group (Label + Input) */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Ô Input nhập liệu */
+.input {
+  width: 100%;
+  height: 48px;
+  padding: 0 1rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:hover {
+  border-color: var(--border-hover);
+}
+
+.input:focus {
+  border-color: var(--dialog-accent, var(--border-focus));
+  background: var(--bg-surface);
+  box-shadow: 0 0 0 4px var(--dialog-accent-dim, var(--accent-focus));
+}
+
+/* Điều chỉnh viền ô Input thành màu đỏ khi kích hoạt trạng thái lỗi */
+.inputError {
+  border-color: var(--danger) !important;
+}
+
+.inputError:focus {
+  box-shadow: 0 0 0 4px var(--danger-dim) !important;
+}
+
+/* Cụm thanh điều hướng chứa nút bấm hành động (Hủy / OK) */
+.actionActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* Base style chung cho cả 2 nút bấm */
+.submitBtn,
+.cancelBtn {
+  height: 44px;
+  padding: 0 1.5rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+/* Nút bấm OK (Xác nhận - Accent Color) */
+.submitBtn {
+  background: var(--dialog-accent, var(--accent));
+  color: var(--btn-text-solid);
+  border: none;
+}
+
+.submitBtn:hover:not(:disabled) {
+  opacity: 0.95;
+  box-shadow: 0 8px 20px var(--dialog-accent-glow, var(--accent-glow));
+  transform: translateY(-1px);
+}
+
+/* Nút bấm Hủy (Cancel - Subtle Background) */
+.cancelBtn {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: var(--border-strong);
+  color: var(--text-heading);
+}
+
+.submitBtn:active:not(:disabled),
+.cancelBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Trạng thái Loading / Đang gửi thông tin */
+.submitBtn:disabled,
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Style cho dòng chữ thông báo lỗi */
+.errorMessage {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.8rem;
+  color: var(--danger);
+  text-align: left;
+  font-weight: 500;
+  line-height: 1.4;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Hiệu ứng mượt mà xuất hiện Modal / Error */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive tinh chỉnh cho màn hình di động nhỏ */
+@media (max-width: 480px) {
+  .card {
+    padding: 1.75rem;
+    border-radius: 16px;
+  }
+  
+  .title {
+    font-size: 1.35rem;
+  }
+
+  .actionActions {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+
+  .submitBtn,
+  .cancelBtn {
+    width: 100%;
+  }
+}

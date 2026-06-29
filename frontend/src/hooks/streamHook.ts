@@ -21,7 +21,7 @@ export const useSSEStream = (conversationId: number | undefined) => {
   const liveText = streamState?.liveText ?? "";
   const streaming = streamState?.streaming ?? false;
 
-  const start = useCallback(async (payload: ChatRequest) => {
+  const start = useCallback(async (payload: ChatRequest, onErrorCallback?: (status: number, msg?: string) => void) => {
     if (!payload.conversationId) return;
     const convId = payload.conversationId;
 
@@ -38,6 +38,19 @@ export const useSSEStream = (conversationId: number | undefined) => {
         payload,
         {
           onChunk: (fullAccumulated) => {
+            if (fullAccumulated.includes('"error":') || fullAccumulated.startsWith("data: [ERROR]")) {
+              try {
+                // Thử bóc tách message lỗi từ SSE gửi về nếu có dạng JSON
+                const cleanStr = fullAccumulated.replace("data:", "").trim();
+                const parsed = JSON.parse(cleanStr);
+                if (parsed.error) {
+                  onErrorCallback?.(500, parsed.error);
+                  return;
+                }
+              } catch {
+                onErrorCallback?.(500, "Server stream interrupted");
+              }
+            }
             // Write to this conversation's slot — works even when the tab
             // is not visible, because streamMap is in context not in the component
             setStreamState(convId, { liveText: fullAccumulated, streaming: true });
@@ -57,18 +70,23 @@ export const useSSEStream = (conversationId: number | undefined) => {
             }
           },
 
-          onError: (err) => {
-            console.error("Stream error:", err);
+          onError: (err:any) => {
             clearStreamState(convId);
-            abortMapRef.current.delete(convId);
+            const status = err.status || 500;
+            onErrorCallback?.(status, err.message);
           },
         },
         controller.signal
       );
     } catch (err: any) {
-      if (err.name !== "AbortError") console.error("streamPrompt threw:", err);
-      clearStreamState(convId);
-      abortMapRef.current.delete(convId);
+        clearStreamState(convId);
+        abortMapRef.current.delete(convId);
+        if (err.name !== "AbortError") {
+          console.error("streamPrompt threw:", err);
+          // Bắt lỗi HTTP status tại đây khi bắt đầu kết nối không thành công
+          const status = err.status || 500;
+          onErrorCallback?.(status, err.message);
+        }
     }
   }, [setStreamState, clearStreamState, appendMessage, abortMapRef]);
 

@@ -15,6 +15,7 @@ import { exportMessage } from "../api/exportApi";
 import { generateDocx, generatePdf} from "../utils/export";
 import ExportModal from "../component/ExportModal";
 import { SettingsIcon } from "./GroupsPage";
+import ApiKeyModal from "./ApiKeyModal";
 
 const ChatPage = () => {
   const { showError, showInfo, showToast } = useNotificationPopup();
@@ -37,7 +38,9 @@ const ChatPage = () => {
   const [inputText, setInputText] = useState("");
   const [selectedModel, setSelectedModel] = useState<{ id: string } | null>({ id: providers[0].models[0] });
   const [attachedFiles, setAttachedFiles] = useState<File|null>(null);
-
+  // ChatPage.tsx
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [targetConfigModel, setTargetConfigModel] = useState<string | undefined>(undefined);
   const [activeConvId, setActiveConvId] = useState<number | undefined>(
     currentConversation?.id
   );
@@ -128,45 +131,45 @@ const ChatPage = () => {
       showError(t("common.failed"));
       }
     }
-  async function optimizeBase64Image(base64Str: string, maxEdge: number = 1024, quality: number = 0.75): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.src = base64Str;
+//   async function optimizeBase64Image(base64Str: string, maxEdge: number = 1024, quality: number = 0.75): Promise<string> {
+//     return new Promise((resolve, reject) => {
+//         const img = new Image();
+//         img.src = base64Str;
 
-        img.onload = () => {
-            let width = img.width;
-            let height = img.height;
+//         img.onload = () => {
+//             let width = img.width;
+//             let height = img.height;
 
-            if (width > height) {
-                if (width > maxEdge) {
-                    height = Math.round((height * maxEdge) / width);
-                    width = maxEdge;
-                }
-            } else {
-                if (height > maxEdge) {
-                    width = Math.round((width * maxEdge) / height);
-                    height = maxEdge;
-                }
-            }
+//             if (width > height) {
+//                 if (width > maxEdge) {
+//                     height = Math.round((height * maxEdge) / width);
+//                     width = maxEdge;
+//                 }
+//             } else {
+//                 if (height > maxEdge) {
+//                     width = Math.round((width * maxEdge) / height);
+//                     height = maxEdge;
+//                 }
+//             }
 
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
+//             const canvas = document.createElement('canvas');
+//             canvas.width = width;
+//             canvas.height = height;
 
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-                return reject(new Error('Failed to acquire a 2D Canvas Context pipeline.'));
-            }
+//             const ctx = canvas.getContext('2d');
+//             if (!ctx) {
+//                 return reject(new Error('Failed to acquire a 2D Canvas Context pipeline.'));
+//             }
 
-            ctx.drawImage(img, 0, 0, width, height);
+//             ctx.drawImage(img, 0, 0, width, height);
 
-            const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-            resolve(compressedBase64);
-        };
+//             const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+//             resolve(compressedBase64);
+//         };
 
-        img.onerror = (error) => reject(error);
-    });
-}
+//         img.onerror = (error) => reject(error);
+//     });
+// }
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -185,7 +188,7 @@ const ChatPage = () => {
       let conversation: any = activeConversationRef.current;
 
       if (!conversation) {
-        const {data, error} = await createConversation(content, selectedModel.id);
+        const {data, error} = await createConversation(content);
         if (data) {
           setCurrentConversation(data);
           conversation = data;
@@ -221,7 +224,7 @@ const ChatPage = () => {
         let finalMime = fileToSend.type;
         let finalName = fileToSend.name;
         if(fileToSend.type.startsWith("image/")){
-          finalData = await optimizeBase64Image(base64Data, 600, 0.6);
+          // finalData = await optimizeBase64Image(base64Data, 600, 0.6);
           finalMime = "image/jpeg";
           finalName = fileToSend.name.replace(/\.[^/.]+$/, "") + ".jpg";
         }
@@ -231,11 +234,15 @@ const ChatPage = () => {
           mimeType: finalMime
         }]
       }
-      if(!localStorage.getItem("APIKey")){
-        showError(t("common.noAPIKey"));
-        return;
-      }
-      start({ conversationId: convId, content, model: conversation.AIModel, APIKey: localStorage.getItem("APIKey"), files: uploads});
+      start({ conversationId: convId, content, model: selectedModel.id, APIKey: localStorage.getItem("APIKey"), files: uploads},
+        (status, msg) => {
+          if (status === 400) {
+            showError(t("chat.wrongConfiguration"));
+          } else if(status === 500) {
+            showError(t("common.InternalError"));
+          }
+        }
+      );
 
     } catch (err) {
       showError(t("common.failed"));
@@ -394,7 +401,9 @@ const ChatPage = () => {
                       title={`Cấu hình ${provider.name}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        alert(`Mở cài đặt riêng cho: ${provider.name}`);
+                        setTargetConfigModel(provider.models[0]); 
+                        setIsApiKeyModalOpen(true); // Bật Modal Overlay lên
+                        setIsModelDropdownOpen(false); // Đóng menu dropdown lựa chọn lại
                       }}
                     >
                       <SettingsIcon />
@@ -571,6 +580,11 @@ const ChatPage = () => {
           onClose={() => setIsExportOpen(false)} 
           onExport={async (format: "docx" | "pdf") => await handleExportMessage(format)}
         />
+        <ApiKeyModal 
+        isOpen={isApiKeyModalOpen}
+        onClose={() => setIsApiKeyModalOpen(false)}
+        modelId={targetConfigModel}
+      />
     </div>
   );
 };

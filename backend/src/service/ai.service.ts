@@ -42,6 +42,26 @@ export class AIService{
             throw new MyError("Unexpected Error fetch model",500);
         }
     }
+    public async getDeepSeekModels(APIKey:string){
+        try{
+            const response = await axios.get(deepseekAPI, {
+                headers:{
+                    "Authorization": `Bearer ${APIKey}`,
+                },
+                ...this.getAxiosProxyConfig()
+            })
+            const data = await response.data;
+            const models = data.data
+            .filter((model: any) => !model.id.includes('whisper') && !model.id.includes('audio'))
+            .map((model: any) => {
+                return { id: model.id };
+            });
+            return models;
+        }catch(error){
+            console.error(error);
+            throw new MyError("Unexpected Error fetch model",500);
+        }
+    }
 
 // public async upsertFile(convId: string, file: { data: string; fileName: string; mimeType: string }) {
 //     // 1. Chuyển base64 ngược thành Buffer để gửi dạng Multipart Form Data
@@ -85,12 +105,12 @@ export class AIService{
 // }
     public async promptToFlowise(content: string, model: string, APIKey: string, APIUrl: string, convId: any, files?: { data: string; fileName: string; mimeType: string }[]) {
         const sessionId = convId.toString();
-        const uploads = files?.map(f => ({
-            data: f.data,        
-            name: f.fileName,
-            type: "file:full",
-            mime: f.mimeType
-        }));
+        // const uploads = files?.map(f => ({
+        //     data: f.data,        
+        //     name: f.fileName,
+        //     type: "file:full",
+        //     mime: f.mimeType
+        // }));
         let finalAPIURL = flowiseAPI;
         if(APIUrl && APIUrl.trim()!==""){
             finalAPIURL = APIUrl;
@@ -102,16 +122,20 @@ export class AIService{
                 question: content,
                 streaming: true,
                 overrideConfig: {
-                    modelName: model,
+                    // agentModelConfig: {
+                    //     modelName: model
+                    // },
                     sessionId: sessionId,
+                    messages: [{ role: "system", content: "You are a helpful AI assistant. Please converse with the User. If a message contains <file_content>, use that specific document context to answer the question accurately." }],
                 },
-                ...(uploads && uploads.length > 0 ? { uploads } : {}),
+                // ...(uploads && uploads.length > 0 ? { uploads } : {}),
             },
             {
+                responseType: "stream",
                 headers: {
                     "Content-Type": "application/json",
                     "Accept": "application/json",
-                    ...(APIKey ? { "Authorization": `Bearer ${APIKey}` } : {})
+                    ...(APIKey && APIKey.trim() !== "" ? { "Authorization": `Bearer ${APIKey}` } : {})
                 },
                 ...this.getAxiosProxyConfig()
             }
@@ -135,9 +159,9 @@ export class AIService{
                 messages: [{ role: "system", content: "You are a helpful AI assistant. Please converse with the User. If a message contains <file_content>, use that specific document context to answer the question accurately." }, { role: "user", content }],
                 streaming: true,
                 model: model,
-                response_format: "json_object",
             },
             {
+                responseType: "stream",
                 headers: {
                     "Content-Type": "application/json",
                     "Accept": "application/json",

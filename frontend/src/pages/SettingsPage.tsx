@@ -8,7 +8,7 @@ import UpdatePasswordModal from "../component/UpdatePasswordModal";
 import { changePassword } from "../api/authApi";
 import { useTranslation } from "react-i18next";
 import { deleteAllConversations } from "../api/conversationApi";
-import { deleteAccount, updateAddress, updatePhoneNumber, updateUserAPIKey } from "../api/userApi";
+import { deleteAccount, updateAddress, updatePhoneNumber } from "../api/userApi";
 import { useChat } from "../hooks/chatHook";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
 import { getGroqModels } from "../api/aiApi";
@@ -123,26 +123,26 @@ const SettingsPage: React.FC = () => {
     }
 
     // Xử lý riêng logic cập nhật API Key
-    if (editableField === "APIKey") {
-      setSavingField(true);
-      const {data, error} = await getGroqModels(nextValue);
-      if(data){
-        localStorage.setItem("APIKey", nextValue);
-        const { data:updateAPIKeyData, error:updateAPIKeyError } = await updateUserAPIKey(nextValue, user?.id);
-        if(updateAPIKeyError){
-          setPhoneError(t("common.failed"));
-          return;
-        }
-        showToast(t("common.success"), "success");
-        closeFieldDialog();
-        setSavingField(false);
-      }
-      if(error){
-        setPhoneError(t("initAPIKey.errorMessage"));
-        setSavingField(false);
-      }
-      return;
-    }
+    // if (editableField === "APIKey") {
+    //   setSavingField(true);
+    //   const {data, error} = await getGroqModels(nextValue);
+    //   if(data){
+    //     localStorage.setItem("APIKey", nextValue);
+    //     const { data:updateAPIKeyData, error:updateAPIKeyError } = await updateUserAPIKey(nextValue, user?.id);
+    //     if(updateAPIKeyError){
+    //       setPhoneError(t("common.failed"));
+    //       return;
+    //     }
+    //     showToast(t("common.success"), "success");
+    //     closeFieldDialog();
+    //     setSavingField(false);
+    //   }
+    //   if(error){
+    //     setPhoneError(t("initAPIKey.errorMessage"));
+    //     setSavingField(false);
+    //   }
+    //   return;
+    // }
 
     // Xử lý logic Địa chỉ
     setSavingField(true);
@@ -305,13 +305,13 @@ const SettingsPage: React.FC = () => {
           />
 
           {/* VÙNG THAY THẾ API KEY MỚI THÊM */}
-          <SettingRow
+          {/* <SettingRow
             icon={<CodeIcon />}
             title="Groq API Key"
             description={localStorage.getItem("APIKey") ? "••••••••••••" + localStorage.getItem("APIKey")?.slice(-4) : t("settings.noAPIKey")}
             actionLabel={t("settings.update")}
             onAction={() => openFieldDialog("APIKey")}
-          />
+          /> */}
 
           <SettingRow
             icon={<TrashIcon />}

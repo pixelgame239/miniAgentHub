@@ -8,11 +8,10 @@ export class ConversationService {
         }});
         return response;
     }
-    public async createNewConversation(id: number, title:string, model: string){
-        const response = await prisma.conversation.create({data:{title: title,userId:id,AIModel: model}, select:{
+    public async createNewConversation(id: number, title:string){
+        const response = await prisma.conversation.create({data:{title: title,userId:id}, select:{
             id: true,
             title: true,
-            AIModel:true,
             messages: {
                 orderBy: {
                     createdAt:"asc"

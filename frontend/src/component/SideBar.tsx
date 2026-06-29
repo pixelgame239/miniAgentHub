@@ -29,15 +29,13 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
-  const { AIModels, conversations } = useRouteLoaderData("layout-data-loader") as {
-    AIModels: AIModels[];
+  const { conversations } = useRouteLoaderData("layout-data-loader") as {
     conversations: Conversation[];
   };
   const { currentConversation, setCurrentConversation, groupConversations, setGroupConversations } =
     useChat();
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatTitle, setNewChatTitle] = useState("");
-  const [selectedModel, setSelectedModel] = useState<AIModels | null>(AIModels[0] ?? null);
   const { t } = useTranslation();
   const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -411,7 +409,7 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
       />
 
       {/* NEW CHAT MODAL */}
-      {showNewChatModal && (
+      {/* {showNewChatModal && (
         <div className={styles.modalOverlay} onClick={() => setShowNewChatModal(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
@@ -459,7 +457,7 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* FOOTER */}
       <div className={styles.sidebarFooter}>
