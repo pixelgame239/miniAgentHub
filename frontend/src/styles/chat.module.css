@@ -301,6 +301,8 @@
   font-size: 14px;
   line-height: 1.65;
   color: var(--text-primary);
+  white-space: pre-wrap; 
+  word-break: break-word;
 }
 
 .messageParagraph {
@@ -612,6 +614,8 @@
 
   .messageText {
     font-size: 13.5px; 
+    white-space: pre-wrap; 
+  word-break: break-word;
   }
 
   .chatImagePreview img {

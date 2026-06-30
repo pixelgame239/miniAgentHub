@@ -21,22 +21,18 @@ export class MessageService {
     if (parsed.choices && Array.isArray(parsed.choices) && parsed.choices.length > 0) {
       const delta = parsed.choices[0].delta;
       if (delta && typeof delta.content === "string") {
-        return delta.content; // Trả về chính xác token (giữ nguyên khoảng trắng gốc)
+        return delta.content; 
       }
       return "";
     }
 
-    // 2. Xử lý định dạng của Flowise dựa trên Event / Type
-    const eventType = parsed.event ?? parsed.type ?? "";
-    if (eventType && this.SKIP_EVENTS.has(eventType)) return "";
-
-    if (parsed.event === "token" || parsed.type === "token") {
+    // 2. Xử lý định dạng của Flowise dựa trên thuộc tính "event"
+    // CHỈ chấp nhận event là "token" để lấy dữ liệu chữ
+    if (parsed.event === "token") {
       return typeof parsed.data === "string" ? parsed.data : "";
     }
-    if (typeof parsed.token === "string") return parsed.token;
-    if (typeof parsed.text === "string") return parsed.text;
-    if (typeof parsed.data === "string") return parsed.data;
 
+    // Bỏ qua tất cả các event khác (nextAgentFlow, agentFlowExecutedData, metadata, end...)
     return "";
   }
 
@@ -75,15 +71,18 @@ export class MessageService {
         select: { OpenRouterAPIKey: true }
       });
       APIKey = APIInformation?.OpenRouterAPIKey || "";
+      if(!APIKey) {
+        throw new MyError("OpenRouter API key not found", 400);
+      }
     } else{
       const APIInformation = await prisma.user.findUnique({
         where: { id: userId },
         select: { GroqAPIKey: true }
       });
       APIKey = APIInformation?.GroqAPIKey || "";
-    }
-    if(!APIKey) {
-      throw new MyError("API key not found", 400);
+      if(!APIKey) {
+        throw new MyError("Groq API key not found", 400);
+      }
     }
     // 1. Xử lý file vật lý TRƯỚC khi gọi API và lưu DB
     if (primaryFile) {
@@ -201,17 +200,15 @@ export class MessageService {
       stream.on("data", (chunk: Buffer) => {
           buffer += chunk.toString("utf8");
           const lines = buffer.split("\n");
-          // Giữ lại dòng cuối cùng chưa hoàn chỉnh vào buffer
           buffer = lines.pop() ?? "";
 
           for (const line of lines) {
-            // Chỉ xử lý dòng bắt đầu bằng "data:" (chấp nhận có khoảng trắng phía trước nếu có)
             if (!line.match(/^\s*data:/)) continue;
 
-            // Loại bỏ tiền tố "data:" và khoảng trắng ngay sau nó một cách chính xác
             const jsonStr = line.replace(/^\s*data:\s*/, "");
             if (!jsonStr) continue;
 
+            // Lọc bỏ tín hiệu kết thúc thô từ OpenAI/Groq cũ
             if (jsonStr === "[DONE]") {
               continue;
             }
@@ -220,19 +217,23 @@ export class MessageService {
               const parsed = JSON.parse(jsonStr);
               console.log("[RESPONSE RAW]", JSON.stringify(parsed));
               
-              // Lấy text nguyên bản (đã được JSON.parse tự động unescape các ký tự \n, \t, \"...)
-              const text = this.extractText(parsed);
-              if (!text) continue;
+              // 1. Kiểm tra nếu là event kết thúc luồng của Flowise hoặc metadata, bỏ qua không gửi client
+              if (parsed.event === "end" || parsed.event === "agentFlowEvent") {
+                continue; 
+              }
 
-              // Làm sạch các ký tự NULL hoặc lỗi xuống dòng Carriage Return hệ thống hỏng
+              // 2. Trích xuất text (Hàm này giờ chỉ trả về text nếu event === "token")
+              const text = this.extractText(parsed);
+              if (!text) continue; // Nếu trích xuất ra rỗng (do trúng event INPROGRESS, Start...) thì bỏ qua
+
+              // 3. Chuẩn hóa dữ liệu sạch
               const normalized = text.replace(/\r/g, "").replace(/\u0000/g, "");
               
-              // Tích lũy vào câu trả lời tổng thể (Giữ nguyên khoảng trắng)
+              // Tích lũy vào câu trả lời tổng thể để lưu DB
               fullResponse += normalized;
 
-              if (!res.writableEnded) {
-                // Bắn trực tiếp token "sạch" xuống Client theo chuẩn Event-Stream 
-                // CHÚ Ý: Không dùng trim() ở đây để giữ nguyên cấu trúc khoảng trắng của AI
+              if (!res.writableEnded && normalized !== "") {
+                // Chỉ bắn các token text thực sự xuống Client
                 res.write(`data: ${normalized}\n\n`);
               }
             } catch (err) {

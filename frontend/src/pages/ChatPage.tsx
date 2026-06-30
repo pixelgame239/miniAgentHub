@@ -28,7 +28,7 @@ const ChatPage = () => {
   } = useChat();
 
   // Định nghĩa mảng providers cố định kèm danh sách model chính xác
-  const providers = [
+    const providers = [
     { id: "flowise", name: "Flowise", icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/flowise.png", models: ["flowise-default", "flowise-custom"] },
     { id: "openRouter", name: "OpenRouter", icon: "https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/openrouter-icon.png", models: ["poolside/laguna-xs.2:free", "google/gemma-4-26b-a4b-it:free"] },
     { id: "groq", name: "Groq", icon: "https://images.seeklogo.com/logo-png/60/1/groq-icon-logo-png_seeklogo-605779.png", models: ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "groq/compound"] },
@@ -36,7 +36,7 @@ const ChatPage = () => {
 
   // Khởi tạo state selectedModel bằng giá trị đầu tiên trong mảng models của provider đầu tiên ("flowise")
   const [inputText, setInputText] = useState("");
-  const [selectedModel, setSelectedModel] = useState<{ id: string } | null>({ id: providers[0].models[0] });
+  const [selectedModel, setSelectedModel] = useState<{ id: string }>({ id: providers[0].models[0] });
   const [attachedFiles, setAttachedFiles] = useState<File|null>(null);
   // ChatPage.tsx
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
@@ -50,14 +50,10 @@ const ChatPage = () => {
   const chatMessages = activeConvId ? (convMessagesMap.get(activeConvId) ?? []) : [];
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [activeProvider, setActiveProvider] = useState<string | null>("flowise");
-
+  useEffect(() => {
+      setSelectedModel({ id: providers[0].models[0] });
+  },[]);
   // Cập nhật hàm lấy icon động bằng cách duyệt qua mảng cấu hình providers cố định
-  const getActiveModelIcon = () => {
-    if (!selectedModel) return "🤖";
-    const matchedProvider = providers.find(p => p.models.includes(selectedModel.id));
-    return matchedProvider ? matchedProvider.icon : "🤖";
-  };
-
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exportID, setExportID] = useState<number | null>(null);
   const handleOpenExport = (messageId: number) => {
@@ -91,7 +87,7 @@ const ChatPage = () => {
   useEffect(() => {
     activeConversationRef.current = currentConversation;
     if (currentConversation) {
-      setSelectedModel({ id: currentConversation.AIModel });
+      // setSelectedModel({ id: currentConversation.AIModel });
       setActiveConvId(currentConversation.id);
       initConvMessages(currentConversation.id, currentConversation.messages ?? []);
     } else {
@@ -264,14 +260,10 @@ const ChatPage = () => {
         : part
     );
 
-  const formatMessageText = (text: string) =>
-    text.split("\n").map((line, i) => {
-      if (line.startsWith("* "))
-        return <li key={i} className={styles.messageBullet}>{formatInline(line.substring(2))}</li>;
-      if (line.trim() === "")
-        return <br key={i} />;
-      return <p key={i} className={styles.messageParagraph}>{formatInline(line)}</p>;
-    });
+// ChatPage.tsx
+    const formatMessageText = (text: string) => {
+      return formatInline(text);
+    };
 
   const formatMessageTime = (createdAt?: string | Date) => {
     if (!createdAt) return "";
@@ -363,14 +355,10 @@ const ChatPage = () => {
             onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
           >
             <span className={styles.modelIcon}>
-              {getActiveModelIcon()?.startsWith("http") ? (
-                <img src={getActiveModelIcon()} alt="Selected Model Icon" className={styles.providerImgIcon} />
-              ) : (
-                <span className={styles.defaultRobotIcon}>{getActiveModelIcon()}</span>
-              )}
+              <img src={providers.find((p) => p.models.includes(selectedModel?.id))?.icon} alt="Selected Model Icon" className={styles.providerImgIcon} />
             </span>
             <span className={styles.modelNameText}>
-              {selectedModel?.id || "Chọn Model"}
+              {selectedModel.id}
             </span>
             <span className={styles.modelDropdownChevron}>▾</span>
           </div>
@@ -509,8 +497,8 @@ const ChatPage = () => {
             <AIAvatar />
             <div className={styles.messageBubbleWrapper}>
               <div className={styles.messageBubble}>
-                <div className={styles.messageText}>
-                  {liveText
+                <div className={styles.messageText}> {/* Class này đã có pre-wrap */}
+                  {liveText.trim() !== "" 
                     ? formatMessageText(liveText)
                     : <span>●</span>
                   }

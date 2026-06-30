@@ -10,7 +10,6 @@ body,
 
 .chat-container {
   display: flex;
-  height: 100vh;
   /* Sử dụng svh trên thiết bị di động để tính toán chính xác chiều cao khi có thanh địa chỉ */
   height: 100svh; 
   background: var(--bg-primary);
@@ -169,25 +168,8 @@ body,
 
 /* Nút bấm Hamburger Menu mở Sidebar */
 .hamburger-btn {
-  display: none; /* Ẩn đi trên máy tính */
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  cursor: pointer;
-  z-index: 90; /* Nằm dưới Sidebar nhưng đè lên hội thoại chat */
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-.hamburger-btn {
   display: none; /* Mặc định ẩn ở Desktop */
-  position: fixed; /* Hoặc absolute tùy bạn, nhưng fixed sẽ giúp nút luôn ghim một chỗ */
+  position: absolute; /* Hoặc absolute tùy bạn, nhưng fixed sẽ giúp nút luôn ghim một chỗ */
   top: 12px;
   left: 12px;
   width: 40px;
@@ -236,12 +218,9 @@ body,
   .page-scroll-container {
     /* Thay vì dùng padding-top làm nhô khung, chúng ta dịch chuyển 
        nội dung bên trong bằng margin hoặc giữ padding nhưng phải có flex: 1 */
-    padding-top: 64px; 
+    /* padding-top: 64px;  */
     flex: 1;          /* Ép container tự co lại vừa khít màn hình sau khi trừ 64px */
   }
 
   /* Đẩy phần nội dung chat xuống một chút để không bị nút đè mất chữ nếu cần */
-  .page-scroll-container {
-    padding-top: 64px; 
-  }
 }

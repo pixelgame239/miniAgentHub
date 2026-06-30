@@ -38,22 +38,18 @@ export const useSSEStream = (conversationId: number | undefined) => {
         payload,
         {
           onChunk: (fullAccumulated) => {
-            if (fullAccumulated.includes('"error":') || fullAccumulated.startsWith("data: [ERROR]")) {
-              try {
-                // Thử bóc tách message lỗi từ SSE gửi về nếu có dạng JSON
-                const cleanStr = fullAccumulated.replace("data:", "").trim();
-                const parsed = JSON.parse(cleanStr);
-                if (parsed.error) {
-                  onErrorCallback?.(500, parsed.error);
-                  return;
-                }
-              } catch {
-                onErrorCallback?.(500, "Server stream interrupted");
+            if (fullAccumulated.startsWith("{") && fullAccumulated.includes('"error":')) {
+                try {
+                  const parsed = JSON.parse(fullAccumulated);
+                  if (parsed.error) {
+                    onErrorCallback?.(500, parsed.error);
+                    return;
+                  }
+                } catch {}
               }
-            }
-            // Write to this conversation's slot — works even when the tab
-            // is not visible, because streamMap is in context not in the component
-            setStreamState(convId, { liveText: fullAccumulated, streaming: true });
+              
+              // Đẩy nguyên vẹn chuỗi tích lũy (bao gồm cả khoảng trắng gốc) lên state
+              setStreamState(convId, { liveText: fullAccumulated, streaming: true });
           },
 
           onDone: (fullText) => {
