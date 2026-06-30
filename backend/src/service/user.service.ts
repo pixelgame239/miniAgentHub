@@ -95,7 +95,7 @@ export class UserService{
         });
         return response;
     }
-    public async updateAIConfig(userId: number, config: { FlowiseAPIKey?: string; FlowiseURL?: string; DeepSeekAPIKey?: string; }){
+    public async updateAIConfig(userId: number, config: { FlowiseAPIKey?: string; FlowiseURL?: string; GroqAPIKey?: string; OpenRouterAPIKey?: string; }){
         const response = await prisma.user.update({
             where: { id: userId },
             data: config

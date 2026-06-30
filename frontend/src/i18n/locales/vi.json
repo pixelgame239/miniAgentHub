@@ -209,5 +209,15 @@
     "grant": "Cho phép",
     "initializeGroup": "Khởi tạo nhóm",
     "updateGroup": "Cập nhật nhóm"
+  },
+  "APIKeyModal": {
+    "title": "Nhập API Key của bạn",
+    "description": "Để truy cập các tính năng AI, vui lòng nhập API Key của bạn bên dưới. Khóa này cần thiết để xác thực các yêu cầu của bạn và đảm bảo giao tiếp an toàn với các dịch vụ AI.",
+    "inputPlaceholder": "Nhập API Key của bạn ở đây...",
+    "submitButton": "Xác minh và lưu",
+    "errorMessage": "Vui lòng nhập một API Key hợp lệ.",
+    "flowiseDescription": "Nếu bạn đang sử dụng Flowise, vui lòng cung cấp URL Flowise thay vì API Key.",
+    "flowiseInputPlaceholder": "Nhập URL Flowise của bạn ở đây...",
+    "flowiseTitle": "Cấu hình Flowise"
   }
 }

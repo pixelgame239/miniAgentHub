@@ -30,7 +30,7 @@ const ChatPage = () => {
   // Định nghĩa mảng providers cố định kèm danh sách model chính xác
   const providers = [
     { id: "flowise", name: "Flowise", icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/flowise.png", models: ["flowise-default", "flowise-custom"] },
-    { id: "deepseek", name: "DeepSeek", icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Deepseek-logo-icon.svg/960px-Deepseek-logo-icon.svg.png", models: ["deepseek-v4-flash", "deepseek-v4-pro"] },
+    { id: "openRouter", name: "OpenRouter", icon: "https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/openrouter-icon.png", models: ["poolside/laguna-xs.2:free", "google/gemma-4-26b-a4b-it:free"] },
     { id: "groq", name: "Groq", icon: "https://images.seeklogo.com/logo-png/60/1/groq-icon-logo-png_seeklogo-605779.png", models: ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "groq/compound"] },
   ];
 
@@ -583,7 +583,7 @@ const ChatPage = () => {
         <ApiKeyModal 
         isOpen={isApiKeyModalOpen}
         onClose={() => setIsApiKeyModalOpen(false)}
-        modelId={targetConfigModel}
+        provider={providers.find(p => p.models.includes(targetConfigModel || ""))?.id || "flowise"}
       />
     </div>
   );

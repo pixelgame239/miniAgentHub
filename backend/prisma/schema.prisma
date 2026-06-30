@@ -24,7 +24,7 @@ model User {
   FlowiseURL  String?
   FlowiseAPIKey String?
   GroqAPIKey  String?
-  DeepSeekAPIKey String?
+  OpenRouterAPIKey String?
 }
 model Group {
   id            Int    @id @default(autoincrement())

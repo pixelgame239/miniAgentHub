@@ -21,7 +21,7 @@ export const getGroqModels = async(req:Request, res: Response, next:NextFunction
         next(error);
     }
 }
-export const getDeepSeekModels = async(req:Request, res: Response, next:NextFunction) =>{
+export const getOpenRouterModels = async(req:Request, res: Response, next:NextFunction) =>{
     try{
         const { APIKey } = req.body;
         if(!APIKey){
@@ -33,7 +33,7 @@ export const getDeepSeekModels = async(req:Request, res: Response, next:NextFunc
             res.status(400).json({message: "Empty API Key"});
             return;
         }
-        const response = await aiService.getDeepSeekModels(userAPIKey);
+        const response = await aiService.getOpenRouterModels(userAPIKey);
         res.status(200).json(response);
         return;
     }catch(error){

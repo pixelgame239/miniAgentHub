@@ -10,7 +10,7 @@ const proxyAgent = proxyUri ? new HttpsProxyAgent(proxyUri) : undefined;
 const flowiseAPI = process.env.FLOWISE_API||"";
 const flowiseUpsertApi= process.env.FLOWISE_UPSERT_API||"";
 const flowiseAuthorizationAPI = process.env.FLOWISE_AUTHORIZATION_API || "";
-const deepseekAPI = process.env.DEEPSEEK_API || "https://api.deepseek.com/chat/completions";
+const openrouterAPI = process.env.OPENROUTER_API || "https://openrouter.ai/api/v1/chat/completions";
 // const flowiseAPI = process.env.FLOWISE_BACKUP_API || "";
 export class AIService{
     private getAxiosProxyConfig(): AxiosRequestConfig {
@@ -24,39 +24,27 @@ export class AIService{
     }
     public async getGroqModels(APIKey:string){
         try{
-            const response = await axios.get(groqAPI, {
+            const response = await axios.get("https://api.groq.com/openai/v1/models", {
                 headers:{
                     "Authorization": `Bearer ${APIKey}`,
                 },
                 ...this.getAxiosProxyConfig()
             })
-            const data = await response.data;
-            const models = data.data
-            .filter((model: any) => !model.id.includes('whisper') && !model.id.includes('audio'))
-            .map((model: any) => {
-                return { id: model.id };
-            });
-            return models;
+            return true;
         }catch(error){
             console.error(error);
             throw new MyError("Unexpected Error fetch model",500);
         }
     }
-    public async getDeepSeekModels(APIKey:string){
+    public async getOpenRouterModels(APIKey:string){
         try{
-            const response = await axios.get(deepseekAPI, {
+            const response = await axios.get("https://openrouter.ai/api/v1/key", {
                 headers:{
                     "Authorization": `Bearer ${APIKey}`,
                 },
                 ...this.getAxiosProxyConfig()
             })
-            const data = await response.data;
-            const models = data.data
-            .filter((model: any) => !model.id.includes('whisper') && !model.id.includes('audio'))
-            .map((model: any) => {
-                return { id: model.id };
-            });
-            return models;
+            return true;
         }catch(error){
             console.error(error);
             throw new MyError("Unexpected Error fetch model",500);
@@ -103,7 +91,7 @@ export class AIService{
 //         throw new MyError("Unexpected Error during file upsert", 500);
 //     }
 // }
-    public async promptToFlowise(content: string, model: string, APIKey: string, APIUrl: string, convId: any, files?: { data: string; fileName: string; mimeType: string }[]) {
+    public async promptToFlowise(content: string, model: string, APIKey: string|null, APIUrl: string|null, convId: any, files?: { data: string; fileName: string; mimeType: string }[]) {
         const sessionId = convId.toString();
         // const uploads = files?.map(f => ({
         //     data: f.data,        
@@ -142,35 +130,53 @@ export class AIService{
         );
         return response.data;
     }
-    public async promptToAIProvider(content: string, model: string, APIKey: string) {
+    public async promptToAIProvider(content: string, model: string, APIKey: string|null) {
         let finalAPIURL;
-        if(!APIKey.trim()){
+        if(!APIKey||APIKey.trim()===""){
             throw new MyError("API Key is required", 400);
         }
-        if(model.startsWith("deepseek")){
-            finalAPIURL = deepseekAPI;
+        if(model.includes("free")){
+            finalAPIURL = openrouterAPI;
         }else{
             finalAPIURL = groqAPI;
         }
         let response;
+        try{
         response = await axios.post(
             finalAPIURL,
             {
-                messages: [{ role: "system", content: "You are a helpful AI assistant. Please converse with the User. If a message contains <file_content>, use that specific document context to answer the question accurately." }, { role: "user", content }],
-                streaming: true,
+                messages: [{ role: "system", content: "You are a helpful AI assistant. Please converse with the User. If a message contains <file_content>, use that specific document context to answer the question accurately.  " }, { role: "user", content }],
+                stream: true,
                 model: model,
             },
             {
                 responseType: "stream",
                 headers: {
                     "Content-Type": "application/json",
-                    "Accept": "application/json",
+                    "Accept": "text/event-stream",
                     "Authorization": `Bearer ${APIKey}`
                 },
                 ...this.getAxiosProxyConfig()
             }
         );
         return response.data;
+        // return response.data.choices[0].message.content;
+        }catch(error:any){
+            if (error.response && error.response.data) {
+                try {
+                    // Đọc buffer stream lỗi và parse thành JSON công khai
+                    const errorBuffer = error.response.data.read();
+                    if (errorBuffer) {
+                        const errorObj = JSON.parse(errorBuffer.toString());
+                        console.error("Chi tiết lỗi từ Provider:", errorObj);
+                        throw new MyError(errorObj.error?.message || "AI Provider Error", error.response.status);
+                    }
+                } catch (parseErr) {
+                    // Nếu không parse được JSON lỗi
+                }
+            }
+            throw new MyError(error.message || "Unexpected Error during AI provider prompt", error.response?.status || 500);
+        }
     }
     public async promptStream(content: string, model: string, convId: any, APIKey: string, files?: { data: string; fileName: string; mimeType: string }[]) {
         const sessionId = convId.toString();

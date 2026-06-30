@@ -1,37 +1,40 @@
 import { useEffect, useState, useRef } from "react";
-import styles from "../styles/apiKeyModal.module.css"; // Nhớ tạo file CSS mới hoặc cập nhật module CSS
+import styles from "../styles/apiKeyModal.module.css"; 
 import { useTranslation } from "react-i18next";
-import { getGroqModels } from "../api/aiApi"; // Giữ nguyên nếu bạn vẫn muốn verify qua Groq, hoặc tùy chỉnh theo model
 import { updateUserAIConfig } from "../api/userApi";
+import { useAuth } from "../hooks/authHook";
 
 interface ApiKeyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  modelId: string | undefined; // Nhận model đang được chọn từ ChatPage
+  provider: string; // Nhận chuẩn id: "flowise" | "openRouter" | "groq" từ ChatPage
 }
 
-const ApiKeyModal = ({ isOpen, onClose, modelId }: ApiKeyModalProps) => {
+const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
   const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth(); 
 
   const [apiKey, setApiKey] = useState("");
-  const [flowiseUrl, setFlowiseUrl] = useState(""); // State cho URL nếu là Flowise
+  const [flowiseUrl, setFlowiseUrl] = useState(""); 
   const [error, setError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Kiểm tra xem model hiện tại có phải Flowise không
-  const isFlowise = modelId?.startsWith("flowise") ?? false;
+  // So khớp logic chuẩn xác theo ID danh mục được truyền từ ChatPage
+  const isFlowise = provider === "flowise";
+  const isGroq = provider === "groq";
+  const isOpenRouter = provider === "openRouter";
 
-  // Reset dữ liệu mỗi khi mở Modal
+  // Reset dữ liệu mỗi khi mở/đóng Modal hoặc thay đổi modelId
   useEffect(() => {
     if (isOpen) {
       setApiKey("");
       setFlowiseUrl("");
       setError(false);
     }
-  }, [isOpen]);
+  }, [isOpen, provider]);
 
-  // Xử lý Behavior: Bấm ra ngoài vùng Modal để đóng
+  // Xử lý đóng Modal khi click ra ngoài
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
@@ -49,6 +52,19 @@ const ApiKeyModal = ({ isOpen, onClose, modelId }: ApiKeyModalProps) => {
 
   if (!isOpen) return null;
 
+  // Giữ nguyên logic hiển thị dựa trên flag phân tách rõ ràng
+  const getModalTitle = () => {
+    if (isFlowise) return t("APIKeyModal.flowiseTitle");
+    return t("APIKeyModal.title");
+  };
+
+  const getInputLabel = () => {
+    if (isFlowise) return "Flowise API Key";
+    if (isGroq) return "Groq API Key";
+    if (isOpenRouter) return "OpenRouter API Key";
+    return "API Key";
+  };
+
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!apiKey.trim()) return;
@@ -58,23 +74,18 @@ const ApiKeyModal = ({ isOpen, onClose, modelId }: ApiKeyModalProps) => {
     setError(false);
 
     try {
-      const userId = JSON.parse(localStorage.getItem("user") || "{}").id;
+      // Chuẩn bị payload: Map chính xác theo trạng thái boolean xử lý từ provider id
+      const configPayload = {
+        FlowiseAPIKey: isFlowise ? apiKey.trim() : undefined,
+        FlowiseURL: isFlowise ? flowiseUrl.trim() : undefined,
+        GroqAPIKey: isGroq ? apiKey.trim() : undefined,
+        OpenRouterAPIKey: isOpenRouter ? apiKey.trim() : undefined,
+      };
 
-      // Lưu trữ local tạm thời tùy logic dự án của bạn
-      localStorage.setItem("APIKey", apiKey.trim());
-      if (isFlowise) {
-        localStorage.setItem("FlowiseURL", flowiseUrl.trim());
-      }
-
-      // Gọi API cập nhật API Key / URL lên DB cho User
-      // Bạn có thể mở rộng hàm `updateUserAIConfig` để truyền thêm flowiseUrl nếu cần thiết
+      // Gọi API cập nhật cấu hình lên DB
       const { error: insertAPIKeyError } = await updateUserAIConfig(
-        {
-          FlowiseAPIKey: isFlowise ? apiKey.trim() : undefined,
-          FlowiseURL: isFlowise ? flowiseUrl.trim() : undefined,
-          DeepSeekAPIKey: !isFlowise ? apiKey.trim() : undefined
-        },
-        userId
+        configPayload,
+        user?.id
       );
 
       if (insertAPIKeyError) {
@@ -83,7 +94,7 @@ const ApiKeyModal = ({ isOpen, onClose, modelId }: ApiKeyModalProps) => {
         return;
       }
 
-      onClose(); // Đóng modal sau khi hoàn thành lưu cấu hình thành công
+      onClose(); 
     } catch (err) {
       console.error(err);
       setError(true);
@@ -95,25 +106,19 @@ const ApiKeyModal = ({ isOpen, onClose, modelId }: ApiKeyModalProps) => {
   return (
     <div className={styles.overlay}>
       <div className={styles.card} ref={modalRef}>
-        <h2 className={styles.title}>
-          {isFlowise ? "Cấu hình Flowise" : t("initAPIKey.title")}
-        </h2>
-        <p className={styles.description}>
-          {isFlowise ? `Vui lòng cung cấp thông tin kết nối cho mẫu: ${modelId}` : t("initAPIKey.description")}
-        </p>
+        <h2 className={styles.title}>{getModalTitle()}</h2>
 
         <form onSubmit={handleSubmit}>
-          {/* Trường nhập API Key (Luôn luôn có) */}
           <div className={styles.formGroup}>
             <label htmlFor="apiKey" className={styles.label}>
-              {isFlowise ? "Flowise API Key (Token)" : t("initAPIKey.inputPlaceholder")}
+              {getInputLabel()}
             </label>
             <input
               id="apiKey"
               type="password"
               required
               className={`${styles.input} ${error ? styles.inputError : ""}`}
-              placeholder="Nhập API Key tại đây..."
+              placeholder={t("APIKeyModal.inputPlaceholder")}
               value={apiKey}
               onChange={(e) => {
                 setApiKey(e.target.value);
@@ -122,18 +127,17 @@ const ApiKeyModal = ({ isOpen, onClose, modelId }: ApiKeyModalProps) => {
             />
           </div>
 
-          {/* Trường nhập Flowise URL bổ sung (Chỉ hiện khi modelId startswith 'flowise') */}
           {isFlowise && (
             <div className={styles.formGroup}>
               <label htmlFor="flowiseUrl" className={styles.label}>
-                Flowise API URL Endpoint
+                "Flowise Endpoint URL"
               </label>
               <input
                 id="flowiseUrl"
                 type="url"
                 required
+                placeholder={t("APIKeyModal.flowiseInputPlaceholder")}
                 className={`${styles.input} ${error ? styles.inputError : ""}`}
-                placeholder="https://your-flowise-instance.com/api/v1/prediction/..."
                 value={flowiseUrl}
                 onChange={(e) => {
                   setFlowiseUrl(e.target.value);
@@ -145,11 +149,10 @@ const ApiKeyModal = ({ isOpen, onClose, modelId }: ApiKeyModalProps) => {
 
           {error && (
             <p className={styles.errorMessage}>
-              {t("initAPIKey.errorMessage") || "Đã xảy ra lỗi, vui lòng kiểm tra lại dữ liệu."}
+              {t("APIKeyModal.errorMessage")}
             </p>
           )}
 
-          {/* Cụm nút hành động chuẩn Pop-up */}
           <div className={styles.actionActions}>
             <button 
               type="button" 
@@ -157,14 +160,14 @@ const ApiKeyModal = ({ isOpen, onClose, modelId }: ApiKeyModalProps) => {
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Hủy
+              {t("common.cancel")}
             </button>
             <button 
               type="submit" 
               className={styles.submitBtn}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Đang lưu..." : "OK"}
+              {isSubmitting ? t("common.loading") : "OK"}
             </button>
           </div>
         </form>

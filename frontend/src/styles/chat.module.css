@@ -235,6 +235,8 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  white-space: pre-wrap; 
+  word-break: break-word;
 }
 
 .messageRow {

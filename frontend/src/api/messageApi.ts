@@ -90,7 +90,7 @@ export const streamPrompt = async (
         if (!line.startsWith("data:")) continue;
 
         // ✅ Only strip the "data:" prefix — do NOT .trim() the value
-        const payload = line.slice("data:".length);
+        const payload = line.replace(/^data:\s?/, "");
         if (payload === "") continue;
 
         if (payload.trim() === "[DONE]") {

@@ -17,14 +17,26 @@ export class MessageService {
     "fileAnnotations", "artifact",
   ]);
   private extractText(parsed: any): string {
+    // 1. Xử lý định dạng chuẩn của AI Provider (Groq / OpenRouter / OpenAI)
+    if (parsed.choices && Array.isArray(parsed.choices) && parsed.choices.length > 0) {
+      const delta = parsed.choices[0].delta;
+      if (delta && typeof delta.content === "string") {
+        return delta.content; // Trả về chính xác token (giữ nguyên khoảng trắng gốc)
+      }
+      return "";
+    }
+
+    // 2. Xử lý định dạng của Flowise dựa trên Event / Type
     const eventType = parsed.event ?? parsed.type ?? "";
     if (eventType && this.SKIP_EVENTS.has(eventType)) return "";
+
     if (parsed.event === "token" || parsed.type === "token") {
       return typeof parsed.data === "string" ? parsed.data : "";
     }
     if (typeof parsed.token === "string") return parsed.token;
     if (typeof parsed.text === "string") return parsed.text;
     if (typeof parsed.data === "string") return parsed.data;
+
     return "";
   }
 
@@ -42,6 +54,37 @@ export class MessageService {
     let dbFileType: string | null = null;
     let currentFileContent: string | null = null; // Variable to hold the extracted file content
     const primaryFile = files && files.length > 0 ? files[0] : null;    
+    let APIKey: string|null = null;
+    let APIUrl: string|null = null;
+    if(model.startsWith("flowise")){
+      let APIInformation;
+      if(model.includes("custom")){
+        APIInformation = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { FlowiseAPIKey: true, FlowiseURL: true }
+        });
+        if(!APIInformation?.FlowiseAPIKey || !APIInformation?.FlowiseURL){
+          throw new MyError("Flowise API key or URL not found",400);
+        }
+      }
+      APIKey = APIInformation?.FlowiseAPIKey || "";
+      APIUrl = APIInformation?.FlowiseURL || "";
+    } else if(model.includes("free")){
+      const APIInformation = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { OpenRouterAPIKey: true }
+      });
+      APIKey = APIInformation?.OpenRouterAPIKey || "";
+    } else{
+      const APIInformation = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { GroqAPIKey: true }
+      });
+      APIKey = APIInformation?.GroqAPIKey || "";
+    }
+    if(!APIKey) {
+      throw new MyError("API key not found", 400);
+    }
     // 1. Xử lý file vật lý TRƯỚC khi gọi API và lưu DB
     if (primaryFile) {
       const base64Data = primaryFile.data.split(";base64,").pop();
@@ -103,39 +146,10 @@ export class MessageService {
 // }
     let stream;
     if(model.startsWith("flowise")){
-      let APIInformation;
-      if(model.includes("custom")){
-        APIInformation = await prisma.user.findUnique({
-          where: { id: userId },
-          select: { FlowiseAPIKey: true, FlowiseURL: true }
-        });
-      }
-      if(!APIInformation?.FlowiseAPIKey || !APIInformation?.FlowiseURL){
-        throw new MyError("Flowise API key or URL not found",400);
-      }
-      const APIKey = APIInformation?.FlowiseAPIKey || "";
-      const APIUrl = APIInformation?.FlowiseURL || "";
       const finalContent = currentFileContent ? `${content}\n\n[Attached File Data]:\n<file_content>\n${currentFileContent}\n</file_content>` : content;
       stream = await aiService.promptToFlowise(finalContent, model, APIKey, APIUrl, convId, files);
     }
     else {
-      let APIKey;
-      if(model.startsWith("deepseek")){
-          const APIInformation = await prisma.user.findUnique({
-          where: { id: userId },
-          select: { DeepSeekAPIKey: true }
-        });
-        APIKey = APIInformation?.DeepSeekAPIKey || "";
-      } else{
-        const APIInformation = await prisma.user.findUnique({
-          where: { id: userId },
-          select: { GroqAPIKey: true }
-        });
-        APIKey = APIInformation?.GroqAPIKey || "";
-      }
-      if(!APIKey) {
-        throw new MyError("API key not found", 400);
-      }
       const previousContext = await prisma.message.findMany({
         where: { conversationId: convId },
         orderBy: { createdAt: "asc" },
@@ -185,40 +199,47 @@ export class MessageService {
 
     return new Promise<void>((resolve) => {
       stream.on("data", (chunk: Buffer) => {
-        buffer += chunk.toString("utf8");
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
+          buffer += chunk.toString("utf8");
+          const lines = buffer.split("\n");
+          // Giữ lại dòng cuối cùng chưa hoàn chỉnh vào buffer
+          buffer = lines.pop() ?? "";
 
-        for (const line of lines) {
-          if (!line.startsWith("data:")) continue;
+          for (const line of lines) {
+            // Chỉ xử lý dòng bắt đầu bằng "data:" (chấp nhận có khoảng trắng phía trước nếu có)
+            if (!line.match(/^\s*data:/)) continue;
 
-          const jsonStr = line.replace("data:", "").trim();
-          if (!jsonStr) continue;
+            // Loại bỏ tiền tố "data:" và khoảng trắng ngay sau nó một cách chính xác
+            const jsonStr = line.replace(/^\s*data:\s*/, "");
+            if (!jsonStr) continue;
 
-          if (jsonStr === "[DONE]") {
-            // if (!res.writableEnded) {
-            //   res.write("data: [DONE]\n\n");
-            // }
-            continue;
-          }
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            console.log("[RESPONSE RAW]", JSON.stringify(parsed));
-            const text = this.extractText(parsed);
-            if (!text) continue;
-
-            const normalized = text.replace(/\r/g, "").replace(/\u0000/g, "");
-            fullResponse += normalized;
-
-            if (!res.writableEnded) {
-              res.write(`data: ${normalized}\n\n`);
+            if (jsonStr === "[DONE]") {
+              continue;
             }
-          } catch (err) {
-            console.error("JSON parse error:", err);
+
+            try {
+              const parsed = JSON.parse(jsonStr);
+              console.log("[RESPONSE RAW]", JSON.stringify(parsed));
+              
+              // Lấy text nguyên bản (đã được JSON.parse tự động unescape các ký tự \n, \t, \"...)
+              const text = this.extractText(parsed);
+              if (!text) continue;
+
+              // Làm sạch các ký tự NULL hoặc lỗi xuống dòng Carriage Return hệ thống hỏng
+              const normalized = text.replace(/\r/g, "").replace(/\u0000/g, "");
+              
+              // Tích lũy vào câu trả lời tổng thể (Giữ nguyên khoảng trắng)
+              fullResponse += normalized;
+
+              if (!res.writableEnded) {
+                // Bắn trực tiếp token "sạch" xuống Client theo chuẩn Event-Stream 
+                // CHÚ Ý: Không dùng trim() ở đây để giữ nguyên cấu trúc khoảng trắng của AI
+                res.write(`data: ${normalized}\n\n`);
+              }
+            } catch (err) {
+              console.error("JSON parse error on line:", jsonStr, err);
+            }
           }
-        }
-      });
+        });
 
       stream.on("end", async () => {
         if (fullResponse) {

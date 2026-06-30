@@ -27,7 +27,6 @@ export const promptToAI = async (
   res.flushHeaders();
 
   try {
-    console.log(req.body.files);
     await messageService.sendPrompt(conversationId, content, model, res, userId, files);
   } catch (error) {
     console.error("promptToAI error:", error);

@@ -210,5 +210,15 @@
     "initializeGroup": "Initialize Group",
     "updateGroup": "Update Group",
     "editDescription": "Update group information and manage members to maintain effective collaboration."
+  },
+  "APIKeyModal": {
+    "title": "Enter Your API Key",
+    "description": "To access the AI features, please enter your API key below. This key is required to authenticate your requests and ensure secure communication with the AI services.",
+    "inputPlaceholder": "Enter your API key here...",
+    "submitButton": "Verify and Save",
+    "errorMessage": "Please enter a valid API key.",
+    "flowiseDescription": "If you are using Flowise, please provide the Flowise URL instead of an API key.",
+    "flowiseInputPlaceholder": "Enter your Flowise URL here...",
+    "flowiseTitle": "Configure Flowise"
   }
 }

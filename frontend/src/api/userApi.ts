@@ -47,7 +47,7 @@ const updatePhoneNumberRequest = client.createRequest<{payload: {phoneNumber: st
     method:"PUT",
     auth:true
 });
-const updateUserAIConfigRequest = client.createRequest<{payload: {FlowiseAPIKey?: string, FlowiseURL?: string, DeepSeekAPIKey?: string}, params: {userId: string|number}}>()({
+const updateUserAIConfigRequest = client.createRequest<{payload: {FlowiseAPIKey?: string, FlowiseURL?: string, GroqAPIKey?: string, OpenRouterAPIKey?: string}, params: {userId: string|number}}>()({
     endpoint: "/users/updateAIConfig/:userId",
     method:"PUT",
     auth:true
@@ -76,6 +76,6 @@ export const updateAddress = async(address:string, userId:any)=>{
 export const updatePhoneNumber = async(phoneNumber:string, userId:any)=>{
     return await updatePhoneNumberRequest.send({payload: {phoneNumber: phoneNumber}, params: {userId}});
 }
-export const updateUserAIConfig = async(aiConfig: {FlowiseAPIKey?: string, FlowiseURL?: string, DeepSeekAPIKey?: string}, userId:any)=>{
+export const updateUserAIConfig = async(aiConfig: {FlowiseAPIKey?: string, FlowiseURL?: string, GroqAPIKey?: string, OpenRouterAPIKey?: string}, userId:any)=>{
     return await updateUserAIConfigRequest.send({payload: aiConfig, params: {userId}});
 }

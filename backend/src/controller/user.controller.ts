@@ -3,9 +3,10 @@ import { UserService } from "../service/user.service";
 import { MyError } from "../utils/MyError";
 import { checkPermission } from "../utils/checkPermission";
 import { error } from "node:console";
+import { AIService } from "../service/ai.service";
 
 const userService = new UserService();
-
+const aiService = new AIService();
 export const fetchAllUsers = async(req: Request, res: Response, next: NextFunction) =>{
     try{
         const users = await userService.getAllUsers();
@@ -115,8 +116,24 @@ export const updateAIConfig = async(req:Request, res:Response, next:NextFunction
     try{
         if(req.user){
             const userId = req.user.id;
-            const {FlowiseAPIKey, FlowiseURL, DeepSeekAPIKey} = req.body;
-            const response = await userService.updateAIConfig(userId, {FlowiseAPIKey, FlowiseURL, DeepSeekAPIKey});
+            const {FlowiseAPIKey, FlowiseURL, GroqAPIKey, OpenRouterAPIKey} = req.body;
+            if(GroqAPIKey){
+                try{
+                    await aiService.getGroqModels(GroqAPIKey);
+                }
+                catch(error){
+                    throw new MyError("Invalid Groq API Key", 400);
+                }
+            }
+            else if(OpenRouterAPIKey){
+                try{
+                    await aiService.getOpenRouterModels(OpenRouterAPIKey);
+                }
+                catch(error){
+                    throw new MyError("Invalid OpenRouter API Key", 400);
+                }
+            }
+            const response = await userService.updateAIConfig(userId, {FlowiseAPIKey, FlowiseURL, GroqAPIKey, OpenRouterAPIKey});
             res.status(201).json(response);
             return;
         }
