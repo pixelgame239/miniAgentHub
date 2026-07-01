@@ -11,10 +11,8 @@ import { deleteAllConversations } from "../api/conversationApi";
 import { deleteAccount, updateAddress, updatePhoneNumber } from "../api/userApi";
 import { useChat } from "../hooks/chatHook";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
-import { getGroqModels } from "../api/aiApi";
 
 type Theme = "dark" | "light";
-// Mở rộng thêm trường APIKey vào danh sách có thể chỉnh sửa trực tiếp qua Dialog
 type EditableField = "phoneNumber" | "address" | "APIKey";
 
 const isValidPhoneNumber = (value: string) => /^0\d{9,10}$/.test(value);
@@ -23,11 +21,15 @@ const SettingsPage: React.FC = () => {
   const [theme, setTheme] = useState<Theme>(localStorage.getItem("app-theme") as Theme || "dark");
   const [language, setLanguage] = useState(localStorage.getItem("app-lang")||"vi");
   const [openPasswordModal, setOpenPasswordModal] = useState(false);
-  const [passwordError, setPasswordError] = useState(""); // State lưu lỗi mật khẩu cũ sai
+  const [passwordError, setPasswordError] = useState(""); 
   
   const [editableField, setEditableField] = useState<EditableField | null>(null);
   const [editableValue, setEditableValue] = useState("");
-  const [phoneError, setPhoneError] = useState(""); // State báo lỗi inline cho riêng số điện thoại
+  
+  // QUẢN LÝ LỖI CHUẨN UX: State chứa lỗi và State đánh dấu người dùng đã chạm vào input chưa
+  const [fieldError, setFieldError] = useState(""); 
+  const [isFieldTouched, setIsFieldTouched] = useState(false);
+  
   const [savingField, setSavingField] = useState(false);
   
   const [dialogType, setDialogType] = useState<"clear-history" | "delete-account" | null>(null);
@@ -64,7 +66,8 @@ const SettingsPage: React.FC = () => {
 
   const openFieldDialog = (field: EditableField) => {
     setEditableField(field);
-    setPhoneError(""); // Reset lỗi cũ
+    setFieldError(""); 
+    setIsFieldTouched(false); // Reset trạng thái chưa chạm khi mở dialog mới
     if (field === "phoneNumber") setEditableValue(user?.phoneNumber ?? "");
     else if (field === "address") setEditableValue(user?.address ?? "");
     else if (field === "APIKey") setEditableValue("");
@@ -73,7 +76,8 @@ const SettingsPage: React.FC = () => {
   const closeFieldDialog = () => {
     setEditableField(null);
     setEditableValue("");
-    setPhoneError("");
+    setFieldError("");
+    setIsFieldTouched(false);
     setSavingField(false);
   };
 
@@ -82,76 +86,74 @@ const SettingsPage: React.FC = () => {
     setDialogType(null);
   };
 
-  const handleSaveField = async () => {
-    if (!editableField) return;
+  // REAL-TIME VALIDATION: Tự động chạy validate mỗi khi giá trị input thay đổi
+  useEffect(() => {
+    if (!editableField || !isFieldTouched) return;
 
-    const nextValue = editableValue.trim();
+    const value = editableValue.trim();
 
-    if (!nextValue) {
-      setPhoneError(t("settings.emptyError"));
+    // 1. Kiểm tra rỗng chung cho các trường
+    if (!value) {
+      setFieldError(t("settings.emptyError"));
       return;
     }
 
-    // Xử lý riêng logic Số điện thoại
+    // 2. Validate riêng biệt theo từng loại trường dữ liệu
     if (editableField === "phoneNumber") {
-      const normalizedPhoneNumber = nextValue.replace(/\s+/g, "");
-
-      if (!isValidPhoneNumber(normalizedPhoneNumber)) {
-        setPhoneError(t("settings.invalidPhone")); // Đưa lỗi vào dòng chữ đỏ inline dưới input
-        return;
+      const normalizedPhone = value.replace(/\s+/g, "");
+      if (!isValidPhoneNumber(normalizedPhone)) {
+        setFieldError(t("settings.invalidPhone"));
+      } else {
+        setFieldError(""); // Hợp lệ thì xóa chữ đỏ ngay lập tức
       }
+    } else {
+      // Trường địa chỉ hoặc các trường khác chỉ cần không rỗng là hợp lệ
+      setFieldError("");
+    }
+  }, [editableValue, editableField, isFieldTouched, t]);
 
-      setSavingField(true);
-      try {
-        if (!user?.id) return;
+  const handleSaveField = async () => {
+    if (!editableField) return;
+
+    // Kích hoạt trạng thái touched để hiển thị lỗi ngay nếu bấm lưu khi chưa chạm
+    setIsFieldTouched(true); 
+    const nextValue = editableValue.trim();
+
+    // Re-validate nhanh trước khi call API
+    if (!nextValue) {
+      setFieldError(t("settings.emptyError"));
+      return;
+    }
+    if (editableField === "phoneNumber" && !isValidPhoneNumber(nextValue.replace(/\s+/g, ""))) {
+      setFieldError(t("settings.invalidPhone"));
+      return;
+    }
+
+    setSavingField(true);
+    try {
+      if (!user?.id) return;
+
+      // Xử lý Số điện thoại
+      if (editableField === "phoneNumber") {
+        const normalizedPhoneNumber = nextValue.replace(/\s+/g, "");
         const { data, error } = await updatePhoneNumber(normalizedPhoneNumber, user.id);
         if (error) {
-          setPhoneError(t("common.failed"));
+          setFieldError(t("common.failed"));
           return;
         }
         if (data) {
           setUser((prev) => (prev ? { ...prev, phoneNumber: normalizedPhoneNumber } : prev));
-          showToast(t("common.success"), "success"); // Lưu thành công bắn Toast thông báo nhẹ nhàng
+          showToast(t("common.success"), "success");
           closeFieldDialog();
         }
-      } catch (error) {
-        setPhoneError(t("common.failed"));
-      } finally {
-        setSavingField(false);
+        return;
       }
-      return;
-    }
 
-    // Xử lý riêng logic cập nhật API Key
-    // if (editableField === "APIKey") {
-    //   setSavingField(true);
-    //   const {data, error} = await getGroqModels(nextValue);
-    //   if(data){
-    //     localStorage.setItem("APIKey", nextValue);
-    //     const { data:updateAPIKeyData, error:updateAPIKeyError } = await updateUserAPIKey(nextValue, user?.id);
-    //     if(updateAPIKeyError){
-    //       setPhoneError(t("common.failed"));
-    //       return;
-    //     }
-    //     showToast(t("common.success"), "success");
-    //     closeFieldDialog();
-    //     setSavingField(false);
-    //   }
-    //   if(error){
-    //     setPhoneError(t("initAPIKey.errorMessage"));
-    //     setSavingField(false);
-    //   }
-    //   return;
-    // }
-
-    // Xử lý logic Địa chỉ
-    setSavingField(true);
-    try {
-      if (!user?.id) return;
+      // Xử lý Địa chỉ
       if (editableField === "address") {
         const { data, error } = await updateAddress(nextValue, user.id);
         if (error) {
-          setPhoneError(t("common.failed"));
+          setFieldError(t("common.failed"));
           return;
         }
         if (data) {
@@ -161,7 +163,7 @@ const SettingsPage: React.FC = () => {
         }
       }
     } catch (error) {
-      setPhoneError(t("common.failed"));
+      setFieldError(t("common.failed"));
     } finally {
       setSavingField(false);
     }
@@ -299,19 +301,10 @@ const SettingsPage: React.FC = () => {
             description={t("settings.passwordDescription")}
             actionLabel={t("settings.update")}
             onAction={() => {
-              setPasswordError(""); // Reset lỗi mật khẩu cũ trước khi mở
+              setPasswordError(""); 
               setOpenPasswordModal(true);
             }}
           />
-
-          {/* VÙNG THAY THẾ API KEY MỚI THÊM */}
-          {/* <SettingRow
-            icon={<CodeIcon />}
-            title="Groq API Key"
-            description={localStorage.getItem("APIKey") ? "••••••••••••" + localStorage.getItem("APIKey")?.slice(-4) : t("settings.noAPIKey")}
-            actionLabel={t("settings.update")}
-            onAction={() => openFieldDialog("APIKey")}
-          /> */}
 
           <SettingRow
             icon={<TrashIcon />}
@@ -362,18 +355,17 @@ const SettingsPage: React.FC = () => {
                   {editableField === "APIKey" && t("settings.updateAPIKey")}
                 </label>
                 <input
-                  className={`${styles["dialog-input"]} ${phoneError ? styles["input-error"] : ""}`}
+                  className={`${styles["dialog-input"]} ${fieldError ? styles["input-error"] : ""}`}
                   value={editableValue}
                   type={editableField === "APIKey" ? "password" : "text"}
                   onChange={(event) => {
                     setEditableValue(event.target.value);
-                    if (phoneError) setPhoneError(""); // User gõ lại thì xóa chữ đỏ báo lỗi mượt mà chuẩn UX
+                    setIsFieldTouched(true); // Đánh dấu là người dùng đã bắt đầu tương tác để kích hoạt real-time validate
                   }}
                   placeholder={editableField === "APIKey" ? t("initAPIKey.inputPlaceholder") : ""}
-                  required
                 />
-                {/* DÒNG BÁO LỖI CHỮ ĐỎ INLINE DƯỚI INPUT DIALOG */}
-                {phoneError && <span className={styles["dialog-error-msg"]}>{phoneError}</span>}
+                {/* HIỂN THỊ LỖI CHỮ ĐỎ REAL-TIME */}
+                {fieldError && <span className={styles["dialog-error-msg"]}>{fieldError}</span>}
               </div>
             </div>
 
@@ -381,7 +373,11 @@ const SettingsPage: React.FC = () => {
               <button className={styles["dialog-cancel"]} onClick={closeFieldDialog}>
                 {t("common.cancel")}
               </button>
-              <button className={styles["dialog-save-btn"]} onClick={handleSaveField} disabled={savingField}>
+              <button 
+                className={styles["dialog-save-btn"]} 
+                onClick={handleSaveField} 
+                disabled={savingField || !!fieldError} // Vô hiệu hóa nút Lưu nếu đang tải hoặc đang có lỗi validate
+              >
                 {savingField ? "Saving..." : t("settings.update")}
               </button>
             </div>
@@ -424,11 +420,10 @@ const SettingsPage: React.FC = () => {
         onSubmit={async (formData) => {
           const { data, error } = await changePassword(formData);
           if (data) {
-            showToast(t("password.successChange"), "success"); // Thành công chỉ dùng Toast thông báo, tắt modal
+            showToast(t("password.successChange"), "success");
             setOpenPasswordModal(false);
           }
           if (error) {
-            // Nếu API báo mật khẩu cũ sai, set chữ đỏ ngay dưới input của modal
             setPasswordError(t("password.wrongOldPassword"));
           }
         }}
@@ -436,6 +431,9 @@ const SettingsPage: React.FC = () => {
     </div>
   );
 };
+
+// ... Các component Icon và SettingRow giữ nguyên không thay đổi
+
 function CodeIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

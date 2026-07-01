@@ -174,7 +174,7 @@ const ChatPage = () => {
   };
 
   const sendMessage = async () => {
-    if (!inputText.trim() || !selectedModel) return;
+    if (streaming ||!inputText.trim() || !selectedModel) return;
 
     const content = inputText;
     const fileToSend= attachedFiles;
@@ -477,11 +477,12 @@ const ChatPage = () => {
 
               {msg.type !== "prompt" && (
                 <div className={styles.modelMeta}>
-                  <span className={styles.modelMetaName}>{selectedModel?.id?.toUpperCase()}</span>
+                  <span className={styles.modelMetaName}>{msg.AIModel}</span>
                   <span className={styles.modelMetaDot}>•</span>
                   <span className={styles.modelMetaTime}>
                     {msg.createdAt ? formatMessageTime(msg.createdAt) : ""}
                   </span>
+                  {!msg.isCompleted && <span className={styles.modelMetaDot}>{t("chat.abortChat")}</span>}
                   <div className={styles.modelActions}>
                     <button className={styles.actionBtn} title={t("common.copy")} onClick={() => navigator.clipboard?.writeText(msg.content)}><CopyIcon /></button>
                     <button className={styles.actionBtn} title={t("common.share")} onClick={async() => await handleShareMessage(msg.id as number)}><ShareIcon /></button>
@@ -554,11 +555,13 @@ const ChatPage = () => {
             onKeyDown={handleKeyDown}
             className={styles.chatInput}
             placeholder={t("chat.promptPlaceholder")}
+            disabled={streaming}
           />
 
           {streaming
             ? <button className={styles.sendBtn} onClick={abort}><StopIcon /></button>
-            : <button className={styles.sendBtn} onClick={sendMessage}><SendIcon /></button>
+            : <button className={styles.sendBtn} onClick={sendMessage}
+            disabled={!inputText.trim()}><SendIcon /></button>
           }
         </div>
         <p className={styles.disclaimer}>Neural Hub may display inaccurate info, so double-check its responses.</p>

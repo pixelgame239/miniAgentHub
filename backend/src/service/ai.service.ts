@@ -91,7 +91,7 @@ export class AIService{
 //         throw new MyError("Unexpected Error during file upsert", 500);
 //     }
 // }
-    public async promptToFlowise(content: string, model: string, APIKey: string|null, APIUrl: string|null, convId: any, files?: { data: string; fileName: string; mimeType: string }[]) {
+    public async promptToFlowise(content: string, APIKey: string|null, APIUrl: string|null, convId: any, signal?: AbortSignal) {
         const sessionId = convId.toString();
         // const uploads = files?.map(f => ({
         //     data: f.data,        
@@ -104,6 +104,18 @@ export class AIService{
             finalAPIURL = APIUrl;
         }
         let response;
+        const axiosConfig: AxiosRequestConfig = {
+            responseType: "stream",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                ...(APIKey && APIKey.trim() !== "" ? { "Authorization": `Bearer ${APIKey}` } : {})
+            },
+            ...this.getAxiosProxyConfig()
+        };
+        if(signal) {
+            axiosConfig.signal = signal;
+        }
         response = await axios.post(
             finalAPIURL,
             {
@@ -118,19 +130,11 @@ export class AIService{
                 },
                 // ...(uploads && uploads.length > 0 ? { uploads } : {}),
             },
-            {
-                responseType: "stream",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    ...(APIKey && APIKey.trim() !== "" ? { "Authorization": `Bearer ${APIKey}` } : {})
-                },
-                ...this.getAxiosProxyConfig()
-            }
+            axiosConfig
         );
         return response.data;
     }
-    public async promptToAIProvider(content: string, model: string, APIKey: string|null) {
+    public async promptToAIProvider(content: string, model: string, APIKey: string|null, signal?: AbortSignal) {
         let finalAPIURL;
         if(!APIKey||APIKey.trim()===""){
             throw new MyError("API Key is required", 400);
@@ -141,6 +145,19 @@ export class AIService{
             finalAPIURL = groqAPI;
         }
         let response;
+        const axiosConfig: AxiosRequestConfig = {
+            responseType: "stream",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/event-stream",
+                "Authorization": `Bearer ${APIKey}`
+            },
+            ...this.getAxiosProxyConfig()
+        };
+
+        if (signal) {
+            axiosConfig.signal = signal;
+        }
         try{
         response = await axios.post(
             finalAPIURL,
@@ -149,19 +166,14 @@ export class AIService{
                 stream: true,
                 model: model,
             },
-            {
-                responseType: "stream",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "text/event-stream",
-                    "Authorization": `Bearer ${APIKey}`
-                },
-                ...this.getAxiosProxyConfig()
-            }
+            axiosConfig
         );
         return response.data;
         // return response.data.choices[0].message.content;
         }catch(error:any){
+            if (axios.isCancel(error)) {
+                throw new MyError("Request aborted by user", 499);
+            }
             if (error.response && error.response.data) {
                 try {
                     // Đọc buffer stream lỗi và parse thành JSON công khai
@@ -172,7 +184,7 @@ export class AIService{
                         throw new MyError(errorObj.error?.message || "AI Provider Error", error.response.status);
                     }
                 } catch (parseErr) {
-                    // Nếu không parse được JSON lỗi
+                    throw new MyError("Unexpected Error during AI provider prompt",500);
                 }
             }
             throw new MyError(error.message || "Unexpected Error during AI provider prompt", error.response?.status || 500);

@@ -12,14 +12,24 @@ const LoginPage = () => {
   const nav = useNavigate();
   const id = useId(); 
   const { user, setUser } = useAuth();
+  const { t } = useTranslation();
+  const { popup, closePopup, showError } = useNotificationPopup();
   
+  // States dữ liệu form
+  const [formData, setFormData] = useState({
+    email: "",
+    userPassword: "",
+  });
+  const [visible, setVisible] = useState(false);
+
   // States quản lý lỗi tại dòng input
   const [emailError, setEmailError] = useState("");
   const [loginError, setLoginError] = useState(""); // Lỗi sai mật khẩu hoặc tài khoản không tồn tại
-
-  const { popup, closePopup, showError } = useNotificationPopup();
   
-  const validateEmail = (email: string) => {
+  // State theo dõi xem người dùng đã tương tác (gõ) vào ô Email chưa
+  const [isEmailTouched, setIsEmailTouched] = useState(false);
+  
+  const validateEmailFormat = (email: string) => {
     return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/.test(email);
   };
 
@@ -34,20 +44,26 @@ const LoginPage = () => {
     }
   }, [user, nav]);
 
-  const [formData, setFormData] = useState({
-    email: "",
-    userPassword: "",
-  });
-  const [visible, setVisible] = useState(false);
+  // REAL-TIME VALIDATION: Tự động bắt lỗi Email khi dữ liệu thay đổi
+  useEffect(() => {
+    if (!isEmailTouched) return;
+
+    if (!formData.email.trim()) {
+      setEmailError(t("login.emailRequired") || "Email không được để trống"); // Fallback text phòng khi thiếu key i18n
+    } else if (!validateEmailFormat(formData.email)) {
+      setEmailError(t("login.invalidEmail"));
+    } else {
+      setEmailError(""); // Xóa chữ đỏ báo lỗi ngay lập tức khi hợp lệ
+    }
+  }, [formData.email, isEmailTouched, t]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     
-    // Khi người dùng gõ lại dữ liệu, tự động xóa thông báo lỗi đi
     if (name === "email") {
-      setEmailError("");
-      setLoginError("");
+      setIsEmailTouched(true); // Đánh dấu người dùng đã gõ vào ô email
+      setLoginError("");       // Xóa lỗi đăng nhập từ backend khi sửa thông tin
     }
     if (name === "userPassword") {
       setLoginError("");
@@ -55,16 +71,15 @@ const LoginPage = () => {
   };
 
   const togglePasswordVisibility = () => setVisible((prev) => !prev);
-  const { t } = useTranslation();
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     
-    // Reset toàn bộ lỗi trước khi submit
-    setEmailError("");
-    setLoginError("");
+    // Đánh dấu đã touched tất cả để kích hoạt validate nếu bấm submit vội
+    setIsEmailTouched(true);
 
-    if (!validateEmail(formData.email)) {
+    // Kiểm tra nhanh lại định dạng email lần cuối trước khi gửi request
+    if (!validateEmailFormat(formData.email)) {
       setEmailError(t("login.invalidEmail"));
       return;
     }
@@ -78,7 +93,7 @@ const LoginPage = () => {
       }
       nav("/chat");
     } else if (error) {
-      // Thay vì hiển thị popup chung chung, hiển thị lỗi ngay dưới ô Password
+      // Nhận phản hồi lỗi từ backend, map thẳng vào ô password
       setLoginError(t("login.error")); 
     } else {
       showError(t("common.InternalError"));
@@ -114,12 +129,11 @@ const LoginPage = () => {
               <input
                 id={`${id}-email`}
                 name="email"
-                type="email"
+                type="text" // Chuyển sang text để tự custom validate bằng regex, tránh tooltip mặc định của trình duyệt đè lên giao diện
                 value={formData.email}
                 onChange={handleChange}
                 className={`${styles["form-input"]} ${(emailError || loginError) ? styles["input-error"] : ""}`}
                 placeholder="name@company.com"
-                required
               />
               <div className={styles["input-icon"]}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -128,7 +142,6 @@ const LoginPage = () => {
                 </svg>
               </div>
             </div>
-            {/* Đưa lỗi ra ngoài input-wrapper để tránh xung đột với Flexbox ngang */}
             {emailError && (
               <span className={styles["error-message"]}>
                 {emailError}
@@ -150,7 +163,6 @@ const LoginPage = () => {
                 onChange={handleChange}
                 className={`${styles["form-input"]} ${loginError ? styles["input-error"] : ""}`}
                 placeholder={t("login.enterPassword")}
-                required
               />
               <button
                 type="button"
@@ -164,7 +176,6 @@ const LoginPage = () => {
                 </svg>
               </button>
             </div>
-            {/* Hiển thị lỗi sai tài khoản / mật khẩu ngay dưới trường Password */}
             {loginError && (
               <span className={styles["error-message"]}>
                 {loginError}
@@ -172,7 +183,11 @@ const LoginPage = () => {
             )}
           </div>
 
-          <button type="submit" className={styles["login-button"]}>
+          <button 
+            type="submit" 
+            className={styles["login-button"]}
+            disabled={!!emailError} // Chặn bấm submit nếu như format email đang bị gõ lỗi
+          >
             {t("login.continue")}
           </button>
         </form>

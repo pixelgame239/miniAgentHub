@@ -11,6 +11,8 @@ export interface Message {
   conversationId: number;
   type: string;
   createdAt?: string | Date;
+  AIModel?: string;
+  isCompleted?: boolean;
 }
 
 export interface Conversation {

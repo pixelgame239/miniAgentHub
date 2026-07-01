@@ -25,6 +25,7 @@ const UserPage = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { showInfo, showError, showToast } = useNotificationPopup();
+  const [submitting, setSubmitting] = useState(false);
   const nav = useNavigate();
   useEffect(()=>{
     document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "dark");
@@ -38,6 +39,7 @@ const UserPage = () => {
   const openCreateDialog = async () => {
     const response = await getAllGroups();
     setGroups(response.data || []);
+    console.log(response.data);
     setDialogMode("create");
   };
 
@@ -66,6 +68,7 @@ const UserPage = () => {
     fullname: string;
     groups: number[];
   }) => {
+    setSubmitting(true);
     if (dialogMode === "create") {
       const { data, error } = await register({...formData, lang: localStorage.getItem("app-lang") || "vi"});
       if(data){
@@ -93,6 +96,7 @@ const UserPage = () => {
         );
       }
       }
+    setSubmitting(false);
     closeDialog();
   };
   const handledeletedUser = async () => {
@@ -249,6 +253,7 @@ const UserPage = () => {
           }
           onClose={closeDialog}
           onSubmit={handleFormSubmit}
+          submitting={submitting}
           groups={groups}
         />
       )}

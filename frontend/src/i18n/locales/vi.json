@@ -74,7 +74,8 @@
     "you": "Bạn",
     "aiResponse": "Phản hồi AI",
     "promptPlaceholder": "Nhập nội dung...",
-    "wrongConfiguration": "Cấu hình mô hình AI không chính xác. Vui lòng kiểm tra cài đặt của bạn."
+    "wrongConfiguration": "Cấu hình mô hình AI không chính xác. Vui lòng kiểm tra cài đặt của bạn.",
+    "abortChat": "Bạn đã dừng câu trả lời này."
   },
 
   "login": {
@@ -148,7 +149,8 @@
     "emptyError": "Tên nhóm không được để trống",
     "editGroup": "Chỉnh sửa nhóm",
     "viewMembers": "Xem thành viên",
-    "deleteGroup": "Xóa nhóm"
+    "deleteGroup": "Xóa nhóm",
+    "groupNameRequired": "Tên nhóm là bắt buộc"
   },
 
   "users": {
@@ -167,7 +169,10 @@
     "sendEmail": "Đã tạo người dùng và gửi mật khẩu tạm thời đến email của người dùng",
     "deletedUser": "Xóa người dùng với email: ",
     "deleteConfirmation": "Bạn có chắc muốn xóa người dùng này? Hành động này không thể hoàn tác.",
-    "deleteWarning": "Cảnh báo: Việc xóa người dùng sẽ loại bỏ vĩnh viễn quyền truy cập và dữ liệu của họ. Vui lòng xác nhận hành động này."
+    "deleteWarning": "Cảnh báo: Việc xóa người dùng sẽ loại bỏ vĩnh viễn quyền truy cập và dữ liệu của họ. Vui lòng xác nhận hành động này.",
+    "groupRequired": "Ít nhất một nhóm phải được chọn cho người dùng.",
+    "emailRequired": "Email là bắt buộc",
+    "fullNameRequired": "Họ tên là bắt buộc"
   },
 
   "password": {

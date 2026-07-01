@@ -70,12 +70,10 @@ export const streamPrompt = async (
   if (!response.ok) {
     const errorObj = new Error(`Request failed with status ${response.status}`) as any;
     errorObj.status = response.status; 
-    console.log("Response not ok:", response.status, response.statusText);
     try {
       const errBody = await response.json();
       if (errBody.message) errorObj.message = errBody.message;
-    } catch {
-    }
+    } catch {}
     throw errorObj; 
   }
 
@@ -90,6 +88,11 @@ export const streamPrompt = async (
 
   try {
     while (true) {
+      // Nếu signal đã bị hủy trước loạt read tiếp theo, tự chủ động break/throw
+      if (signal.aborted) {
+        throw new DOMException("The user aborted a request.", "AbortError");
+      }
+
       const { done, value } = await reader.read();
       if (done) break;
 
@@ -98,9 +101,8 @@ export const streamPrompt = async (
       buffer = lines.pop() ?? "";
 
       for (const line of lines) {
-      if (!line.startsWith("data:")) continue;
+        if (!line.startsWith("data:")) continue;
 
-        // Thay vì regex phức tạp, cắt chính xác tiền tố "data:"
         const payload = line.replace(/^data:\s?/, "");
         if (payload === "") continue;
 
@@ -108,33 +110,33 @@ export const streamPrompt = async (
           handlers.onDone(accumulated);
           return;
         }
+
         try {
-            const parsedPayload = JSON.parse(payload.trim());
-            
-            // Nếu object nhận được có chứa flag error từ Backend gửi sang
-            if (parsedPayload && parsedPayload.error) {
-              const customError = new Error(parsedPayload.message || "Stream error") as any;
-              customError.status = parsedPayload.status || 500; // Lấy đúng mã 400 hoặc 500 từ Backend
-              
-              handlers.onError?.(customError); // Kích hoạt sự kiện Error ở Hook
-              return;
-            }
-          } catch {
-            // Nếu không parse được JSON, tức là payload này là chuỗi text chunk bình thường từ AI
+          const parsedPayload = JSON.parse(payload.trim());
+          if (parsedPayload && parsedPayload.error) {
+            const customError = new Error(parsedPayload.message || "Stream error") as any;
+            customError.status = parsedPayload.status || 500;
+            handlers.onError?.(customError);
+            return;
           }
-      const text = extractChunkText(payload);
-        
-        // CHÚ Ý: Không continue nếu text là ký tự xuống dòng hoặc khoảng trắng trống
-        // Chỉ continue nếu text thực sự rỗng do lỗi metadata từ Flowise
+        } catch {}
+
+        const text = extractChunkText(payload);
         if (text === "" && !payload.includes("\n")) continue; 
 
         accumulated += text;
         handlers.onChunk(accumulated);
       }
     }
+
+    // Chỉ gọi onDone nếu luồng kết thúc tự nhiên và KHÔNG bị hủy
+    if (!signal.aborted) {
+      handlers.onDone(accumulated);
+    }
+  } catch (err: any) {
+    // Nếu là lỗi hủy, ném ra ngoài cho hook useSSEStream xử lý, TUYỆT ĐỐI không gọi handlers.onDone
+    throw err;
   } finally {
     reader.releaseLock();
   }
-
-  handlers.onDone(accumulated);
 };

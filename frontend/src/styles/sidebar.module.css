@@ -300,6 +300,22 @@
   font-size: 13px;
   cursor: pointer;
   transition: background 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Khoảng cách an toàn giữa icon và chữ */
+}
+.chatActionMenuItem svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+/* Giữ cấu trúc đồng bộ cho nút Share nếu có thẻ div phụ bên trong */
+.chatActionMenuItem > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 .chatActionMenuItem:hover {

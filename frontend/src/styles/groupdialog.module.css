@@ -138,7 +138,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  align-items: end;
+  /* ĐÃ SỬA: Chuyển từ 'end' sang 'start' để cố định cạnh trên của 2 cột luôn thẳng hàng với nhau */
+  align-items: start; 
 }
 
 @media (max-width: 560px) {
@@ -178,6 +179,14 @@
 .input:focus {
   border-color: var(--dialog-accent-border);
   box-shadow: 0 0 0 3px var(--dialog-accent-dim);
+}
+
+/* BỔ SUNG: Class báo lỗi đồng bộ hóa hiệu ứng viền cho Input */
+.input-error {
+  border-color: #d97706 !important;
+}
+.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15) !important;
 }
 
 /* ── Entity type tabs ─────────────────────────────── */
@@ -524,20 +533,28 @@
 .submitBtn:active {
   transform: translateY(0);
 }
+
+/* Nút Submit khi bị vô hiệu hóa (Khi form trống/lỗi) */
+.submitBtn:disabled {
+  background: var(--bg-subtle) !important;
+  color: var(--text-muted) !important;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 /* =========================================================
    BỔ SUNG RESPONSIVE TOÀN DIỆN CHO THIẾT BỊ DI ĐỘNG (< 768px)
 ========================================================= */
 @media (max-width: 768px) {
-  /* 1. Đẩy overlay bám sát đáy màn hình */
   .overlay {
     padding: 0;
     align-items: flex-end;
   }
 
-  /* 2. Biến đổi Dialog thành Bottom Sheet trượt lên */
   .dialog {
     max-width: 100%;
-    max-height: 92vh; /* Không chiếm toàn bộ để chừa không gian vuốt tắt */
+    max-height: 92vh;
     border-radius: 24px 24px 0 0;
     animation: slideUpMobile 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -547,7 +564,6 @@
     to   { transform: translateY(0); }
   }
 
-  /* 3. Thu nhỏ không gian đệm của Header */
   .header {
     padding: 20px 20px 16px;
     gap: 12px;
@@ -567,13 +583,11 @@
     border-radius: 8px;
   }
 
-  /* 4. Tối ưu Scrollable body trên mobile */
   .body {
     padding: 16px 20px 32px;
     gap: 24px;
   }
 
-  /* Thu nhỏ chiều cao của input và tabs để tăng không gian hiển thị khi mở bàn phím ảo */
   .input, 
   .tabGroup {
     height: 46px;
@@ -583,7 +597,6 @@
     font-size: 13px;
   }
 
-  /* 5. TÁI CẤU TRÚC BẢNG PHÂN QUYỀN (RBAC) THÀNH DẠNG KHỐI DỌC */
   .permissionsTable {
     border: none;
     border-radius: 0;
@@ -593,12 +606,12 @@
   }
 
   .permHead {
-    display: none; /* Ẩn dòng tiêu đề cột (Action | Scope | Grant) vì không còn phù hợp */
+    display: none;
   }
 
   .permRow {
     display: grid;
-    grid-template-columns: 1fr 40px; /* Cột bên trái là nội dung, cột phải là checkbox */
+    grid-template-columns: 1fr 40px;
     grid-template-areas: 
       "action checkbox"
       "desc checkbox";
@@ -628,7 +641,6 @@
     height: 100%;
   }
 
-  /* 6. KHU VỰC TÌM KIẾM THÀNH VIÊN & SUGGESTIONS */
   .memberSearchWrapper {
     height: 48px;
     padding: 0 12px;
@@ -638,7 +650,6 @@
     font-size: 14px;
   }
 
-  /* Giới hạn chiều cao hộp gợi ý để tránh đè mất form bên dưới */
   .suggestions {
     max-height: 180px;
     overflow-y: auto;
@@ -649,12 +660,11 @@
     font-size: 13px;
   }
 
-  /* 7. ĐỊNH DẠNG LẠI FOOTER NÚT BẤM */
   .footer {
     padding: 12px 20px 20px;
     background: var(--bg-card);
     display: grid;
-    grid-template-columns: 1fr 1.2fr; /* Chia hai nút nằm ngang cân đối màn hình */
+    grid-template-columns: 1fr 1.2fr;
     gap: 10px;
   }
 

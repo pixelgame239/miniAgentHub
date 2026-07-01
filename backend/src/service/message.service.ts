@@ -44,7 +44,7 @@ export class MessageService {
     userId: number,
     files?: { data: string; fileName: string; mimeType: string }[]
   ): Promise<void> {
-    
+    const axiosController= new AbortController();
     let dbFileUrl: string | null = null;
     let dbFileName: string | null = null;
     let dbFileType: string | null = null;
@@ -99,11 +99,12 @@ export class MessageService {
           // 4. Ném Buffer và đuôi file vào hàm vạn năng của chúng ta
           const extractedText = await extractFileContent(fileBuffer, fileExt);
           
-          console.log("Extracted Text:", extractedText);
+          // console.log("Extracted Text:", extractedText);
           currentFileContent = extractedText; // Lưu nội dung bóc tách vào biến fileContent
           // Giờ bạn có thể lưu extractedText này vào cột `fileContent` (String) của Prisma!
         } catch (error) {
           console.error("File Extraction Error:", error);
+          throw new MyError(`Failed to extract content from file`, 500);
         }
       
 
@@ -146,7 +147,7 @@ export class MessageService {
     let stream;
     if(model.startsWith("flowise")){
       const finalContent = currentFileContent ? `${content}\n\n[Attached File Data]:\n<file_content>\n${currentFileContent}\n</file_content>` : content;
-      stream = await aiService.promptToFlowise(finalContent, model, APIKey, APIUrl, convId, files);
+      stream = await aiService.promptToFlowise(finalContent, APIKey, APIUrl, convId, axiosController.signal);
     }
     else {
       const previousContext = await prisma.message.findMany({
@@ -187,92 +188,123 @@ export class MessageService {
       AI:`;
 
       // 4. Send to your AI Provider
-      stream = await aiService.promptToAIProvider(finalPrompt, model, APIKey);
+      stream = await aiService.promptToAIProvider(finalPrompt, model, APIKey, axiosController.signal);
     }
 
     let fullResponse = "";
     let buffer = "";
+    let isStreamFinished = false; // Thay thế isAborted bằng cờ kiểm soát luồng kết thúc tự nhiên
 
-    const cleanup = () => stream.destroy();
+    const saveAIResponse = async (completed: boolean) => {
+      if (!fullResponse.trim()) return;
+      try {
+        await prisma.message.create({
+          data: {
+            content: fullResponse,
+            conversationId: convId,
+            type: "response",
+            AIModel: model,
+            isCompleted: completed 
+          },
+        });
+        console.log(`[DB] Saved AI Response. Completed: ${completed} | Length: ${fullResponse.length}`);
+      } catch (err) {
+        console.error("DB write error:", err);
+      }
+    };
+
+const cleanup = async () => {
+      // 🛠️ Kiểm tra nếu luồng chưa kết thúc thì xử lý ngắt kết nối khẩn cấp
+      if (!isStreamFinished) {
+        isStreamFinished = true; 
+        
+        // Gỡ bỏ ngay lập tức để tránh rò rỉ listener hoặc gọi nhầm luồng
+        res.off("close", cleanup); 
+        
+        axiosController.abort(); // Ngắt kết nối Axios ngay lập tức
+        if (stream && typeof stream.destroy === "function") {
+          stream.destroy();
+        }
+        
+        console.log("[STREAM] Client disconnected via Abort. Freezing and saving partial text...");
+        await saveAIResponse(false); // Lưu dở dang với trạng thái false
+      }
+    };
+    
+    // Đăng ký sự kiện ngắt kết nối từ phía Client
     res.on("close", cleanup);
 
     return new Promise<void>((resolve) => {
       stream.on("data", (chunk: Buffer) => {
-          buffer += chunk.toString("utf8");
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
+        if (isStreamFinished) return; 
+        
+        buffer += chunk.toString("utf8");
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
 
-          for (const line of lines) {
-            if (!line.match(/^\s*data:/)) continue;
+        for (const line of lines) {
+          if (!line.match(/^\s*data:/)) continue;
 
-            const jsonStr = line.replace(/^\s*data:\s*/, "");
-            if (!jsonStr) continue;
+          const jsonStr = line.replace(/^\s*data:\s*/, "");
+          if (!jsonStr) continue;
+          if (jsonStr === "[DONE]") continue;
 
-            // Lọc bỏ tín hiệu kết thúc thô từ OpenAI/Groq cũ
-            if (jsonStr === "[DONE]") {
-              continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            if (parsed.event === "end" || parsed.event === "agentFlowEvent") continue;
+
+            const text = this.extractText(parsed);
+            if (!text) continue;
+
+            const normalized = text.replace(/\r/g, "").replace(/\u0000/g, "");
+            
+            if (isStreamFinished) return; 
+
+            fullResponse += normalized;
+
+            if (!res.writableEnded && normalized !== "") {
+              res.write(`data: ${normalized}\n\n`);
             }
-
-            try {
-              const parsed = JSON.parse(jsonStr);
-              console.log("[RESPONSE RAW]", JSON.stringify(parsed));
-              
-              // 1. Kiểm tra nếu là event kết thúc luồng của Flowise hoặc metadata, bỏ qua không gửi client
-              if (parsed.event === "end" || parsed.event === "agentFlowEvent") {
-                continue; 
-              }
-
-              // 2. Trích xuất text (Hàm này giờ chỉ trả về text nếu event === "token")
-              const text = this.extractText(parsed);
-              if (!text) continue; // Nếu trích xuất ra rỗng (do trúng event INPROGRESS, Start...) thì bỏ qua
-
-              // 3. Chuẩn hóa dữ liệu sạch
-              const normalized = text.replace(/\r/g, "").replace(/\u0000/g, "");
-              
-              // Tích lũy vào câu trả lời tổng thể để lưu DB
-              fullResponse += normalized;
-
-              if (!res.writableEnded && normalized !== "") {
-                // Chỉ bắn các token text thực sự xuống Client
-                res.write(`data: ${normalized}\n\n`);
-              }
-            } catch (err) {
-              console.error("JSON parse error on line:", jsonStr, err);
-            }
+          } catch (err) {
+            console.error("JSON parse error on line:", jsonStr, err);
           }
-        });
+        }
+      });
 
       stream.on("end", async () => {
-        if (fullResponse) {
-          try {
-            await prisma.message.create({
-              data: {
-                content: fullResponse,
-                conversationId: convId,
-                type: "response",
-                AIModel: model
-              },
-            });
-          } catch (err) {
-            console.error("DB write error:", err);
+        // 🛠️ Nếu chưa bị Abort trước đó, xử lý kết thúc thành công tự nhiên
+        if (!isStreamFinished) {
+          isStreamFinished = true; 
+          res.off("close", cleanup); // 🛠️ CHẮC CHẮN gỡ bỏ cleanup khi hoàn thành thành công
+
+          await saveAIResponse(true); 
+
+          if (!res.writableEnded) {
+            res.write("data: [DONE]\n\n");
+            res.end();
           }
         }
-
-        if (!res.writableEnded) {
-          res.write("data: [DONE]\n\n");
-          res.end();
-        }
-        res.off("close", cleanup);
         resolve();
       });
 
       stream.on("error", (err: Error) => {
-        console.error("Stream error:", err);
-        if (!res.writableEnded) {
-          res.write(`data: [ERROR] ${err.message}\n\n`);
-          res.end();
+        // 🛠️ LUÔN LUÔN gỡ bỏ cleanup khi stream gặp lỗi (bao gồm cả lỗi hủy mạng ERR_CANCELED)
+        if (!isStreamFinished) {
+          isStreamFinished = true;
         }
-        res.off("close", cleanup);
+        
+        res.off("close", cleanup); // 🛠️ ĐƯA RA NGOÀI ĐIỀU KIỆN: Bắt buộc phải gỡ listener ra khỏi res
+
+        // Nếu lỗi xảy ra KHÔNG phải do chúng ta chủ động abort, log lỗi ra
+        if (err.name !== 'CanceledError' && err.message !== 'canceled') {
+          console.error("Stream real error:", err);
+          if (!res.writableEnded) {
+            res.write(`data: [ERROR] ${err.message}\n\n`);
+            res.end();
+          }
+        } else {
+          console.log("[STREAM] Axios request successfully canceled & cleaned up.");
+        }
         resolve();
       });
     });

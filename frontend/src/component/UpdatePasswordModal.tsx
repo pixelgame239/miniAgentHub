@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 interface UpdatePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
-  error?: string; // 1. Thêm prop error nhận từ API của SettingsPage
+  error?: string; // Nhận lỗi từ API (ví dụ: "Mật khẩu hiện tại không đúng")
   onSubmit?: (data: {
     currentPassword: string;
     newPassword: string;
@@ -17,21 +17,31 @@ interface UpdatePasswordModalProps {
 const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
   isOpen,
   onClose,
-  error, // Nhận prop error ở đây
+  error,
   onSubmit,
 }) => {
+  const { t } = useTranslation();
+
+  // Form states
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const { t } = useTranslation();
-  
+
+  // Error states
   const [errors, setErrors] = useState<{
     currentPassword?: string;
     newPassword?: string;
     confirmPassword?: string;
   }>({});
 
-  // 2. Lắng nghe nếu có lỗi từ Server/API gửi xuống thì map vào ô currentPassword
+  // Đánh dấu xem người dùng đã chạm/gõ vào ô đó chưa (tránh báo lỗi ngay khi vừa mở modal)
+  const [touched, setTouched] = useState<{
+    currentPassword?: boolean;
+    newPassword?: boolean;
+    confirmPassword?: boolean;
+  }>({});
+
+  // 1. Lắng nghe lỗi từ Backend/API gửi xuống
   useEffect(() => {
     if (error) {
       setErrors((prev) => ({
@@ -41,17 +51,52 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
     }
   }, [error]);
 
+  // 2. Real-time Validation: Chạy validate mỗi khi input thay đổi
+  useEffect(() => {
+    const newErrors: typeof errors = {};
+
+    // Validate Mật khẩu hiện tại (chỉ validate client-side nếu đã bị touched)
+    if (touched.currentPassword && !currentPassword.trim()) {
+      newErrors.currentPassword = t("password.passwordRequired");
+    } else if (error && !touched.currentPassword) {
+      // Giữ lại lỗi từ API nếu người dùng chưa sửa ô này
+      newErrors.currentPassword = error;
+    }
+
+    // Validate Mật khẩu mới
+    if (touched.newPassword) {
+      if (!newPassword.trim()) {
+        newErrors.newPassword = t("password.passwordRequired");
+      } else if (newPassword.length < 6) {
+        newErrors.newPassword = t("password.passwordMin");
+      }
+    }
+
+    // Validate Xác nhận mật khẩu mới
+    if (touched.confirmPassword) {
+      if (!confirmPassword.trim()) {
+        newErrors.confirmPassword = t("password.confirmRequired");
+      } else if (confirmPassword.length < 6) {
+        newErrors.confirmPassword = t("password.passwordMin");
+      } else if (newPassword !== confirmPassword) {
+        newErrors.confirmPassword = t("password.passwordMismatch");
+      }
+    }
+
+    setErrors(newErrors);
+  }, [currentPassword, newPassword, confirmPassword, touched, error, t]);
+
   // Reset form khi đóng/mở modal
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
-      // Clear data khi đóng modal
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setErrors({});
+      setTouched({});
     }
 
     return () => {
@@ -61,38 +106,29 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
 
   if (!isOpen) return null;
 
-  const validate = () => {
-    const newErrors: typeof errors = {};
+  // Hàm helper kích hoạt validate toàn bộ (dùng khi bấm submit)
+  const validateAllFields = () => {
+    setTouched({
+      currentPassword: true,
+      newPassword: true,
+      confirmPassword: true,
+    });
 
-    if (!currentPassword.trim()) {
-      newErrors.currentPassword = t("password.passwordRequired");
-    }
-
-    if (!newPassword.trim()) {
-      newErrors.newPassword = t("password.passwordRequired");
-    } else if (newPassword.length < 6) {
-      newErrors.newPassword = t("password.passwordMin");
-    }
-
-    if (!confirmPassword.trim()) {
-      newErrors.confirmPassword = t("password.confirmRequired");
-    } else if (confirmPassword.length < 6) {
-      newErrors.confirmPassword = t("password.passwordMin");
-    } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = t("password.passwordMismatch");
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // Kiểm tra nhanh xem form hiện tại đã hợp lệ chưa
+    const hasError = 
+      !currentPassword.trim() || 
+      !newPassword.trim() || newPassword.length < 6 ||
+      !confirmPassword.trim() || confirmPassword.length < 6 || newPassword !== confirmPassword;
+    
+    return !hasError;
   };
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!validate()) return;
+    // Nếu kích hoạt tất cả các ô mà vẫn có lỗi thì dừng lại
+    if (!validateAllFields()) return;
 
-    // 3. CHỈ gọi onSubmit. KHÔNG tự động onClose() hay xóa dữ liệu ở đây nữa.
-    // Việc đóng form & clear data sẽ do SettingsPage quyết định sau khi kiểm tra API (status === 200).
     onSubmit?.({
       currentPassword,
       newPassword,
@@ -108,28 +144,22 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
             <p className={styles["modal-eyebrow"]}>{t("password.security")}</p>
             <h2 className={styles["modal-title"]}>{t("password.updatePassword")}</h2>
           </div>
-
-          <button className={styles["modal-close"]} onClick={onClose}>
-            ✕
-          </button>
+          <button className={styles["modal-close"]} onClick={onClose}>✕</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles["modal-form"]}>
           
-          {/* Ô MẬT KHẨU HIỆN TẠI (Sẽ hiển thị lỗi nếu gõ sai hoặc API trả về lỗi) */}
+          {/* Ô MẬT KHẨU HIỆN TẠI */}
           <div className={styles["form-group"]}>
             <label className={styles["form-label"]}>{t("password.currentPassword")}</label>
             <input
               type="password"
-              className={`${styles["form-input"]} ${
-                errors.currentPassword ? styles["error"] : ""
-              }`}
+              className={`${styles["form-input"]} ${errors.currentPassword ? styles["error"] : ""}`}
               placeholder={t("password.currentPassword")}
               value={currentPassword}
-              required
               onChange={(e) => {
                 setCurrentPassword(e.target.value);
-                if (errors.currentPassword) setErrors((prev) => ({ ...prev, currentPassword: undefined }));
+                setTouched((prev) => ({ ...prev, currentPassword: true }));
               }}
             />
             {errors.currentPassword && (
@@ -142,15 +172,12 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
             <label className={styles["form-label"]}>{t("password.newPassword")}</label>
             <input
               type="password"
-              className={`${styles["form-input"]} ${
-                errors.newPassword ? styles["error"] : ""
-              }`}
+              className={`${styles["form-input"]} ${errors.newPassword ? styles["error"] : ""}`}
               placeholder="Enter new password"
               value={newPassword}
-              required
               onChange={(e) => {
                 setNewPassword(e.target.value);
-                if (errors.newPassword) setErrors((prev) => ({ ...prev, newPassword: undefined }));
+                setTouched((prev) => ({ ...prev, newPassword: true }));
               }}
             />
             {errors.newPassword && (
@@ -163,15 +190,12 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
             <label className={styles["form-label"]}>{t("password.confirmPassword")}</label>
             <input
               type="password"
-              className={`${styles["form-input"]} ${
-                errors.confirmPassword ? styles["error"] : ""
-              }`}
+              className={`${styles["form-input"]} ${errors.confirmPassword ? styles["error"] : ""}`}
               placeholder="Confirm new password"
               value={confirmPassword}
-              required
               onChange={(e) => {
                 setConfirmPassword(e.target.value);
-                if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                setTouched((prev) => ({ ...prev, confirmPassword: true }));
               }}
             />
             {errors.confirmPassword && (
@@ -183,7 +207,6 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
             <button type="button" className={styles["secondary-btn"]} onClick={onClose}>
               {t("common.cancel")}
             </button>
-
             <button type="submit" className={styles["primary-btn"]}>
               {t("password.updatePassword")}
             </button>

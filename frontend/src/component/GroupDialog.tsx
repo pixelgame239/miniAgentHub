@@ -76,15 +76,19 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
   /* state */
   const [groupName, setGroupName] = useState(initialData?.groupName ?? "");
   
-  // FIX 1: Chuẩn hóa thực thể ban đầu, đảm bảo viết hoa chữ cái đầu đồng bộ với cấu trúc dữ liệu hệ thống
+  // States quản lý lỗi thời gian thực
+  const [errors, setErrors] = useState<{ groupName?: string }>({});
+  const [touched, setTouched] = useState<{ groupName?: boolean }>({});
+
+  // Tông màu cảnh báo đồng bộ (Cam/Amber đậm)
+  const warningColor = "#d90606";
+
   const [entityType, setEntityType] = useState<string>(() => {
     if (!initialData?.entityType) return "Users";
-    // Tránh trường hợp BE hoặc dữ liệu cũ trả về "users"/"groups" hoặc "USERS"/"GROUPS"
     const formatted = initialData.entityType.trim().toLowerCase();
     return formatted === "groups" ? "Groups" : "Users";
   });
   
-  // Track permissions separately for each entity type
   const [permissionsByType, setPermissionsByType] = useState<Record<string, Permission[]>>(() => {
     const initial: Record<string, Permission[]> = {
       Users: USER_PERMISSIONS.map((p) => ({ ...p })),
@@ -106,7 +110,6 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
     return initial;
   });
   
-  // Get current permissions for active entity type
   const permissions = permissionsByType[entityType] || getDefaultPermissions(entityType);
   const [members, setMembers] = useState<Member[]>(initialData?.members ?? []);
   const [memberSearch, setMemberSearch] = useState("");
@@ -118,6 +121,15 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
     return () => { document.body.style.overflow = ""; };
   }, []);
 
+  // REAL-TIME VALIDATION: Kiểm tra tính hợp lệ của Group Name ngay khi đang gõ
+  useEffect(() => {
+    const newErrors: typeof errors = {};
+    if (touched.groupName && !groupName.trim()) {
+      newErrors.groupName = t("groups.groupNameRequired") || "Tên nhóm không được để trống";
+    }
+    setErrors(newErrors);
+  }, [groupName, touched.groupName, t]);
+
   useEffect(() => {
     const fetchUsersByQuery = async () => {
       const response = await findUsers(memberSearch);
@@ -128,15 +140,12 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
     fetchUsersByQuery();
   }, [memberSearch]);
 
-  /* close on backdrop click */
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === overlayRef.current) onClose();
   };
 
-  // FIX 2: Đồng bộ hóa mảng các Tab dựa trên Key chuẩn ("Users", "Groups") đại diện cho State nội bộ
   const entityTabs = ["Users", "Groups"];
 
-  /* toggle permission */
   const togglePermission = (index: number) => {
     setPermissionsByType((prev) => ({
       ...prev,
@@ -146,7 +155,6 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
     }));
   };
 
-  /* members */
   const addMember = (member: Member) => {
     setMembers((prev) => [...prev, member]);
     setMemberSearch("");
@@ -157,7 +165,17 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
     setMembers((prev) => prev.filter((m) => m.id !== id));
 
   /* submit */
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Ngăn hành vi load lại trang của Form
+
+    // Kích hoạt trạng thái đã touched để kiểm tra dữ liệu nếu người dùng bấm lưu vội
+    setTouched({ groupName: true });
+
+    if (!groupName.trim()) {
+      setErrors({ groupName: t("groups.groupNameRequired") || "Tên nhóm không được để trống" });
+      return;
+    }
+
     const allPermissions = [
       ...permissionsByType.Users,
       ...permissionsByType.Groups
@@ -179,14 +197,20 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
       ref={overlayRef}
       onClick={handleOverlayClick}
     >
-      <div className={styles.dialog} role="dialog" aria-modal="true">
+      {/* Bao bọc khối giao diện bằng thẻ <form> để tận dụng cơ chế submit chuẩn */}
+      <form 
+        className={styles.dialog} 
+        role="dialog" 
+        aria-modal="true"
+        onSubmit={handleSubmit}
+      >
         {/* ── Header ── */}
         <div className={styles.header}>
           <div>
             <h2 className={styles.title}>{title}</h2>
             <p className={styles.subtitle}>{subtitle}</p>
           </div>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
             <XIcon />
           </button>
         </div>
@@ -201,15 +225,25 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
             <div className={styles.identityGrid}>
               {/* Group Name */}
               <div className={styles.field}>
-                <label className={styles.fieldLabel}>{t("groups.groupName")}</label>
+                <label className={styles.fieldLabel}>
+                  {t("groups.groupName")} <span style={{ color: warningColor }}>*</span>
+                </label>
                 <input
-                  className={styles.input}
+                  className={`${styles.input} ${errors.groupName ? styles["input-error"] : ""}`}
                   type="text"
                   placeholder="e.g. Quantum Research Team"
                   value={groupName}
-                  onChange={(e) => setGroupName(e.target.value)}
-                  required
+                  onChange={(e) => {
+                    setGroupName(e.target.value);
+                    setTouched((prev) => ({ ...prev, groupName: true }));
+                  }}
+                  style={errors.groupName ? { borderColor: warningColor } : {}}
                 />
+                {errors.groupName && (
+                  <span style={{ color: warningColor, display: "block", marginTop: "5px", fontSize: "12px" }}>
+                    {errors.groupName}
+                  </span>
+                )}
               </div>
 
               {/* Entity Type */}
@@ -218,11 +252,11 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
                 <div className={styles.tabGroup}>
                   {entityTabs.map((tab) => (
                     <button
+                      type="button"
                       key={tab}
                       className={`${styles.tab} ${entityType === tab ? styles.tabActive : ""}`}
                       onClick={() => setEntityType(tab)}
                     >
-                      {/* Giữ nguyên logic Translate text hiển thị ra UI, không làm ảnh hưởng data gốc */}
                       {tab === "Users" ? t("groupDialog.usersTab", "USERS") : t("groupDialog.groupsTab", "GROUPS")}
                     </button>
                   ))}
@@ -253,6 +287,7 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
                   <span className={styles.permDesc}>{perm.description}</span>
                   <div className={styles.grantCol}>
                     <button
+                      type="button"
                       className={`${styles.checkbox} ${perm.granted ? styles.checkboxChecked : ""}`}
                       onClick={() => togglePermission(i)}
                       aria-checked={perm.granted}
@@ -288,6 +323,7 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
                 <div className={styles.suggestions}>
                   {availableUsers.filter((s) => members.every((m) => m.id !== s.id)).map((s) => (
                     <button
+                      type="button"
                       key={s.id}
                       className={styles.suggestionItem}
                       onMouseDown={() => addMember(s)}
@@ -309,6 +345,7 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
                     <span className={styles.memberTagAvatar}>{m.fullname.charAt(0)}</span>
                     {m.fullname}
                     <button
+                      type="button"
                       className={styles.memberTagRemove}
                       onClick={() => removeMember(m.id)}
                       aria-label={`Remove ${m.fullname}`}
@@ -324,12 +361,16 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
 
         {/* ── Footer ── */}
         <div className={styles.footer}>
-          <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
-          <button className={styles.submitBtn} onClick={handleSubmit}>
+          <button type="button" className={styles.cancelBtn} onClick={onClose}>Cancel</button>
+          <button 
+            type="submit" 
+            className={styles.submitBtn}
+            disabled={!!errors.groupName} // Khóa nút khi dữ liệu rỗng và đang lỗi
+          >
             {submitLabel}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

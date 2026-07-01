@@ -180,7 +180,7 @@ export async function extractFileContent(fileBuffer: Buffer, fileExt: string): P
   }
 
   // 2. Microsoft Word Files (.docx) - FULLY UPDATED FOR EMBEDDED IMAGES OCR
-  if (ext === '.docx') {
+  if (ext === '.docx' || ext === '.doc') {
     let embeddedImagesText = '';
     let imageCounter = 1;
 

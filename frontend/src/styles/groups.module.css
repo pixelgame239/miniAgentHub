@@ -1,7 +1,8 @@
 /* groups.module.css – all colors via CSS variables */
 
 .groupsPage {
-  padding: 48px;
+  /* Đồng bộ padding tổng thể giống .userContent (2.5rem 3rem) */
+  padding: 2.5rem 3rem;
   min-height: 100vh;
   background:
     radial-gradient(
@@ -21,23 +22,25 @@
 .heroSection {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 32px;
-  margin-bottom: 42px;
+  align-items: flex-start; /* Đồng bộ align với .userHeader */
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .pageTitle {
-  font-size: 64px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  margin: 0 0 18px;
+  /* Đồng bộ font-size 2.4rem giống trang User */
+  font-size: 2.4rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.75rem;
   color: var(--text-heading);
 }
 
 .pageDescription {
-  max-width: 760px;
-  font-size: 18px;
+  max-width: 720px;
+  /* Đồng bộ font-size 0.95rem giống .userDescription */
+  font-size: 0.95rem;
   line-height: 1.7;
   color: var(--text-secondary);
   margin: 0;
@@ -46,44 +49,42 @@
 /* CREATE BUTTON */
 
 .createButton {
-  height: 72px;
-  min-width: 270px;
+  /* Đồng bộ chiều cao 52px và kiểu bo góc 14px chuẩn của .addUserBtn */
+  height: 52px;
+  padding: 0 1.4rem;
+  min-width: auto; /* Bỏ min-width quá lớn để co dãn theo content như trang User */
   border: none;
-  border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    #dce7ff 0%,
-    #bfd0ff 100%
-  );
-  color: #122044;
-  font-size: 24px;
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--text-heading);
+  /* Đồng bộ font chữ nút bấm */
+  font-size: 0.92rem;
   font-weight: 600;
-  padding: 0 30px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 0.55rem;
   cursor: pointer;
-  box-shadow:
-    0 14px 34px var(--accent-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  box-shadow: 0 6px 20px var(--accent-glow);
   transition:
+    background 0.2s ease,
     transform 0.2s ease,
     box-shadow 0.2s ease;
 }
 
 .createButton:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 18px 40px var(--accent-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px var(--accent-glow);
 }
 
 /* TABLE CARD */
 
 .tableCard {
   background: var(--bg-card);
-  border-radius: 24px;
+  /* Đồng bộ bo góc mượt 22px giống .tableWrapper */
+  border-radius: 22px;
   overflow: hidden;
   border: 1px solid var(--border);
   box-shadow:
@@ -97,26 +98,30 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28px 32px;
+  padding: 1.2rem 1.4rem; /* Thu nhỏ khoảng cách đệm khớp hàng bảng */
 }
 
 .tableTitle {
-  font-size: 22px;
+  /* Đồng bộ font-size tiêu đề phụ */
+  font-size: 1.1rem;
   font-weight: 700;
   margin: 0;
 }
 
 .totalBadge {
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 10px;
-  background: var(--bg-hover);
-  color: var(--text-secondary);
+  /* Đồng bộ với .roleBadge bên trang User */
+  min-height: 34px;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  color: var(--accent-text);
   display: flex;
   align-items: center;
-  font-size: 12px;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
 /* TABLE */
@@ -133,19 +138,25 @@
 }
 
 .tableHead {
-  height: 68px;
-  padding: 0 32px;
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
+  height: auto;
+  /* Đồng bộ padding dòng đầu bảng `.userTable th` */
+  padding: 1.1rem 1.4rem;
+  /* Đồng bộ text style hoa, nhỏ của `.userTable th` */
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
 
 .tableRow {
-  min-height: 92px;
-  padding: 0 32px;
-  transition: background 0.2s ease;
+  min-height: auto;
+  /* Đồng bộ padding dòng dữ liệu `.userTable td` */
+  padding: 1.2rem 1.4rem;
+  transition: background 0.15s ease;
 }
 
 .tableRow:hover {
@@ -159,13 +170,15 @@
 /* CELLS */
 
 .groupName {
-  font-size: 17px;
+  /* Đồng bộ font chữ text chính 0.92rem */
+  font-size: 0.92rem;
   font-weight: 600;
   color: var(--accent-text);
 }
 
 .memberCount {
-  font-size: 16px;
+  /* Đồng bộ font chữ text chính 0.92rem */
+  font-size: 0.92rem;
   color: var(--text-primary);
 }
 
@@ -176,40 +189,51 @@
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: 14px;
+  /* Đồng bộ khoảng cách giữa các nút thao tác giống trang User */
+  gap: 0.6rem;
 }
 
 /* ICON BUTTONS */
 
 .iconButton {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  display: flex;
+  /* Đồng bộ kích thước chuẩn 36px và bo góc 10px giống hệt `.actionBtn` */
+  height: 36px;
+  min-width: 36px;
+  padding: 0 0.9rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  /* Đồng bộ chữ trong nút bấm (nếu có chữ) */
+  font-size: 0.82rem;
+  font-weight: 600;
   transition:
-    background 0.2s ease,
-    color 0.2s ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
     transform 0.15s ease;
 }
 
 .iconButton:hover {
   background: var(--bg-hover);
-  color: var(--text-heading);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
 }
 
 .iconButton:active {
-  transform: scale(0.96);
+  transform: scale(1);
+}
+
+.deleteButton {
+  color: var(--danger);
 }
 
 .deleteButton:hover {
   background: var(--danger-dim);
-  color: var(--danger);
+  border-color: var(--danger-border);
 }
 
 /* RESPONSIVE */
@@ -217,66 +241,56 @@
 @media (max-width: 1200px) {
   .heroSection {
     flex-direction: column;
-    align-items: stretch; /* Ép các phần tử giãn đều */
+    align-items: stretch;
     gap: 20px;
   }
 
   .createButton {
-    width: 100%; /* Nút bấm full-width để ngón cái dễ thao tác */
+    width: fit-content; /* Đổi full-width thành fit-content như bên User breakpoint 1024px */
   }
 }
 
 @media (max-width: 900px) {
   .groupsPage {
-    /* Đệm top 4.5rem (khoảng 72px) để né nút Hamburger lơ lửng của Layout */
-    padding: 4.5rem 1.5rem 2rem 1.5rem; 
+    padding: 4rem 1.5rem 2rem 1.5rem; /* Đệm giữ nguyên khoảng cách né Hamburger */
   }
 
   .pageTitle {
-    font-size: 42px; /* Hạ size chữ tiêu đề siêu to khổng lồ */
-    margin-bottom: 10px;
+    font-size: 1.8rem; /* Giảm đồng bộ font chuẩn tiêu đề mobile */
+    margin-bottom: 0.5rem;
   }
 
   .pageDescription {
-    font-size: 16px;
+    font-size: 0.88rem;
+    line-height: 1.5;
   }
 
-  /* Thu nhỏ nút tạo nhóm một chút cho vừa mắt */
   .createButton {
-    height: 56px;
-    font-size: 18px;
-    border-radius: 14px;
-  }
-  
-  .createButton svg {
-    width: 20px;
-    height: 20px;
+    /* Khớp cấu trúc nút khi thu nhỏ màn hình */
+    height: 48px;
+    border-radius: 12px;
+    font-size: 0.88rem;
   }
 
   .tableHead,
   .tableRow {
-    grid-template-columns: 1.4fr 1fr 160px; /* Thu hẹp cột action */
-    padding: 0 20px;
+    grid-template-columns: 1.4fr 1fr 160px;
+    padding: 1rem;
   }
   
   .tableHeader {
-    padding: 20px;
+    padding: 1rem;
   }
 }
 
 /* MÀN HÌNH DI ĐỘNG THỰC TẾ (< 700px) */
 @media (max-width: 700px) {
   .groupsPage {
-    padding: 4.5rem 1rem 1.5rem 1rem;
+    padding: 4rem 1rem 1.5rem 1rem;
   }
 
-  .pageTitle {
-    font-size: 28px; /* Kích thước chữ chuẩn mobile */
-  }
-
-  .pageDescription {
-    font-size: 14px;
-    line-height: 1.5;
+  .createButton {
+    width: 100%; /* Giãn rộng toàn màn hình trên thiết bị di động */
   }
 
   /* Ẩn hẳn thanh đầu bảng vì không còn phù hợp dạng cột dọc */
@@ -284,47 +298,46 @@
     display: none; 
   }
 
-  /* Biến các hàng thành một chiếc Card độc lập */
+  /* Biến các hàng thành một chiếc Card độc lập (giữ nguyên layout gốc của bạn) */
   .tableRow {
     grid-template-columns: 1fr;
     gap: 12px;
-    padding: 20px;
+    padding: 1rem;
     min-height: auto;
     align-items: flex-start;
   }
 
   .groupName {
-    font-size: 16px;
-    border-bottom: 1px dashed var(--border); /* Tạo đường gạch nhẹ phân cách tên nhóm */
+    font-size: 0.88rem;
+    border-bottom: 1px dashed var(--border);
     padding-bottom: 8px;
     width: 100%;
   }
 
-  /* Hiện nhãn "Thành viên:" đi kèm với con số */
   .mobileLabel {
     display: inline;
-    font-size: 13px;
+    font-size: 0.75rem;
     color: var(--text-muted);
-    font-weight: 500;
+    font-weight: 700;
+    text-transform: uppercase;
   }
 
   .memberCount {
-    font-size: 14px;
+    font-size: 0.88rem;
     color: var(--text-primary);
   }
 
-  /* Đẩy các nút chức năng (Xem, Sửa, Xóa) rộng ra cho dễ chạm trúng */
   .actions {
     justify-content: flex-end;
     width: 100%;
-    gap: 12px;
+    gap: 0.5rem;
     margin-top: 4px;
   }
 
   .iconButton {
-    width: 44px; /* Tăng nhẹ diện tích bề mặt nút bấm trên mobile chống bấm nhầm */
-    height: 44px;
-    background: var(--bg-subtle); /* Thêm nền nhẹ cho nút dễ nhận biết */
+    flex: 1; /* Phân bổ đều không gian nút bấm di động tương tự trang User */
+    height: 40px;
+    background: var(--bg-subtle);
     border-radius: 10px;
   }
 }
