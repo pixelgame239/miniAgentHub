@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react"; // 🛠️ Import thêm useRef
+import { useCallback, useEffect, useRef } from "react"; // 🛠️ Import thêm useRef
 import { streamPrompt, type ChatRequest } from "../api/messageApi";
 import { useChat } from "./chatHook";
 
@@ -77,38 +77,49 @@ export const useSSEStream = (conversationId: number | undefined) => {
     } catch (err: any) {
       // 🛠️ GIẢI PHÁP: Lấy text trực tiếp từ biến Ref an toàn, không lo Map bị clear trước
       const cachedText = currentLiveTextRef.current;
+      const isAbort = 
+        err.name === "AbortError" || 
+        err.message?.toLowerCase().includes("aborted") || 
+        controller.signal.aborted;
 
-      clearStreamState(convId);
-      abortMapRef.current.delete(convId);
+      if (isAbort) {
+          if (cachedText && cachedText.trim()) {
+            appendMessage(convId, {
+              content: cachedText,
+              type: "response",
+              conversationId: convId,
+              createdAt: new Date().toISOString(),
+              isCompleted: false, // Hiện nhãn Chat bị hủy ở UI
+              AIModel: payload.model
+            });
+          }
+        } else {
+          console.error("streamPrompt threw:", err);
+            const status = err.status || 500;
+            onErrorCallback?.(status, err.message);
+          }
 
-      if (err.name === "AbortError" || err.message?.includes("aborted")) {
-        if (cachedText && cachedText.trim()) {
-          appendMessage(convId, {
-            content: cachedText,
-            type: "response",
-            conversationId: convId,
-            createdAt: new Date().toISOString(),
-            isCompleted: false, // Hiện nhãn t("chat.abortChat") đỏ/xám dưới UI
-            AIModel: payload.model
-          });
-        }
-      } else {
-        console.error("streamPrompt threw:", err);
-        const status = err.status || 500;
-        onErrorCallback?.(status, err.message);
-      }
+          // 🔥 Sau khi xử lý lưu dữ liệu xong xuôi mới giải phóng State
+          clearStreamState(convId);
+          abortMapRef.current.delete(convId);
     }
   }, [setStreamState, clearStreamState, appendMessage, abortMapRef]);
-
+  const currentIdRef = useRef(conversationId);
+  useEffect(() => {
+    currentIdRef.current = conversationId;
+  }, [conversationId]);
   // Sửa lại hàm abort để đảm bảo đồng bộ
   const abort = useCallback(() => {
-    if (conversationId === undefined) return;
+    const activeId = currentIdRef.current;
+    if (activeId === undefined) return;
     
-    // Phát tín hiệu dừng
-    abortMapRef.current.get(conversationId)?.abort();
-    abortMapRef.current.delete(conversationId);
-    clearStreamState(conversationId);
-  }, [conversationId, clearStreamState, abortMapRef]);
+    const controller = abortMapRef.current.get(activeId);
+    if (controller) {
+      console.log("[FRONTEND] Kích hoạt phát tín hiệu controller.abort() thành công.");
+      controller.abort();
+      abortMapRef.current.delete(activeId);
+    }
+  }, [abortMapRef]);
 
   return { liveText, streaming, start, abort };
 };

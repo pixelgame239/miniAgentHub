@@ -5,8 +5,7 @@ import { getToken, removeToken } from "../api/apiClient";
 interface UserType{
     id?:number;
     email?: string; 
-    userAccess?: boolean;
-    groupAccess?: boolean;
+    permissions?: string[];
     fullname?: string;
     active?: boolean;
     groups?: {id: number, groupName: string}[];
@@ -32,6 +31,7 @@ export const AuthProvider = ({children}:AuthProviderProps) =>{
         const getUserData = async()=>{
             const {data, error} = await getMe();
             if(data){
+                console.log("Fetched user data:", data);
                 setUser(data);
             }
             if(error){

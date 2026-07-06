@@ -4,9 +4,9 @@ import { ExportService } from "./export.service";
 
 const exportService = new ExportService();
 export class ShareService {
-  public async shareConversation(conversationId: number) {
+  public async shareConversation(userId: number, conversationId: number) {
     try{
-        const conversationData = await exportService.exportAllMessages(conversationId);
+        const conversationData = await exportService.exportAllMessages(userId, conversationId);
         if(!conversationData){
             throw new MyError("Conversation not found", 404);
         }
@@ -23,9 +23,9 @@ export class ShareService {
         throw new MyError("Failed to share conversation", 500);
     }
   }
-  public async shareMessage(messageId: number) {
+  public async shareMessage(userId: number, messageId: number) {
     try {
-      const sharedSnapshot = await exportService.exportMessage(messageId);
+      const sharedSnapshot = await exportService.exportMessage(userId, messageId);
 
       const sharedData = await prisma.sharedConversation.create({
         data: {

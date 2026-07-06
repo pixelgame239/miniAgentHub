@@ -224,6 +224,8 @@
     "errorMessage": "Please enter a valid API key.",
     "flowiseDescription": "If you are using Flowise, please provide the Flowise URL instead of an API key.",
     "flowiseInputPlaceholder": "Enter your Flowise URL here...",
-    "flowiseTitle": "Configure Flowise"
+    "flowiseTitle": "Configure Flowise",
+    "apiKeyRequired": "API Key is required",
+    "urlRequired": "Flowise Endpoint URL is required"
   }
 }

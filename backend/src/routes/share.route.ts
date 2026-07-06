@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
 import { jwtVerify } from '../middleware/jwt.middleware';
-import { checkPermission, narrowCheckPermission } from '../utils/checkPermission';
+import { checkPermission } from '../utils/checkPermission';
 import { getSharedConversation, shareConversation, shareMessage } from '../controller/share.controller';
 
 export const shareRouter: Router = express.Router();

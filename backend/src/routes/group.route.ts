@@ -1,9 +1,9 @@
 import express, { Router } from "express";
 import { addUserToGroup, createNewGroup, deleteGroup, fetchAllGroups, removeUserFromGroup, updateGroupData, viewGroupDetail } from "../controller/group.controller";
-import { checkPermission, narrowCheckPermission } from "../utils/checkPermission";
+import { checkPermission } from "../utils/checkPermission";
 
 export const groupRouter:Router = express.Router();
-groupRouter.use(narrowCheckPermission("GROUP"));
+// groupRouter.use(narrowCheckPermission("GROUP"));
 groupRouter.get("/", checkPermission("GROUP_R"), fetchAllGroups);
 // groupRouter.get("/mygroups", fetchUserGroups);
 groupRouter.post("/create", checkPermission("GROUP_C"), createNewGroup);

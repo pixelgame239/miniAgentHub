@@ -2,10 +2,10 @@ import { prisma } from "../../lib/prisma";
 import { MyError } from "../utils/MyError";
 
 export class ExportService {
-    public async exportAllMessages(conversationId: number) {
+    public async exportAllMessages(userId: number, conversationId: number) {
         try{
             const conversationData = await prisma.conversation.findUnique({
-            where: { id: conversationId },
+            where: { id: conversationId, userId: userId },
             include: {
                 messages: {
                 orderBy: {
@@ -14,13 +14,16 @@ export class ExportService {
                 },
             },
             });
+            if (!conversationData) {
+                throw new MyError("Conversation not found", 404);
+            }
             return conversationData;
         } catch (error) {
             console.error("Error exporting conversation:", error);
             throw new MyError("Failed to export conversation", 500);
         }
     }
-    public async exportMessage(messageId: number) {
+    public async exportMessage(userId: number, messageId: number) {
         try {
             const targetMessage = await prisma.message.findUnique({
             where: { id: messageId },
@@ -28,10 +31,13 @@ export class ExportService {
             });
 
             if (!targetMessage || !targetMessage.conversation) {
-            throw new MyError("Message or associated Conversation not found", 404);
+                throw new MyError("Message or associated Conversation not found", 404);
             }
 
             const conversationData = targetMessage.conversation;
+            if (conversationData.userId !== userId) {
+                throw new MyError("Unauthorized access to this message", 403);
+            }
 
             const pairMessages = await prisma.message.findMany({
             where: {

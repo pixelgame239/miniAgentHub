@@ -7,7 +7,13 @@ import { useAuth } from "../hooks/authHook";
 interface ApiKeyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  provider: string; // Nhận chuẩn id: "flowise" | "openRouter" | "groq" từ ChatPage
+  provider: string; 
+}
+
+// Khai báo kiểu dữ liệu cho object chứa lỗi validate của từng ô input
+interface FormErrors {
+  apiKey?: string;
+  flowiseUrl?: string;
 }
 
 const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
@@ -17,20 +23,21 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
 
   const [apiKey, setApiKey] = useState("");
   const [flowiseUrl, setFlowiseUrl] = useState(""); 
-  const [error, setError] = useState(false);
+  const [apiError, setApiError] = useState(false); // Lỗi từ phía backend/server
+  const [errors, setErrors] = useState<FormErrors>({}); // Lỗi validate realtime từng ô
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // So khớp logic chuẩn xác theo ID danh mục được truyền từ ChatPage
   const isFlowise = provider === "flowise";
   const isGroq = provider === "groq";
   const isOpenRouter = provider === "openRouter";
 
-  // Reset dữ liệu mỗi khi mở/đóng Modal hoặc thay đổi modelId
+  // Reset toàn bộ form khi đóng/mở hoặc chuyển provider
   useEffect(() => {
     if (isOpen) {
       setApiKey("");
       setFlowiseUrl("");
-      setError(false);
+      setApiError(false);
+      setErrors({});
     }
   }, [isOpen, provider]);
 
@@ -52,7 +59,6 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
 
   if (!isOpen) return null;
 
-  // Giữ nguyên logic hiển thị dựa trên flag phân tách rõ ràng
   const getModalTitle = () => {
     if (isFlowise) return t("APIKeyModal.flowiseTitle");
     return t("APIKeyModal.title");
@@ -65,16 +71,46 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
     return "API Key";
   };
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  // --- HÀM VALIDATE REALTIME CHO TỪNG INPUT ---
+  const validateField = (name: "apiKey" | "flowiseUrl", value: string) => {
+    let errorMsg = "";
+    
+    if (name === "apiKey" && !value.trim()) {
+      errorMsg = t("APIKeyModal.apiKeyRequired");
+    }
+    
+    if (name === "flowiseUrl" && isFlowise && !value.trim()) {
+      errorMsg = t("APIKeyModal.urlRequired");
+    }
+
+    // Cập nhật lại danh sách lỗi realtime
+    setErrors((prev) => ({
+      ...prev,
+      [name]: errorMsg,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!apiKey.trim()) return;
-    if (isFlowise && !flowiseUrl.trim()) return;
+    setApiError(false);
+
+    // Validate tổng lực lần cuối trước khi gửi data lên server
+    const currentErrors: FormErrors = {};
+    if (!apiKey.trim()) {
+      currentErrors.apiKey = t("APIKeyModal.apiKeyRequired");
+    }
+    if (isFlowise && !flowiseUrl.trim()) {
+      currentErrors.flowiseUrl = t("APIKeyModal.urlRequired");
+    }
+
+    if (Object.keys(currentErrors).length > 0) {
+      setErrors(currentErrors);
+      return; // Chặn submit nếu có lỗi
+    }
 
     setIsSubmitting(true);
-    setError(false);
 
     try {
-      // Chuẩn bị payload: Map chính xác theo trạng thái boolean xử lý từ provider id
       const configPayload = {
         FlowiseAPIKey: isFlowise ? apiKey.trim() : undefined,
         FlowiseURL: isFlowise ? flowiseUrl.trim() : undefined,
@@ -82,22 +118,18 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
         OpenRouterAPIKey: isOpenRouter ? apiKey.trim() : undefined,
       };
 
-      // Gọi API cập nhật cấu hình lên DB
-      const { error: insertAPIKeyError } = await updateUserAIConfig(
-        configPayload,
-        user?.id
-      );
+      const { error: insertAPIKeyError } = await updateUserAIConfig(configPayload, user?.id);
 
       if (insertAPIKeyError) {
         console.error("Failed to save API key:", insertAPIKeyError);
-        setError(true);
+        setApiError(true);
         return;
       }
 
       onClose(); 
     } catch (err) {
       console.error(err);
-      setError(true);
+      setApiError(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -108,46 +140,56 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
       <div className={styles.card} ref={modalRef}>
         <h2 className={styles.title}>{getModalTitle()}</h2>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
+          
+          {/* Cụm Input 1: API Key */}
           <div className={styles.formGroup}>
             <label htmlFor="apiKey" className={styles.label}>
-              {getInputLabel()}
+              {getInputLabel()} <span className={styles.requiredStar}>*</span>
             </label>
             <input
               id="apiKey"
               type="password"
-              required
-              className={`${styles.input} ${error ? styles.inputError : ""}`}
+              className={`${styles.input} ${errors.apiKey ? styles.inputError : ""}`}
               placeholder={t("APIKeyModal.inputPlaceholder")}
               value={apiKey}
               onChange={(e) => {
-                setApiKey(e.target.value);
-                if (error) setError(false);
+                const val = e.target.value;
+                setApiKey(val);
+                validateField("apiKey", val);
               }}
             />
+            {errors.apiKey && (
+              <p className={styles.fieldErrorMessage}>{errors.apiKey}</p>
+            )}
           </div>
 
+          {/* Cụm Input 2: Flowise URL (Chỉ hiển thị khi chọn Flowise) */}
           {isFlowise && (
             <div className={styles.formGroup}>
               <label htmlFor="flowiseUrl" className={styles.label}>
-                "Flowise Endpoint URL"
+                Flowise Endpoint URL <span className={styles.requiredStar}>*</span>
               </label>
               <input
                 id="flowiseUrl"
                 type="url"
-                required
                 placeholder={t("APIKeyModal.flowiseInputPlaceholder")}
-                className={`${styles.input} ${error ? styles.inputError : ""}`}
+                className={`${styles.input} ${errors.flowiseUrl ? styles.inputError : ""}`}
                 value={flowiseUrl}
                 onChange={(e) => {
-                  setFlowiseUrl(e.target.value);
-                  if (error) setError(false);
+                  const val = e.target.value;
+                  setFlowiseUrl(val);
+                  validateField("flowiseUrl", val);
                 }}
               />
+              {errors.flowiseUrl && (
+                <p className={styles.fieldErrorMessage}>{errors.flowiseUrl}</p>
+              )}
             </div>
           )}
 
-          {error && (
+          {/* Lỗi hệ thống từ API (nếu có) */}
+          {apiError && (
             <p className={styles.errorMessage}>
               {t("APIKeyModal.errorMessage")}
             </p>

@@ -6,6 +6,7 @@ import type { User } from "../loader/userLoader";
 import { getGroupUsers, getUsers } from "../api/userApi";
 import { removeUser, addUser } from "../api/groupApi";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
+import { useAuth } from "../hooks/authHook";
 
 interface GroupMembersModalProps {
   open: boolean;
@@ -25,7 +26,7 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedUsersToAdd, setSelectedUsersToAdd] = useState<number[]>([]);
   const { showError, showToast } = useNotificationPopup();
-
+  const { user } = useAuth(); // Lấy thông tin người dùng hiện tại từ hook useAuth
   useEffect(() => {
     if (open) {
       loadMembers();
@@ -125,13 +126,14 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                 <div className={styles.totalBadge}>
                   {members.length} {members.length === 1 ? "member" : "members"}
                 </div>
+                {user && user.permissions?.includes("GROUP_ADD_USER") && (
                 <button
                   className={styles.addUserBtn}
                   onClick={() => setShowAddDialog(true)}
                 >
                   <PlusIcon />
                   <span>{t("groups.addMember")}</span>
-                </button>
+                </button>)}
               </div>
             </div>
 
@@ -151,24 +153,26 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                   <div className={styles.actionsCol}>{t("groups.actions")}</div>
                 </div>
 
-                {members.map((user) => (
-                  <div key={user.id} className={styles.tableRow}>
+                {members.map((mem) => (
+                  <div key={mem.id} className={styles.tableRow}>
                     <div className={styles.nameCol}>
-                      <span className={styles.userName}>{user.fullname}</span>
+                      <span className={styles.userName}>{mem.fullname}</span>
                     </div>
-                    <div className={styles.emailCol}>{user.email}</div>
+                    <div className={styles.emailCol}>{mem.email}</div>
                     <div className={styles.groupsCol}>
-                      {t("groups.total")}: {user.groups?.length || 0}
+                      {t("groups.total")}: {mem.groups?.length || 0}
                     </div>
                     <div className={styles.actionsCol}>
-                      <button
-                        className={`${styles.iconButton} ${styles.deleteBtn}`}
-                        onClick={() => handleRemoveUser(user.id)}
-                        aria-label={`Remove ${user.fullname}`}
-                        title={t("groups.removeMember")}
-                      >
+                      {user && user.permissions?.includes("GROUP_DELETE_USER") && (
+                        <button
+                          className={`${styles.iconButton} ${styles.deleteBtn}`}
+                          onClick={() => handleRemoveUser(mem.id)}
+                          aria-label={`Remove ${mem.fullname}`}
+                          title={t("groups.removeMember")}
+                        >
                         <TrashIcon />
                       </button>
+                      )}
                     </div>
                   </div>
                 ))}

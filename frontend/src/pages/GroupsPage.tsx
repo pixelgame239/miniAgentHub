@@ -34,7 +34,7 @@ const GroupsPage: React.FC = () => {
   useEffect(()=>{
     document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "dark");
   },[]);
-  if (!user?.groupAccess) {
+  if (!user?.permissions?.includes("GROUP_R")) {
     nav("/chat");
   }
 
@@ -115,11 +115,12 @@ const GroupsPage: React.FC = () => {
             <h1 className={styles.pageTitle}>{t("groups.title")}</h1>
             <p className={styles.pageDescription}>{t("groups.description")}</p>
           </div>
-
-          <button className={styles.createButton} onClick={openCreate}>
-            <UserPlusIcon />
-            <span>{t("groups.createGroup")}</span>
-          </button>
+          {user?.permissions?.includes("GROUP_C") && (
+            <button className={styles.createButton} onClick={openCreate}>
+              <UserPlusIcon />
+              <span>{t("groups.createGroup")}</span>
+            </button>
+          )}
         </div>
 
         {/* ── Table card ── */}
@@ -159,24 +160,29 @@ const GroupsPage: React.FC = () => {
                   </button>
 
                   {/* Settings / Edit → opens Update dialog */}
-                  <button
-                    className={styles.iconButton}
-                    onClick={async() => await openUpdate(group)}
-                    aria-label={`Edit ${group.groupName}`}
-                    title={t("groups.editGroup")}
-                  >
+                  
+                  {user?.permissions?.includes("GROUP_U") && (
+                    <button
+                      className={styles.iconButton}
+                      onClick={async() => await openUpdate(group)}
+                      aria-label={`Edit ${group.groupName}`}
+                      title={t("groups.editGroup")}
+                    >
                     <SettingsIcon />
                   </button>
+                  )}
 
                   {/* Delete */}
-                  <button
-                    className={`${styles.iconButton} ${styles.deleteButton}`}
-                    onClick={() => openDelete(group.id)}
-                    aria-label={`Delete ${group.groupName}`}
-                    title={t("groups.deleteGroup")}
-                  >
+                  {user?.permissions?.includes("GROUP_D") && (
+                    <button
+                      className={`${styles.iconButton} ${styles.deleteButton}`}
+                      onClick={() => openDelete(group.id)}
+                      aria-label={`Delete ${group.groupName}`}
+                      title={t("groups.deleteGroup")}
+                    >
                     <TrashIcon />
                   </button>
+                  )}
                 </div>
               </div>
             ))}

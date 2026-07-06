@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import styles from "../styles/groupdialog.module.css";
 import { useTranslation } from "react-i18next";
 import { findUsers } from "../api/userApi";
+import { useAuth } from "../hooks/authHook";
 
 /* ─── Types ─────────────────────────────────── */
 export type DialogMode = "create" | "update";
@@ -88,7 +89,7 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
     const formatted = initialData.entityType.trim().toLowerCase();
     return formatted === "groups" ? "Groups" : "Users";
   });
-  
+  const { user } = useAuth(); // Lấy thông tin người dùng hiện tại từ hook useAuth
   const [permissionsByType, setPermissionsByType] = useState<Record<string, Permission[]>>(() => {
     const initial: Record<string, Permission[]> = {
       Users: USER_PERMISSIONS.map((p) => ({ ...p })),
@@ -190,7 +191,7 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
     ? t("groupDialog.createDescription")
     : t("groupDialog.editDescription");
   const submitLabel = isCreate ? t("groupDialog.initializeGroup") : t("groupDialog.updateGroup");
-
+  
   return (
     <div
       className={styles.overlay}
@@ -318,6 +319,7 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                disabled={!user||!user.permissions?.includes("GROUP_ADD_USER")}
               />
               {showSuggestions && availableUsers.length > 0 && (
                 <div className={styles.suggestions}>
@@ -344,14 +346,16 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
                   <span key={m.id} className={styles.memberTag}>
                     <span className={styles.memberTagAvatar}>{m.fullname.charAt(0)}</span>
                     {m.fullname}
-                    <button
-                      type="button"
-                      className={styles.memberTagRemove}
-                      onClick={() => removeMember(m.id)}
-                      aria-label={`Remove ${m.fullname}`}
+                    {!user||!user.permissions?.includes("GROUP_DELETE_USER") ? null : (
+                      <button
+                        type="button"
+                        className={styles.memberTagRemove}
+                        onClick={() => removeMember(m.id)}
+                        aria-label={`Remove ${m.fullname}`}
                     >
                       <XSmallIcon />
                     </button>
+                    )}
                   </span>
                 ))}
               </div>

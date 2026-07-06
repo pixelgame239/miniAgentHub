@@ -71,7 +71,8 @@ export const updateConversationTitle = async(req: Request, res: Response, next: 
     try{
         if(req.user){
             const convId = parseInt(req.params.convId as string, 10);
-            const response = await conversationService.updateConversationTitle(convId, req.body.title);
+            const userId = req.user.id;
+            const response = await conversationService.updateConversationTitle(userId, convId, req.body.title);
             res.status(201).json(response);
             return;
         }

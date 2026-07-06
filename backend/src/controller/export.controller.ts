@@ -7,7 +7,8 @@ export const exportAllMessages = async (req: Request, res: Response, next: NextF
     try{
         if(req.user){
             const convId = parseInt(req.params.convId as string, 10);
-            const response = await exportService.exportAllMessages(convId);
+            const userId = req.user.id;
+            const response = await exportService.exportAllMessages(userId,convId);
             if(response){
                 res.status(200).json(response);
             } else{
@@ -24,7 +25,8 @@ export const exportMessage = async (req: Request, res: Response, next: NextFunct
     try{
         if(req.user){
             const messageId = parseInt(req.params.messageId as string, 10);
-            const response = await exportService.exportMessage(messageId);
+            const userId = req.user.id;
+            const response = await exportService.exportMessage(userId, messageId);
             if(response){
                 res.status(200).json(response);
             } else{

@@ -31,7 +31,7 @@ const UserPage = () => {
     document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "dark");
   },[]);
   useEffect(() => {
-    if (user && !user.userAccess) {
+    if (user && !user.permissions?.includes("USER_R")) {
       nav("/chat");
     }
   }, [user, nav]);
@@ -148,13 +148,14 @@ const UserPage = () => {
             {t("users.description")}
           </p>
         </div>
-
-        <button
-          className={styles.addUserBtn}
-          onClick={openCreateDialog}
-        >
-          {t("users.addUser")}
-        </button>
+        {user?.permissions?.includes("USER_C") && (
+          <button
+            className={styles.addUserBtn}
+            onClick={openCreateDialog}
+          >
+            {t("users.addUser")}
+          </button>
+        )}
       </header>
 
       <div className={styles.tableWrapper}>
@@ -173,38 +174,38 @@ const UserPage = () => {
           </thead>
 
           <tbody>
-            {users.map((user) => (
+            {users.map((sing) => (
               <tr
-                key={user.id}
+                key={sing.id}
                 className={
-                  selectedIds.includes(user.id)
+                  selectedIds.includes(sing.id)
                     ? `${styles.userRow} ${styles.selectedRow}`
                     : styles.userRow
                 }
               >
                 {/* Thêm class responsive riêng cho ô checkbox */}
                 <td data-label="ID">
-                  {user.id}
+                  {sing.id}
                 </td>
 
                 {/* Thêm data-label tương ứng với thẻ dịch t() */}
                 <td data-label={t("users.fullName")}>
                   <div className={styles.userCell}>
                     <div className={styles.userAvatar}>
-                      {user.fullname
+                      {sing.fullname
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
                     </div>
-                    <span>{user.fullname}</span>
+                    <span>{sing.fullname}</span>
                   </div>
                 </td>
 
-                <td data-label={t("users.email")}>{user.email}</td>
+                <td data-label={t("users.email")}>{sing.email}</td>
 
                 <td data-label={t("users.groups")}>
                   <div className={styles.groupList}>
-                    {user.groups.map((group) => (
+                    {sing.groups.map((group) => (
                       <span
                         key={group.id}
                         className={styles.groupBadge}
@@ -218,19 +219,23 @@ const UserPage = () => {
                 {/* Ô hành động gán class riêng cho mobile */}
                 <td className={`${styles.actionsCol} ${styles.mobileActions}`}>
                   <div className={styles.actions}>
-                    <button
-                      className={styles.actionBtn}
-                      onClick={() => openEditDialog(user)}
-                    >
-                      <SettingsIcon />
-                    </button>
+                    {user?.permissions?.includes("USER_U") && (
+                      <button
+                        className={styles.actionBtn}
+                        onClick={() => openEditDialog(sing)}
+                      >
+                        <SettingsIcon />
+                      </button>
+                    )}
 
-                    <button
-                      className={`${styles.actionBtn} ${styles.deleteBtn}`}
-                      onClick={() => openDeleteDialog(user)}
-                    >
-                      <TrashIcon />
-                    </button>
+                    {user?.permissions?.includes("USER_D") && (
+                      <button
+                        className={`${styles.actionBtn} ${styles.deleteBtn}`}
+                        onClick={() => openDeleteDialog(sing)}
+                      >
+                        <TrashIcon />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

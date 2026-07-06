@@ -115,24 +115,49 @@ export class AIService{
         };
         if(signal) {
             axiosConfig.signal = signal;
+            // Đảm bảo nếu tín hiệu hủy kích hoạt, hủy luồng nhận dữ liệu của axios nếu nó bị kẹt
+            signal.addEventListener("abort", () => {
+                console.log("[AXIOS INTERNAL] Nhận lệnh huỷ mạng từ Controller.");
+            });
         }
-        response = await axios.post(
-            finalAPIURL,
-            {
-                question: content,
-                streaming: true,
-                overrideConfig: {
-                    // agentModelConfig: {
-                    //     modelName: model
-                    // },
-                    sessionId: sessionId,
-                    messages: [{ role: "system", content: "You are a helpful AI assistant. Please converse with the User. If a message contains <file_content>, use that specific document context to answer the question accurately." }],
+        try{
+            response = await axios.post(
+                finalAPIURL,
+                {
+                    question: content,
+                    streaming: true,
+                    overrideConfig: {
+                        // agentModelConfig: {
+                        //     modelName: model
+                        // },
+                        sessionId: sessionId,
+                        messages: [{ role: "system", content: "You are a helpful AI assistant. Please converse with the User. If a message contains <file_content>, use that specific document context to answer the question accurately." }],
+                    },
+                    // ...(uploads && uploads.length > 0 ? { uploads } : {}),
                 },
-                // ...(uploads && uploads.length > 0 ? { uploads } : {}),
-            },
-            axiosConfig
-        );
-        return response.data;
+                axiosConfig
+            );
+            return response.data;
+        }catch(error:any){
+            console.error("promptToFlowise error:", error);
+            if (axios.isCancel(error)) {
+                throw new MyError("Request aborted by user", 499);
+            }
+            if (error.response && error.response.data) {
+                try {
+                    // Đọc buffer stream lỗi và parse thành JSON công khai
+                    const errorBuffer = error.response.data.read();
+                    if (errorBuffer) {
+                        const errorObj = JSON.parse(errorBuffer.toString());
+                        console.error("Chi tiết lỗi từ Flowise:", errorObj);
+                        throw new MyError(errorObj.error?.message || "Flowise Error", error.response.status);
+                    }
+                } catch (parseErr) {
+                    throw new MyError("Unexpected Error during Flowise prompt",500);
+                }
+            }
+            throw new MyError(error.message || "Unexpected Error during Flowise prompt", error.response?.status || 500);
+        }
     }
     public async promptToAIProvider(content: string, model: string, APIKey: string|null, signal?: AbortSignal) {
         let finalAPIURL;
@@ -157,6 +182,10 @@ export class AIService{
 
         if (signal) {
             axiosConfig.signal = signal;
+            // Đảm bảo nếu tín hiệu hủy kích hoạt, hủy luồng nhận dữ liệu của axios nếu nó bị kẹt
+            signal.addEventListener("abort", () => {
+                console.log("[AXIOS INTERNAL] Nhận lệnh huỷ mạng từ Controller.");
+            });
         }
         try{
         response = await axios.post(

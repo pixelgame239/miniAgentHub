@@ -10,8 +10,7 @@ declare global{
                 email: string,
                 address: string|null,
                 phoneNumber: string|null,
-                userAccess: boolean,
-                groupAccess: boolean,
+                permissions: string[],
                 fullname: string,
                 active: boolean,
                 groups: {id: number, groupName:string}[]

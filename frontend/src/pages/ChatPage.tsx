@@ -15,7 +15,7 @@ import { exportMessage } from "../api/exportApi";
 import { generateDocx, generatePdf} from "../utils/export";
 import ExportModal from "../component/ExportModal";
 import { SettingsIcon } from "./GroupsPage";
-import ApiKeyModal from "./ApiKeyModal";
+import ApiKeyModal from "../component/ApiKeyModal";
 
 const ChatPage = () => {
   const { showError, showInfo, showToast } = useNotificationPopup();
@@ -31,7 +31,7 @@ const ChatPage = () => {
     const providers = [
     { id: "flowise", name: "Flowise", icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/flowise.png", models: ["flowise-default", "flowise-custom"] },
     { id: "openRouter", name: "OpenRouter", icon: "https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/openrouter-icon.png", models: ["poolside/laguna-xs.2:free", "google/gemma-4-26b-a4b-it:free"] },
-    { id: "groq", name: "Groq", icon: "https://images.seeklogo.com/logo-png/60/1/groq-icon-logo-png_seeklogo-605779.png", models: ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "groq/compound"] },
+    { id: "groq", name: "Groq", icon: "https://images.seeklogo.com/logo-png/60/1/groq-icon-logo-png_seeklogo-605779.png", models: ["llama-3.3-70b-versatile", "openai/gpt-oss-120b"] },
   ];
 
   // Khởi tạo state selectedModel bằng giá trị đầu tiên trong mảng models của provider đầu tiên ("flowise")
@@ -560,7 +560,7 @@ const ChatPage = () => {
 
           {streaming
             ? <button className={styles.sendBtn} onClick={abort}><StopIcon /></button>
-            : <button className={styles.sendBtn} onClick={sendMessage}
+            : <button className={styles.sendBtn} onClick={async () => await sendMessage()}
             disabled={!inputText.trim()}><SendIcon /></button>
           }
         </div>

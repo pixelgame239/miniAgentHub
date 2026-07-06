@@ -181,7 +181,22 @@
   line-height: 1.4;
   animation: fadeIn 0.2s ease-in-out;
 }
-
+/* Thêm class này vào cuối file css hiện tại của bạn */
+.fieldErrorMessage {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.8rem;
+  color: var(--danger);
+  text-align: left;
+  font-weight: 500;
+  line-height: 1.2;
+  animation: fadeIn 0.15s ease-in-out;
+}
+/* Thêm vào cuối file CSS của bạn */
+.requiredStar {
+  color: var(--danger);
+  margin-left: 0.25rem;
+  font-weight: bold;
+}
 /* Hiệu ứng mượt mà xuất hiện Modal / Error */
 @keyframes fadeIn {
   from {

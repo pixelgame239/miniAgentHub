@@ -13,8 +13,11 @@ export const shareConversation = async (req: Request, res: Response, next: NextF
     if (isNaN(conversationId)) {
       throw new MyError("Invalid conversation ID", 400);
     }
-
-    const result = await shareService.shareConversation(conversationId);
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new MyError("Unauthorized", 401);
+    }
+    const result = await shareService.shareConversation(userId, conversationId);
     res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -29,8 +32,11 @@ export const shareMessage = async (req: Request, res: Response, next: NextFuncti
     if (isNaN(messageId)) {
       throw new MyError("Invalid message ID", 400);
     }
-
-    const result = await shareService.shareMessage(messageId);
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new MyError("Unauthorized", 401);
+    }
+    const result = await shareService.shareMessage(userId, messageId);
     res.status(200).json(result);
   } catch (error) {
     next(error);

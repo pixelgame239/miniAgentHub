@@ -16,12 +16,17 @@ export class MessageService {
     "agentReasoning", "sourceDocuments", "usedTools",
     "fileAnnotations", "artifact",
   ]);
+  private activeControllers = new Map<number, AbortController>();
   private extractText(parsed: any): string {
     // 1. Xử lý định dạng chuẩn của AI Provider (Groq / OpenRouter / OpenAI)
+    console.log(parsed);
     if (parsed.choices && Array.isArray(parsed.choices) && parsed.choices.length > 0) {
       const delta = parsed.choices[0].delta;
       if (delta && typeof delta.content === "string") {
         return delta.content; 
+      }
+      if(delta && typeof delta.reasoning === "string" && !delta.channel) {
+        return delta.reasoning || "";
       }
       return "";
     }
@@ -44,7 +49,21 @@ export class MessageService {
     userId: number,
     files?: { data: string; fileName: string; mimeType: string }[]
   ): Promise<void> {
-    const axiosController= new AbortController();
+    const existingConversation = await prisma.conversation.findUnique({
+      where: { id: convId, userId: userId },
+    });
+
+    if (!existingConversation) {
+      throw new MyError("Unauthorized", 401);
+    }
+    if (this.activeControllers.has(convId)) {
+      this.activeControllers.get(convId)?.abort();
+      this.activeControllers.delete(convId);
+    }
+
+    // Tạo mới và lưu vào Map toàn cục của Service
+    const axiosController = new AbortController();
+    this.activeControllers.set(convId, axiosController);
     let dbFileUrl: string | null = null;
     let dbFileName: string | null = null;
     let dbFileType: string | null = null;
@@ -193,7 +212,7 @@ export class MessageService {
 
     let fullResponse = "";
     let buffer = "";
-    let isStreamFinished = false; // Thay thế isAborted bằng cờ kiểm soát luồng kết thúc tự nhiên
+    let isStreamFinished = false;
 
     const saveAIResponse = async (completed: boolean) => {
       if (!fullResponse.trim()) return;
@@ -207,27 +226,44 @@ export class MessageService {
             isCompleted: completed 
           },
         });
-        console.log(`[DB] Saved AI Response. Completed: ${completed} | Length: ${fullResponse.length}`);
+        console.log(`[🟢 DB SAVED] Model: ${model} | Completed: ${completed} | Length: ${fullResponse.length} chars`);
       } catch (err) {
-        console.error("DB write error:", err);
+        console.error("[🔴 DB ERROR] Ghi nhận phản hồi thất bại:", err);
       }
     };
 
-const cleanup = async () => {
-      // 🛠️ Kiểm tra nếu luồng chưa kết thúc thì xử lý ngắt kết nối khẩn cấp
-      if (!isStreamFinished) {
-        isStreamFinished = true; 
-        
-        // Gỡ bỏ ngay lập tức để tránh rò rỉ listener hoặc gọi nhầm luồng
-        res.off("close", cleanup); 
-        
-        axiosController.abort(); // Ngắt kết nối Axios ngay lập tức
-        if (stream && typeof stream.destroy === "function") {
+    const cleanup = async () => {
+      if (isStreamFinished) {
+        console.log(`[⚠️ ABORT IGNORED] Client gửi tín hiệu đóng kết nối nhưng luồng của ${model} ĐÃ KẾT THÚC trước đó.`);
+        return; 
+      }
+      
+      isStreamFinished = true; 
+      console.log(`[🚨 ABORT DETECTED] ===== USER BẤM ABORT THÀNH CÔNG =====`);
+      console.log(`[🚨 ABORT DETECTED] Thời gian: ${new Date().toISOString()} | Model đang chạy: ${model}`);
+      
+      // Gỡ bỏ ngay lập tức listener để tránh rò rỉ bộ nhớ
+      res.removeListener("close", cleanup); 
+      const currentController = this.activeControllers.get(convId);
+      if(currentController) {
+        currentController.abort();
+        this.activeControllers.delete(convId);
+      }
+      // Hủy request Axios 
+      console.log(`[🚨 ABORT ACTION] Đang gửi lệnh hủy request tới Axios Provider...`);
+      axiosController.abort(); 
+      
+      // Hủy stream dữ liệu nhận từ AI Provider
+      if (stream) {
+        if (typeof stream.destroy === "function") {
           stream.destroy();
+        } else if (stream.push) {
+          stream.push(null); // Cách đóng stream nếu là Readable đóng gói thủ công
         }
-        
-        console.log("[STREAM] Client disconnected via Abort. Freezing and saving partial text...");
-        await saveAIResponse(false); // Lưu dở dang với trạng thái false
+      }
+      await saveAIResponse(false); 
+      if (!res.writableEnded) { 
+        res.end();
       }
     };
     
@@ -235,48 +271,96 @@ const cleanup = async () => {
     res.on("close", cleanup);
 
     return new Promise<void>((resolve) => {
+    let chunkCount = 0;
       stream.on("data", (chunk: Buffer) => {
-        if (isStreamFinished) return; 
+        chunkCount++;
+        console.log("Raw chunk:", chunk.toString("utf8"));
+        if (isStreamFinished || axiosController.signal.aborted) {
+          if (!isStreamFinished) cleanup();
+          return;
+        }
         
         buffer += chunk.toString("utf8");
         const lines = buffer.split("\n");
         buffer = lines.pop() ?? "";
+        if (chunkCount % 10 === 0 || chunkCount === 1) {
+          console.log(`[📶 STREAMING DATA] Model: ${model} | Chunk #${chunkCount}`);
+        }
+        
+        let isAnalysisChannel = false;
 
         for (const line of lines) {
+          // Bẻ gãy vòng lặp đồng bộ NGAY LẬP TỨC nếu client bấm hủy hoặc res đóng
+          if (isStreamFinished || axiosController.signal.aborted || res.writableEnded) {
+            console.log(`[🛑 LOOP BREAKER] Vòng lặp từ chunk #${chunkCount} bị chặn đứng ngay lập tức do đã Abort!`);
+            break; 
+          }
+
           if (!line.match(/^\s*data:/)) continue;
 
-          const jsonStr = line.replace(/^\s*data:\s*/, "");
+          const jsonStr = line.replace(/^\s*data:\s*/, "").trim();
           if (!jsonStr) continue;
-          if (jsonStr === "[DONE]") continue;
 
+          // XỬ LÝ TÍN HIỆU [DONE] THÔ TRƯỚC VÌ NÓ KHÔNG PHẢI JSON
+          if (jsonStr === "[DONE]") {
+            if (isAnalysisChannel) {
+              console.log(`[⚠️ FALSE DONE BLOCKED] Phát hiện tín hiệu [DONE] giả từ ${model} khi đang ở channel: analysis.`);
+              continue; 
+            }
+            console.log(`[🏁 PROVIDER DONE] Nhận được tín hiệu [DONE] chính thức từ ${model}`);
+            continue;
+          }
+
+          // CHỈ DÙNG 1 KHỐI TRY-CATCH DUY NHẤT CHO JSON DƯỚI ĐÂY
           try {
             const parsed = JSON.parse(jsonStr);
+            // 1. Kiểm tra lỗi Flowise integration
+            if (parsed.event === "error" || parsed.status === "error") {
+              console.error(`[🚨 FLOWISE ERROR DETECTED]: ${jsonStr}`);
+              res.write(`data: ${JSON.stringify({ error: true, status: 400, message: parsed.data || "Flowise Integration Error" })}\n\n`);
+              res.end();
+              return; 
+            }
+
+            // 2. Bỏ qua các sự kiện end/bổ trợ của Flowise
             if (parsed.event === "end" || parsed.event === "agentFlowEvent") continue;
 
+            // 3. Thẩm định kênh truyền (analysis vs content)
+            const delta = parsed.choices?.[0]?.delta;
+            if (delta) {
+              if (delta.channel === "analysis") {
+                isAnalysisChannel = true;
+              } else if (delta.content !== undefined || (delta.channel && delta.channel !== "analysis")) {
+                isAnalysisChannel = false;
+              }
+            }
+
+            // 4. Bóc tách chữ và viết xuống stream
             const text = this.extractText(parsed);
             if (!text) continue;
 
             const normalized = text.replace(/\r/g, "").replace(/\u0000/g, "");
             
-            if (isStreamFinished) return; 
+            // Re-check abort ngay trước khi ghi
+            if (isStreamFinished || axiosController.signal.aborted || res.writableEnded) break;
 
             fullResponse += normalized;
 
-            if (!res.writableEnded && normalized !== "") {
+            if (normalized !== "") {
               res.write(`data: ${normalized}\n\n`);
             }
           } catch (err) {
-            console.error("JSON parse error on line:", jsonStr, err);
+            // Trường hợp dòng không parse được (text thô hoặc format lạ) nhưng không phải lỗi hệ thống
           }
         }
       });
 
       stream.on("end", async () => {
-        // 🛠️ Nếu chưa bị Abort trước đó, xử lý kết thúc thành công tự nhiên
+        console.log(`[🔚 STREAM END] Sự kiện stream.on("end") kích hoạt cho model ${model}`);
         if (!isStreamFinished) {
           isStreamFinished = true; 
-          res.off("close", cleanup); // 🛠️ CHẮC CHẮN gỡ bỏ cleanup khi hoàn thành thành công
-
+          res.removeListener("close", cleanup); 
+          this.activeControllers.delete(convId);
           await saveAIResponse(true); 
 
           if (!res.writableEnded) {
@@ -287,23 +371,23 @@ const cleanup = async () => {
         resolve();
       });
 
-      stream.on("error", (err: Error) => {
-        // 🛠️ LUÔN LUÔN gỡ bỏ cleanup khi stream gặp lỗi (bao gồm cả lỗi hủy mạng ERR_CANCELED)
+      stream.on("error", (err: any) => {
+        console.log(`[💥 STREAM ERROR] Xuất hiện lỗi luồng từ model ${model}: ${err.message}`);
         if (!isStreamFinished) {
           isStreamFinished = true;
+          cleanup();
         }
         
-        res.off("close", cleanup); // 🛠️ ĐƯA RA NGOÀI ĐIỀU KIỆN: Bắt buộc phải gỡ listener ra khỏi res
+        this.activeControllers.delete(convId);
 
-        // Nếu lỗi xảy ra KHÔNG phải do chúng ta chủ động abort, log lỗi ra
-        if (err.name !== 'CanceledError' && err.message !== 'canceled') {
-          console.error("Stream real error:", err);
+        if (err.name !== 'CanceledError' && err.message !== 'canceled' && err.code !== 'ERR_CANCELED') {
+          console.error("[🔴 REAL ERROR]", err);
           if (!res.writableEnded) {
             res.write(`data: [ERROR] ${err.message}\n\n`);
             res.end();
           }
         } else {
-          console.log("[STREAM] Axios request successfully canceled & cleaned up.");
+          console.log("[✨ CLEANUP SUCCESS] Hủy kết nối mạng Axios thành công, tài nguyên đã được giải phóng.");
         }
         resolve();
       });

@@ -252,8 +252,8 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
         {user &&
           navItems
             .filter((item) => {
-              if (item.label === t("sidebar.users") && !user.userAccess) return false;
-              if (item.label === t("sidebar.groups") && !user.groupAccess) return false;
+              if (item.label === t("sidebar.users") && !user.permissions?.includes("USER_R")) return false;
+              if (item.label === t("sidebar.groups") && !user.permissions?.includes("GROUP_R")) return false;
               return true;
             })
             .map((item) => (

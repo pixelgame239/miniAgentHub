@@ -50,7 +50,6 @@ export const findUsers = async(req: Request, res: Response, next: NextFunction)=
             const response = await userService.queryUser(input);
             res.status(200).json(response);
             return;
-            
         }
         throw new MyError("Forbidden", 403);
     }catch(error){

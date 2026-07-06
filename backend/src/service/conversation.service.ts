@@ -31,6 +31,9 @@ export class ConversationService {
                 }
             }
         }})
+        if(!response){
+            throw new MyError("Not found", 404);
+        }
         return response;
     }
     public async deleteConversation(convId:number, userId: number){
@@ -43,8 +46,8 @@ export class ConversationService {
         const response = await prisma.conversation.deleteMany({where:{userId: userId}});
         return response;
     }
-    public async updateConversationTitle(convId: number, title: string){
-        const response = await prisma.conversation.update({where:{id: convId}, data:{title: title}});
+    public async updateConversationTitle(userId: number, convId: number, title: string){
+        const response = await prisma.conversation.update({where:{id: convId, userId: userId}, data:{title: title}});
         return response;
     }
 }

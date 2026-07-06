@@ -65,25 +65,25 @@ export class AuthService{
         const passwordCorrect = await comparePassword(userData.userPassword, existingUser.userPassword);
         if(passwordCorrect){
             const userPermissions = existingUser.groups.flatMap((group: any) => group.permissions);
-            let userAccess = false;
-            let groupAccess = false;
-            if(userPermissions.some((permission: string) => permission.startsWith("USER"))){
-                userAccess = true;
-            }
-            if(userPermissions.some((permission: string) => permission.startsWith("GROUP"))){
-                groupAccess = true;
-            }
+            // let userAccess = false;
+            // let groupAccess = false;
+            // if(userPermissions.some((permission: string) => permission.startsWith("USER"))){
+            //     userAccess = true;
+            // }
+            // if(userPermissions.some((permission: string) => permission.startsWith("GROUP"))){
+            //     groupAccess = true;
+            // }
+            console.log("User permissions:", userPermissions);
             return{
                 message: "Logged in!",
-                token: generateAccessToken(existingUser.id, existingUser.email, existingUser.address, existingUser.phoneNumber, userAccess, groupAccess, existingUser.fullname, existingUser.active, existingUser.groups.map((group: any) => ({ id: group.id, groupName: group.groupName }))),
+                token: generateAccessToken(existingUser.id, existingUser.email, existingUser.address, existingUser.phoneNumber, userPermissions, existingUser.fullname, existingUser.active, existingUser.groups.map((group: any) => ({ id: group.id, groupName: group.groupName }))),
                 userData: {
                     id: existingUser.id,
                     fullname: existingUser.fullname,
                     email: existingUser.email,
                     address: existingUser.address,
                     phoneNumber: existingUser.phoneNumber,
-                    userAccess: userAccess,
-                    groupAccess: groupAccess,
+                    permissions: userPermissions,
                     active: existingUser.active,
                     groups: existingUser.groups.map((group: any) => ({id: group.id, groupName: group.groupName})),
                 }
