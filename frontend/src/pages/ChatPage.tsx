@@ -1,5 +1,5 @@
 // ChatPage.tsx
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "../styles/chat.module.css";
 import { useRouteLoaderData } from "react-router";
 import type { AIModels } from "../loader/aiLoader";
@@ -16,7 +16,14 @@ import { generateDocx, generatePdf} from "../utils/export";
 import ExportModal from "../component/ExportModal";
 import { SettingsIcon } from "./GroupsPage";
 import ApiKeyModal from "../component/ApiKeyModal";
+import StreamingBubble from "../component/StreamingBubble";
 
+  const formatInline = (text: string) =>
+    text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
+      part.startsWith("**") && part.endsWith("**")
+        ? <strong key={i}>{part.slice(2, -2)}</strong>
+        : part
+    );
 const ChatPage = () => {
   const { showError, showInfo, showToast } = useNotificationPopup();
   const { t } = useTranslation();
@@ -30,7 +37,7 @@ const ChatPage = () => {
   // Định nghĩa mảng providers cố định kèm danh sách model chính xác
     const providers = [
     { id: "flowise", name: "Flowise", icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/flowise.png", models: ["flowise-default", "flowise-custom"] },
-    { id: "openRouter", name: "OpenRouter", icon: "https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/openrouter-icon.png", models: ["poolside/laguna-xs.2:free", "google/gemma-4-26b-a4b-it:free"] },
+    { id: "openRouter", name: "OpenRouter", icon: "https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/openrouter-icon.png", models: ["poolside/laguna-m.1:free", "google/gemma-4-26b-a4b-it:free"] },
     { id: "groq", name: "Groq", icon: "https://images.seeklogo.com/logo-png/60/1/groq-icon-logo-png_seeklogo-605779.png", models: ["llama-3.3-70b-versatile", "openai/gpt-oss-120b"] },
   ];
 
@@ -253,17 +260,11 @@ const ChatPage = () => {
     }
   };
 
-  const formatInline = (text: string) =>
-    text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
-      part.startsWith("**") && part.endsWith("**")
-        ? <strong key={i}>{part.slice(2, -2)}</strong>
-        : part
-    );
 
 // ChatPage.tsx
-    const formatMessageText = (text: string) => {
+    const formatMessageText = useCallback((text: string) => {
       return formatInline(text);
-    };
+    }, []);
 
   const formatMessageTime = (createdAt?: string | Date) => {
     if (!createdAt) return "";
@@ -494,23 +495,24 @@ const ChatPage = () => {
           </div>
         ))}
         {streaming && (
-          <div className={`${styles.messageRow} ${styles.modelRow}`}>
-            {/* <AIAvatar /> */}
-            <div className={styles.messageBubbleWrapper}>
-                <div className={`${styles.messageBubble} ${liveText.trim() === "" ? styles.loadingBubble : ""}`}>
-                  <div className={styles.messageText}> {/* Class này đã có pre-wrap */}
-                  {liveText.trim() !== "" 
-                    ? formatMessageText(liveText)
-                    : <div className={styles.typingIndicator}>
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
+          // <div className={`${styles.messageRow} ${styles.modelRow}`}>
+          //   {/* <AIAvatar /> */}
+          //   <div className={styles.messageBubbleWrapper}>
+          //       <div className={`${styles.messageBubble} ${liveText.trim() === "" ? styles.loadingBubble : ""}`}>
+          //         <div className={styles.messageText}> {/* Class này đã có pre-wrap */}
+          //         {liveText.trim() !== "" 
+          //           ? formatMessageText(liveText)
+          //           : <div className={styles.typingIndicator}>
+          //             <span></span>
+          //             <span></span>
+          //             <span></span>
+          //           </div>
+          //         }
+          //       </div>
+          //     </div>
+          //   </div>
+          // </div>
+          <StreamingBubble streaming={streaming} liveText={liveText} formatMessageText={formatMessageText} />
         )}
         <div ref={messagesEndRef} />
       </div>
