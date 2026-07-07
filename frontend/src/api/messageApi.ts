@@ -10,13 +10,12 @@ export type ChatRequest = {
   conversationId?: number;
   content?: string;
   model?: string;
-  APIKey?: string|null;
   files?: FileUpload[]; 
 };
 
 export type SSEHandlers = {
   onChunk: (text: string) => void;
-  onDone: (fullText: string) => void;
+  onDone: (result: { fullText: string; responseId: number; completed: boolean }) => void;
   onError?: (err: Error) => void;
 };
 
@@ -85,6 +84,7 @@ export const streamPrompt = async (
   const decoder = new TextDecoder();
   let buffer = "";
   let accumulated = "";
+  let isAnalysisChannel = false;
 
   try {
     while (true) {
@@ -101,37 +101,59 @@ export const streamPrompt = async (
       buffer = lines.pop() ?? "";
 
       for (const line of lines) {
-        if (!line.startsWith("data:")) continue;
+        if(signal.aborted) {
+          throw new DOMException("The user aborted a request.", "AbortError");
+        }
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) continue;
 
-        const payload = line.replace(/^data:\s?/, "");
+        const payload = trimmed.replace(/^data:\s?/, "");
         if (payload === "") continue;
 
-        if (payload === "[DONE]" || payload.trim() === "[DONE]") {
-          handlers.onDone(accumulated);
-          return;
-        }
-
-        try {
-          const parsedPayload = JSON.parse(payload.trim());
-          if (parsedPayload && parsedPayload.error) {
+        try{
+          const parsedPayload = JSON.parse(payload);
+          if (payload === "[DONE]") {
+            console.log("[FRONTEND API] Nhận tín hiệu kết thúc chính thức [DONE]. Giải phóng luồng.");
+            handlers.onDone({ 
+              fullText: accumulated, 
+              responseId: parsedPayload?.responseId, // 🔥 Tận dụng dữ liệu ID đã parse được từ block trước nếu có
+              completed: true 
+            });
+            return; 
+          }
+          if(parsedPayload&&parsedPayload.error){
             const customError = new Error(parsedPayload.message || "Stream error") as any;
             customError.status = parsedPayload.status || 500;
             handlers.onError?.(customError);
             return;
           }
-        } catch {}
-
-        const text = extractChunkText(payload);
-        if (text === "" && !payload.includes("\n")) continue; 
-
-        accumulated += text;
-        handlers.onChunk(accumulated);
+          if(parsedPayload&&parsedPayload.streamFinished){
+            handlers.onDone({ fullText: accumulated, responseId: parsedPayload.responseId, completed: parsedPayload.completed });
+            return;
+          }
+          const delta = parsedPayload.choices?.[0]?.delta;
+          if (delta) {
+            // Kiểm tra xem token này thuộc kênh nào
+            if (delta.channel === "analysis" || delta.reasoning !== undefined) {
+              isAnalysisChannel = true;
+            } else if (delta.content !== undefined || (delta.channel && delta.channel !== "analysis")) {
+              isAnalysisChannel = false;
+            }
+          }
+          let token = "";
+          if (!isAnalysisChannel) {
+            if (delta && typeof delta.content === "string") {
+              token = delta.content;
+            } else if (parsedPayload.event === "token" && typeof parsedPayload.data === "string") {
+              token = parsedPayload.data; // Định dạng Flowise
+            }
+          }
+          if (token) {
+            accumulated += token;
+            handlers.onChunk(accumulated);
+          }
+        }catch{}
       }
-    }
-
-    // Chỉ gọi onDone nếu luồng kết thúc tự nhiên và KHÔNG bị hủy
-    if (!signal.aborted) {
-      handlers.onDone(accumulated);
     }
   } catch (err: any) {
     // Nếu là lỗi hủy, ném ra ngoài cho hook useSSEStream xử lý, TUYỆT ĐỐI không gọi handlers.onDone

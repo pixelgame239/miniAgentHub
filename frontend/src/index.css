@@ -64,6 +64,8 @@
   --radius:          20px;
   --btn-text-solid:          #ffffff;
   --btn-text-danger-shading: #f87171;
+    --special-text: #ffffff
+
 }
 
 /* ================================================
@@ -167,6 +169,7 @@
   /* ── FIX ĐỘ TƯƠNG PHẢN CHO LIGHT MODE ── */
   --btn-text-solid:        #ffffff; /* Chữ trắng trên nền nút đậm (Primary, Destructive) */
   --btn-text-danger-shading: #b91c1c; /* Màu chữ danger đậm hơn cho text/outline button */
+  --special-text: #ffffff
 }
 /* ================================================
    BASE RESET

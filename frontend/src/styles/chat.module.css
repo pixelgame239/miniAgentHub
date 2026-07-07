@@ -17,7 +17,57 @@
 /* ========================================
    HEADER
 ======================================== */
+/* ========================================
+   TYPING INDICATOR (LOADING CHAT)
+======================================== */
 
+/* Class phụ modifier để thu nhỏ ô chat khi đang loading */
+.loadingBubble {
+  padding: 10px 14px !important; /* Thu nhỏ padding để ôm sát dấu chấm */
+  display: inline-flex;
+  align-items: center;
+  min-height: unset !important; /* Loại bỏ giới hạn chiều cao nếu có */
+}
+
+/* Khung chứa các dấu chấm */
+.typingIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px; /* Khoảng cách vừa vặn giữa các chấm */
+  height: 14px; /* Fix chiều cao bằng đúng line-height tiêu chuẩn */
+}
+
+/* Style cho từng dấu chấm */
+.typingIndicator span {
+  width: 6px;  /* Thu nhỏ lại 6px nhìn sẽ tinh tế và sang hơn */
+  height: 6px;
+  background-color: var(--text-secondary, #a0a0a0); /* Ưu tiên dùng biến hệ thống của bạn */
+  border-radius: 50%;
+  display: inline-block;
+  animation: geminiBounce 1.2s infinite ease-in-out both;
+}
+
+/* Delay animation tạo hiệu ứng gợn sóng mượt mà */
+.typingIndicator span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typingIndicator span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+/* Hiệu ứng nảy êm ái kết hợp mờ ảo của Gemini/ChatGPT */
+@keyframes geminiBounce {
+  0%, 80%, 100% {
+    transform: translateY(0) scale(0.85);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-4px) scale(1); /* Nảy nhẹ lên 4px */
+    opacity: 1;
+  }
+}
 .chatHeader {
   height: 60px;
   min-height: 60px;

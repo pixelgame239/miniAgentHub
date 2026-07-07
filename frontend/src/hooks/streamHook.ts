@@ -13,6 +13,7 @@ export const useSSEStream = (conversationId: number | undefined) => {
 
   // Dùng một ref nội bộ để luôn bám sát text đang chạy mà không bị ảnh hưởng bởi việc xóa Map bất đồng bộ
   const currentLiveTextRef = useRef<string>("");
+  const currentResponseIdRef = useRef<number | undefined>(undefined);
 
   const streamState = conversationId !== undefined
     ? streamMap.get(conversationId)
@@ -30,6 +31,7 @@ export const useSSEStream = (conversationId: number | undefined) => {
     abortMapRef.current.set(convId, controller);
 
     currentLiveTextRef.current = ""; // Reset ref cho tin nhắn mới
+    currentResponseIdRef.current = undefined;
     setStreamState(convId, { liveText: "", streaming: true });
 
     try {
@@ -37,31 +39,40 @@ export const useSSEStream = (conversationId: number | undefined) => {
         payload,
         {
           onChunk: (fullAccumulated) => {
-            if (fullAccumulated.startsWith("{") && fullAccumulated.includes('"error":')) {
-              try {
-                const parsed = JSON.parse(fullAccumulated);
-                if (parsed.error) {
-                  onErrorCallback?.(500, parsed.error);
-                  return;
-                }
-              } catch {}
-            }
+            // if (fullAccumulated.startsWith("{") && fullAccumulated.includes('"error":')) {
+            //   try {
+            //     const parsed = JSON.parse(fullAccumulated);
+            //     if (parsed.error) {
+            //       onErrorCallback?.(500, parsed.error);
+            //       return;
+            //     }
+            //   } catch {}
+            // }
             
             // Ghi nhận vào biến Ref liên tục
+            if(controller.signal.aborted) {
+              console.warn("[FRONTEND] Tín hiệu abort đã được phát ra, bỏ qua onChunk cuối cùng.");
+              return;
+            }
             currentLiveTextRef.current = fullAccumulated;
             setStreamState(convId, { liveText: fullAccumulated, streaming: true });
           },
 
-          onDone: (fullText) => {
+          onDone: ({fullText, responseId, completed}) => {
+            if (controller.signal.aborted) return;
+            currentResponseIdRef.current = responseId;
             clearStreamState(convId);
             abortMapRef.current.delete(convId);
 
             if (fullText.trim()) {
               appendMessage(convId, {
+                id: responseId,
                 content: fullText,
                 type: "response",
                 conversationId: convId,
                 createdAt: new Date().toISOString(),
+                isCompleted: completed,
+                AIModel: payload.model
               });
             }
           },
@@ -81,10 +92,13 @@ export const useSSEStream = (conversationId: number | undefined) => {
         err.name === "AbortError" || 
         err.message?.toLowerCase().includes("aborted") || 
         controller.signal.aborted;
-
+      clearStreamState(convId);
+      abortMapRef.current.delete(convId);
       if (isAbort) {
+        console.log("[FRONTEND] Tín hiệu abort đã được phát ra, bỏ qua onError cuối cùng.");
           if (cachedText && cachedText.trim()) {
             appendMessage(convId, {
+              id: currentResponseIdRef.current,
               content: cachedText,
               type: "response",
               conversationId: convId,
@@ -104,22 +118,21 @@ export const useSSEStream = (conversationId: number | undefined) => {
           abortMapRef.current.delete(convId);
     }
   }, [setStreamState, clearStreamState, appendMessage, abortMapRef]);
-  const currentIdRef = useRef(conversationId);
-  useEffect(() => {
-    currentIdRef.current = conversationId;
-  }, [conversationId]);
+  // const currentIdRef = useRef(conversationId);
+  // useEffect(() => {
+  //   currentIdRef.current = conversationId;
+  // }, [conversationId]);
   // Sửa lại hàm abort để đảm bảo đồng bộ
   const abort = useCallback(() => {
-    const activeId = currentIdRef.current;
-    if (activeId === undefined) return;
-    
-    const controller = abortMapRef.current.get(activeId);
+    if (conversationId === undefined) return;
+    clearStreamState(conversationId);    
+    const controller = abortMapRef.current.get(conversationId);
     if (controller) {
       console.log("[FRONTEND] Kích hoạt phát tín hiệu controller.abort() thành công.");
       controller.abort();
-      abortMapRef.current.delete(activeId);
+      abortMapRef.current.delete(conversationId);
     }
-  }, [abortMapRef]);
+  }, [abortMapRef, clearStreamState, conversationId]);
 
   return { liveText, streaming, start, abort };
 };

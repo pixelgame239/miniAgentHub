@@ -230,7 +230,7 @@ const ChatPage = () => {
           mimeType: finalMime
         }]
       }
-      start({ conversationId: convId, content, model: selectedModel.id, APIKey: localStorage.getItem("APIKey"), files: uploads},
+      start({ conversationId: convId, content, model: selectedModel.id, files: uploads},
         (status, msg) => {
           if (status === 400) {
             showError(t("chat.wrongConfiguration"));
@@ -430,7 +430,7 @@ const ChatPage = () => {
             key={index}
             className={`${styles.messageRow} ${msg.type === "prompt" ? styles.userRow : styles.modelRow}`}
           >
-            {msg.type !== "prompt" && <AIAvatar />}
+            {/* {msg.type !== "prompt" && <AIAvatar />} */}
             <div className={styles.messageBubbleWrapper}>
               <div className={styles.messageBubble}>
                 {msg.fileUrl && (
@@ -495,13 +495,17 @@ const ChatPage = () => {
         ))}
         {streaming && (
           <div className={`${styles.messageRow} ${styles.modelRow}`}>
-            <AIAvatar />
+            {/* <AIAvatar /> */}
             <div className={styles.messageBubbleWrapper}>
-              <div className={styles.messageBubble}>
-                <div className={styles.messageText}> {/* Class này đã có pre-wrap */}
+                <div className={`${styles.messageBubble} ${liveText.trim() === "" ? styles.loadingBubble : ""}`}>
+                  <div className={styles.messageText}> {/* Class này đã có pre-wrap */}
                   {liveText.trim() !== "" 
                     ? formatMessageText(liveText)
-                    : <span>●</span>
+                    : <div className={styles.typingIndicator}>
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
                   }
                 </div>
               </div>
@@ -559,7 +563,7 @@ const ChatPage = () => {
           />
 
           {streaming
-            ? <button className={styles.sendBtn} onClick={abort}><StopIcon /></button>
+            ? <button className={styles.sendBtn} onClick={async () => await abort()}><StopIcon /></button>
             : <button className={styles.sendBtn} onClick={async () => await sendMessage()}
             disabled={!inputText.trim()}><SendIcon /></button>
           }

@@ -184,7 +184,7 @@
 .submit-btn {
   background: linear-gradient(135deg, var(--dialog-accent), var(--accent));
   border: none;
-  color: var(--text-heading);
+  color: var(--special-text);
 }
 
 .submit-btn:hover {

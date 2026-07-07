@@ -148,7 +148,7 @@
 .primary-btn {
   background: var(--accent);
   border: none;
-  color: var(--text-heading);
+  color: var(--special-text);
 }
 
 .primary-btn:hover {

@@ -204,6 +204,7 @@ export class AIService{
                 throw new MyError("Request aborted by user", 499);
             }
             if (error.response && error.response.data) {
+                console.error("promptToAIProvider error response:", error);
                 try {
                     // Đọc buffer stream lỗi và parse thành JSON công khai
                     const errorBuffer = error.response.data.read();

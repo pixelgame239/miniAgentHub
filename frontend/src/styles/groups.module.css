@@ -56,7 +56,7 @@
   border: none;
   border-radius: 14px;
   background: var(--accent);
-  color: var(--text-heading);
+  color: var(--special-text);
   /* Đồng bộ font chữ nút bấm */
   font-size: 0.92rem;
   font-weight: 600;

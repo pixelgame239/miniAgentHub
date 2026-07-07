@@ -73,7 +73,7 @@ export class AuthService{
             // if(userPermissions.some((permission: string) => permission.startsWith("GROUP"))){
             //     groupAccess = true;
             // }
-            console.log("User permissions:", userPermissions);
+            // console.log("User permissions:", userPermissions);
             return{
                 message: "Logged in!",
                 token: generateAccessToken(existingUser.id, existingUser.email, existingUser.address, existingUser.phoneNumber, userPermissions, existingUser.fullname, existingUser.active, existingUser.groups.map((group: any) => ({ id: group.id, groupName: group.groupName }))),
