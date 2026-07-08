@@ -38,7 +38,7 @@ export const useSSEStream = (conversationId: number | undefined) => {
       await streamPrompt(
         payload,
         {
-          onChunk: (fullAccumulated) => {
+          onChunk: (token, responseId) => {
             // if (fullAccumulated.startsWith("{") && fullAccumulated.includes('"error":')) {
             //   try {
             //     const parsed = JSON.parse(fullAccumulated);
@@ -54,24 +54,24 @@ export const useSSEStream = (conversationId: number | undefined) => {
               console.warn("[FRONTEND] Tín hiệu abort đã được phát ra, bỏ qua onChunk cuối cùng.");
               return;
             }
-            currentLiveTextRef.current = fullAccumulated;
-            setStreamState(convId, { liveText: fullAccumulated, streaming: true });
+            currentLiveTextRef.current += token;
+            if(responseId) currentResponseIdRef.current = responseId;
+            setStreamState(convId, { liveText: currentLiveTextRef.current, streaming: true });
           },
 
-          onDone: ({fullText, responseId, completed}) => {
+          onDone: () => {
             if (controller.signal.aborted) return;
-            currentResponseIdRef.current = responseId;
+            const resId = currentResponseIdRef.current;
             clearStreamState(convId);
             abortMapRef.current.delete(convId);
-
-            if (fullText.trim()) {
+            if (resId) {
               appendMessage(convId, {
-                id: responseId,
-                content: fullText,
+                id: resId,
+                content: currentLiveTextRef.current,
                 type: "response",
                 conversationId: convId,
                 createdAt: new Date().toISOString(),
-                isCompleted: completed,
+                isCompleted: true,
                 AIModel: payload.model
               });
             }
@@ -88,6 +88,7 @@ export const useSSEStream = (conversationId: number | undefined) => {
     } catch (err: any) {
       // 🛠️ GIẢI PHÁP: Lấy text trực tiếp từ biến Ref an toàn, không lo Map bị clear trước
       const cachedText = currentLiveTextRef.current;
+      const cachedResponseId = currentResponseIdRef.current;
       const isAbort = 
         err.name === "AbortError" || 
         err.message?.toLowerCase().includes("aborted") || 
@@ -96,9 +97,9 @@ export const useSSEStream = (conversationId: number | undefined) => {
       abortMapRef.current.delete(convId);
       if (isAbort) {
         console.log("[FRONTEND] Tín hiệu abort đã được phát ra, bỏ qua onError cuối cùng.");
-          if (cachedText && cachedText.trim()) {
+          if (cachedText && cachedText.trim()&& cachedResponseId) {
             appendMessage(convId, {
-              id: currentResponseIdRef.current,
+              id: cachedResponseId,
               content: cachedText,
               type: "response",
               conversationId: convId,
@@ -107,12 +108,12 @@ export const useSSEStream = (conversationId: number | undefined) => {
               AIModel: payload.model
             });
           }
-        } else {
+        } 
+        else {
           console.error("streamPrompt threw:", err);
             const status = err.status || 500;
             onErrorCallback?.(status, err.message);
           }
-
           // 🔥 Sau khi xử lý lưu dữ liệu xong xuôi mới giải phóng State
           clearStreamState(convId);
           abortMapRef.current.delete(convId);
@@ -124,6 +125,7 @@ export const useSSEStream = (conversationId: number | undefined) => {
   // }, [conversationId]);
   // Sửa lại hàm abort để đảm bảo đồng bộ
   const abort = useCallback(() => {
+    console.log("[FRONTEND] Kích hoạt abort() từ Hook useSSEStream.");
     if (conversationId === undefined) return;
     clearStreamState(conversationId);    
     const controller = abortMapRef.current.get(conversationId);

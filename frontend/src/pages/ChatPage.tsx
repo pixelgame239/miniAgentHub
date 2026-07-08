@@ -554,19 +554,41 @@ const ChatPage = () => {
             <PlusIcon />
           </button>
 
-          <input
-            type="text"
+          <textarea
             value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={handleKeyDown}
+            rows={1}
+            onChange={(e) => {
+              setInputText(e.target.value);
+              // Tự động tính toán độ cao chính xác theo nội dung gõ vào
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (inputText.trim() && !streaming) {
+                  sendMessage();
+                  // RESET CHIỀU CAO: Thu về 1 dòng sau khi bấm Enter gửi bài
+                  e.currentTarget.style.height = "auto";
+                }
+              }
+            }}
             className={styles.chatInput}
             placeholder={t("chat.promptPlaceholder")}
             disabled={streaming}
+            // Thêm mẹo nhỏ này để textarea render mượt mà ngay từ dòng đầu tiên
+            style={{ height: "auto" }} 
           />
 
           {streaming
-            ? <button className={styles.sendBtn} onClick={async () => await abort()}><StopIcon /></button>
-            : <button className={styles.sendBtn} onClick={async () => await sendMessage()}
+            ? <button className={styles.sendBtn} onClick={async () => abort()}><StopIcon /></button>
+            : <button className={styles.sendBtn} 
+            onClick={async () => {
+              await sendMessage();
+              // Sau khi click gửi, tìm thẻ textarea và ép chiều cao nó về ban đầu
+              const textarea = document.querySelector(`.${styles.chatInput}`) as HTMLTextAreaElement;
+              if (textarea) textarea.style.height = "auto";
+            }}
             disabled={!inputText.trim()}><SendIcon /></button>
           }
         </div>

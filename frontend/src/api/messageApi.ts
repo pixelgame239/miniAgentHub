@@ -14,8 +14,8 @@ export type ChatRequest = {
 };
 
 export type SSEHandlers = {
-  onChunk: (text: string) => void;
-  onDone: (result: { fullText: string; responseId: number; completed: boolean }) => void;
+  onChunk: (text: string, responseId: number) => void;
+  onDone: () => void;
   onError?: (err: Error) => void;
 };
 
@@ -83,7 +83,7 @@ export const streamPrompt = async (
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  let accumulated = "";
+  // let accumulated = "";
   let isAnalysisChannel = false;
 
   try {
@@ -112,49 +112,71 @@ export const streamPrompt = async (
 
         try{
           const parsedPayload = JSON.parse(payload);
-          if (payload === "[DONE]") {
-            console.log("[FRONTEND API] Nhận tín hiệu kết thúc chính thức [DONE]. Giải phóng luồng.");
-            handlers.onDone({ 
-              fullText: accumulated, 
-              responseId: parsedPayload?.responseId, // 🔥 Tận dụng dữ liệu ID đã parse được từ block trước nếu có
-              completed: true 
-            });
-            return; 
-          }
-          if(parsedPayload&&parsedPayload.error){
+          // Xử lý báo lỗi từ server nếu có
+          if (parsedPayload.error) {
             const customError = new Error(parsedPayload.message || "Stream error") as any;
-            customError.status = parsedPayload.status || 500;
             handlers.onError?.(customError);
             return;
           }
-          if(parsedPayload&&parsedPayload.streamFinished){
-            handlers.onDone({ fullText: accumulated, responseId: parsedPayload.responseId, completed: parsedPayload.completed });
-            return;
-          }
-          const delta = parsedPayload.choices?.[0]?.delta;
-          if (delta) {
-            // Kiểm tra xem token này thuộc kênh nào
-            if (delta.channel === "analysis" || delta.reasoning !== undefined) {
-              isAnalysisChannel = true;
-            } else if (delta.content !== undefined || (delta.channel && delta.channel !== "analysis")) {
-              isAnalysisChannel = false;
-            }
-          }
-          let token = "";
-          if (!isAnalysisChannel) {
-            if (delta && typeof delta.content === "string") {
-              token = delta.content;
-            } else if (parsedPayload.event === "token" && typeof parsedPayload.data === "string") {
-              token = parsedPayload.data; // Định dạng Flowise
-            }
-          }
+
+          // Trích xuất ID và nội dung chữ từ chunk chuẩn hoá mới từ Backend gửi về
+          const resId = parsedPayload.responseId;
+          const token = parsedPayload.choices?.[0]?.delta?.content || "";
+
           if (token) {
-            accumulated += token;
-            handlers.onChunk(accumulated);
+            // accumulated += token;
+            // // 🌟 Liên tục bắn ngược ID và text tích luỹ ra Hook xử lý
+            // handlers.onChunk(accumulated, resId); 
+            handlers.onChunk(token, resId);
           }
+          // if (payload === "[DONE]") {
+          //   console.log("[FRONTEND API] Nhận tín hiệu kết thúc chính thức [DONE]. Giải phóng luồng.");
+          //   handlers.onDone({ 
+          //     fullText: accumulated, 
+          //     responseId: parsedPayload?.responseId, // 🔥 Tận dụng dữ liệu ID đã parse được từ block trước nếu có
+          //     completed: true 
+          //   });
+          //   return; 
+          // }
+          // if(parsedPayload&&parsedPayload.error){
+          //   const customError = new Error(parsedPayload.message || "Stream error") as any;
+          //   customError.status = parsedPayload.status || 500;
+          //   if(parsedPayload.responseId) {
+          //     handlers.onError?.(customError, { fullText: accumulated, responseId: parsedPayload.responseId, completed: false });
+          //   } else {
+          //     handlers.onError?.(customError, undefined);
+          //   }
+          //   return;
+          // }
+          // if(parsedPayload&&parsedPayload.streamFinished){
+          //   handlers.onDone({ fullText: accumulated, responseId: parsedPayload.responseId, completed: parsedPayload.completed });
+          //   return;
+          // }
+          // const delta = parsedPayload.choices?.[0]?.delta;
+          // if (delta) {
+          //   // Kiểm tra xem token này thuộc kênh nào
+          //   if (delta.channel === "analysis" || delta.reasoning !== undefined) {
+          //     isAnalysisChannel = true;
+          //   } else if (delta.content !== undefined || (delta.channel && delta.channel !== "analysis")) {
+          //     isAnalysisChannel = false;
+          //   }
+          // }
+          // let token = "";
+          // if (!isAnalysisChannel) {
+          //   if (delta && typeof delta.content === "string") {
+          //     token = delta.content;
+          //   } else if (parsedPayload.event === "token" && typeof parsedPayload.data === "string") {
+          //     token = parsedPayload.data; // Định dạng Flowise
+          //   }
+          // }
+          // if (token) {
+          //   accumulated += token;
+          //   handlers.onChunk(accumulated);
+          // }
         }catch{}
       }
     }
+    handlers.onDone();
   } catch (err: any) {
     // Nếu là lỗi hủy, ném ra ngoài cho hook useSSEStream xử lý, TUYỆT ĐỐI không gọi handlers.onDone
     throw err;

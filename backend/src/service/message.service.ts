@@ -145,7 +145,6 @@ export class MessageService {
         dbFileType = primaryFile.mimeType;
       }
     }
-
     await prisma.message.create({
       data: { 
         content, 
@@ -158,11 +157,6 @@ export class MessageService {
         fileContent: currentFileContent // Lưu nội dung bóc tách vào cột fileContent
       },
     });
-//     if (files && files.length > 0) {
-//     for (const file of files) {
-//         await aiService.upsertFile(convId.toString(), file);
-//     }
-// }
     let stream;
     if(model.startsWith("flowise")){
       const finalContent = currentFileContent ? `${content}\n\n[Attached File Data]:\n<file_content>\n${currentFileContent}\n</file_content>` : content;
@@ -209,7 +203,21 @@ export class MessageService {
       // 4. Send to your AI Provider
       stream = await aiService.promptToAIProvider(finalPrompt, model, APIKey, axiosController.signal);
     }
-
+//     if (files && files.length > 0) {
+//     for (const file of files) {
+//         await aiService.upsertFile(convId.toString(), file);
+//     }
+// }
+    const placeholderAiMessage = await prisma.message.create({
+      data: {
+        content: "", 
+        conversationId: convId,
+        type: "response",
+        AIModel: model,
+        isCompleted: false // Mặc định chưa hoàn thành
+      },
+    });
+    const responseId = placeholderAiMessage.id;
     // let fullResponse = "";
     let cleanAccumulatedContent = "";
     let streamBuffer = "";
@@ -233,7 +241,10 @@ export class MessageService {
       }
       try {
         // Chỉ gọi một câu lệnh INSERT duy nhất cho tin nhắn RESPONSE
-        const savedAiMessage = await prisma.message.create({
+        const savedAiMessage = await prisma.message.update({
+          where: {
+            id: placeholderAiMessage.id
+          },
           data: {
             content: savedText , 
             conversationId: convId,
@@ -245,13 +256,13 @@ export class MessageService {
         });
 
         // Đẩy dòng dữ liệu JSON cuối cùng báo hiệu kết thúc chứa ID thật về Frontend 🌟
-        if (!res.writableEnded) {
-          res.write(`data: ${JSON.stringify({ 
-            streamFinished: true, 
-            responseId: savedAiMessage.id,
-            completed: finalCompletedStatus
-          })}\n\n`);
-        }
+        // if (!res.writableEnded) {
+        //   res.write(`data: ${JSON.stringify({ 
+        //     streamFinished: true, 
+        //     responseId: savedAiMessage.id,
+        //     completed: finalCompletedStatus
+        //   })}\n\n`);
+        // }
       } catch (err) {
         console.error("[🔴 DB ERROR] Ghi nhận phản hồi thất bại:", err);
       }
@@ -318,7 +329,7 @@ export class MessageService {
         if (isStreamFinished || axiosController.signal.aborted || res.writableEnded) {
           return;
         }
-        res.write(chunk);
+        // res.write(chunk);
         // console.log(chunk.toString("utf-8"));
         // buffer += chunk.toString("utf8");
         streamBuffer+=chunk.toString("utf-8");
@@ -347,7 +358,15 @@ export class MessageService {
             if (!isAnalysisChannel) {
               const textToken = this.extractText(parsed);
               if (textToken) {
-                cleanAccumulatedContent += textToken.replace(/\r/g, "").replace(/\u0000/g, "");
+                const cleanToken = textToken.replace(/\r/g, "").replace(/\u0000/g, "");
+                cleanAccumulatedContent += cleanToken;
+                // cleanAccumulatedContent += textToken.replace(/\r/g, "").replace(/\u0000/g, "");
+                if (!res.writableEnded) {
+                  res.write(`data: ${JSON.stringify({
+                    choices: [{ delta: { content: cleanToken } }],
+                    responseId: responseId
+                  })}\n\n`);
+                }
               }
             }
           } catch (err) {
