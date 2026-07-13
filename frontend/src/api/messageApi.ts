@@ -63,7 +63,7 @@ export const streamPrompt = async (
       Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(data),
-    signal,
+    signal: signal,
   });
 
   if (!response.ok) {

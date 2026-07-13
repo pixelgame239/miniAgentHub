@@ -1,7 +1,7 @@
 services:
   # 1. Dịch vụ Database (PostgreSQL)
   database:
-    image: postgres:12-alpine  # Dùng luôn bản 12 giống máy bạn cho đồng bộ, nền Alpine siêu nhẹ
+    image: postgres:12-alpine
     container_name: my_postgres_db
     restart: always
     environment:
@@ -9,32 +9,42 @@ services:
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: my_fullstack_db
     ports:
-      - "5433:5432"            # Đổi cổng máy thật thành 5433 để tránh trùng với Postgres v12 đang có sẵn trên Ubuntu của bạn
+      - "5433:5432" # Máy thật kết nối qua 5433, các container khác kết nối qua database:5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data # Giữ lại dữ liệu, sang máy khác copy thư mục này là xong
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - my_network
 
   # 2. Dịch vụ Backend
   backend-app:
-    build: ./backend           # Tìm vào thư mục backend để đọc Dockerfile
+    build: ./backend
     container_name: my_backend
     restart: always
     ports:
-      - "3000:3000"            # Giả định Backend của bạn chạy cổng 3000
+      - "3000:3000"
     env_file:
-      - ./backend/.env         # Bơm file .env của backend vào (file này cấu hình kết nối DB trỏ tới cổng 5433 hoặc host: database)
+      - ./backend/.env
     depends_on:
-      - database               # Chờ database khởi động xong thì backend mới chạy
+      - database
+    networks:
+      - my_network
 
   # 3. Dịch vụ Frontend
   frontend-app:
-    build: ./frontend          # Tìm vào thư mục frontend để đọc Dockerfile
+    build: ./frontend
     container_name: my_frontend
     restart: always
     ports:
-      - "5173:5173"            # Giả định Frontend của bạn chạy cổng 5173
+      - "5173:5173"
     env_file:
-      - ./frontend/.env        # Bơm file .env của frontend vào (nếu có)
+      - ./frontend/.env
+    networks:
+      - my_network
 
-# Định nghĩa khu vực lưu trữ dữ liệu database cố định trên máy thật
 volumes:
   postgres_data:
+
+# Tạo một mạng chung để các container tự nhận diện tên của nhau
+networks:
+  my_network:
+    driver: bridge

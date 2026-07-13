@@ -17,6 +17,7 @@ import ExportModal from "../component/ExportModal";
 import { SettingsIcon } from "./GroupsPage";
 import ApiKeyModal from "../component/ApiKeyModal";
 import StreamingBubble from "../component/StreamingBubble";
+import { ChatActionButtons } from "../component/ChatActionButtons";
 
   const formatInline = (text: string) =>
     text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
@@ -24,6 +25,7 @@ import StreamingBubble from "../component/StreamingBubble";
         ? <strong key={i}>{part.slice(2, -2)}</strong>
         : part
     );
+    
 const ChatPage = () => {
   const { showError, showInfo, showToast } = useNotificationPopup();
   const { t } = useTranslation();
@@ -134,6 +136,7 @@ const ChatPage = () => {
       showError(t("common.failed"));
       }
     }
+    
 //   async function optimizeBase64Image(base64Str: string, maxEdge: number = 1024, quality: number = 0.75): Promise<string> {
 //     return new Promise((resolve, reject) => {
 //         const img = new Image();
@@ -259,7 +262,14 @@ const ChatPage = () => {
       sendMessage();
     }
   };
+  const handleSendClick = useCallback(async () => {
+    await sendMessage();
+    const textarea = document.querySelector(`.${styles.chatInput}`) as HTMLTextAreaElement;
+    if (textarea) textarea.style.height = "auto";
+  }, [sendMessage]);
 
+  // 2. Tính toán sẵn biến boolean, không truyền cả string inputText vào nút bấm
+  const canSend = inputText.trim().length > 0;
 
 // ChatPage.tsx
     const formatMessageText = useCallback((text: string) => {
@@ -306,19 +316,6 @@ const ChatPage = () => {
     </svg>
   );
 
-  const SendIcon = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="22" y1="2" x2="11" y2="13"/>
-      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-    </svg>
-  );
-
-  const StopIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <rect x="4" y="4" width="16" height="16" rx="2"/>
-    </svg>
-  );
-
   const PlusIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <line x1="12" y1="5" x2="12" y2="19"/>
@@ -343,7 +340,6 @@ const ChatPage = () => {
       </svg>
     </div>
   );
-
   return (
     <div className={styles.chatPage}>
       {/* Header */}
@@ -580,8 +576,8 @@ const ChatPage = () => {
             style={{ height: "auto" }} 
           />
 
-          {streaming
-            ? <button className={styles.sendBtn} onClick={async () => abort()}><StopIcon /></button>
+          {/* {streaming
+            ? <button className={styles.sendBtn} onClick={() => abort()}><StopIcon /></button>
             : <button className={styles.sendBtn} 
             onClick={async () => {
               await sendMessage();
@@ -590,7 +586,13 @@ const ChatPage = () => {
               if (textarea) textarea.style.height = "auto";
             }}
             disabled={!inputText.trim()}><SendIcon /></button>
-          }
+          } */}
+        <ChatActionButtons 
+          streaming={streaming}
+          onAbort={abort}        // Hàm abort từ hook của bạn đã tối ưu useCallback
+          onSend={handleSendClick} // Hàm đã bọc useCallback ở trên
+          canSend={canSend}      // Biến primitive (boolean), cực kỳ an toàn khi React.memo so sánh
+        />
         </div>
         <p className={styles.disclaimer}>Neural Hub may display inaccurate info, so double-check its responses.</p>
       </div>
@@ -607,5 +609,6 @@ const ChatPage = () => {
     </div>
   );
 };
+
 
 export default ChatPage;

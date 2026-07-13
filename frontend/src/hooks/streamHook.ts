@@ -119,22 +119,23 @@ export const useSSEStream = (conversationId: number | undefined) => {
           abortMapRef.current.delete(convId);
     }
   }, [setStreamState, clearStreamState, appendMessage, abortMapRef]);
-  // const currentIdRef = useRef(conversationId);
-  // useEffect(() => {
-  //   currentIdRef.current = conversationId;
-  // }, [conversationId]);
-  // Sửa lại hàm abort để đảm bảo đồng bộ
+  const currentIdRef = useRef(conversationId);
+
+  useEffect(() => {
+    currentIdRef.current = conversationId;
+  }, [conversationId]);
   const abort = useCallback(() => {
-    console.log("[FRONTEND] Kích hoạt abort() từ Hook useSSEStream.");
-    if (conversationId === undefined) return;
-    clearStreamState(conversationId);    
-    const controller = abortMapRef.current.get(conversationId);
+    console.log("[FRONTEND] Kích hoạt abort() từ Hook useSSEStream.", Date.now());
+    const activeId = currentIdRef.current;
+    if (activeId === undefined) return;
+    clearStreamState(activeId);    
+    const controller = abortMapRef.current.get(activeId);
     if (controller) {
       console.log("[FRONTEND] Kích hoạt phát tín hiệu controller.abort() thành công.");
       controller.abort();
-      abortMapRef.current.delete(conversationId);
+      abortMapRef.current.delete(activeId);
     }
-  }, [abortMapRef, clearStreamState, conversationId]);
+  }, [abortMapRef, clearStreamState]);
 
   return { liveText, streaming, start, abort };
 };
