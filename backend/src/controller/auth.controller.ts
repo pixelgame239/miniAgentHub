@@ -27,7 +27,19 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     };  
     const result = await authService.authLogin(userData);
     if (result) {
-      res.status(200).json(result);
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
+        sameSite: 'strict', // Ngăn chặn CSRF
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
+      });
+      res.cookie('accessToken', result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
+        sameSite: 'strict', // Ngăn chặn CSRF
+        maxAge: 5 * 60 * 1000, 
+      });
+      res.status(200).json(result.userData);
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
     }
@@ -47,12 +59,64 @@ export const changePassword = async(req:Request, res: Response, next:NextFunctio
       if(req.user){
       const response = await authService.authChangePassword({id: req.user.id, currentPassword: req.body.currentPassword? req.body.currentPassword : null, newPassword: req.body.newPassword});
       if(response){
-        const newToken = generateAccessToken(req.user.id, req.user.email, req.user.address, req.user.phoneNumber, req.user.permissions, req.user.fullname, true, req.user.groups);
-        res.status(200).json(newToken);
+        if(req.user){
+          if(!req.user.active){
+            const tokenPayload = {
+              id: req.user.id,
+              email: req.user.email,
+              address: req.user.address,
+              phoneNumber: req.user.phoneNumber,
+              permissions: req.user.permissions,
+              fullname: req.user.fullname,
+              active: true,
+              groups: req.user.groups.map((group:any)=>({id: group.id, groupName: group.groupName}))
+            }
+            res.clearCookie("accessToken");
+            const newToken = generateAccessToken(tokenPayload);
+            res.cookie('accessToken', newToken, {
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
+              sameSite: 'strict', // Ngăn chặn CSRF
+              maxAge: 5 * 60 * 1000, 
+            });
+            res.status(200).json(newToken);
+          }
+          else{
+            res.status(200).json({message: "Password changed successfully"});
+          }
+        }
       } else{
         res.status(500).json({message: "Unexpected Error"});
       }
     }
+  }catch(error){
+    next(error);
+  }
+}
+export const refreshAccessToken = async(req:Request, res: Response, next:NextFunction)=>{
+  try{
+    const refreshToken = req.body.refreshToken;
+    const accessToken = req.body.accessToken;
+    if(!refreshToken || !accessToken){
+      res.status(400).json({message: "Refresh token and access token are required"});
+      return;
+    }
+    const result = await authService.authRefreshToken(refreshToken, accessToken);
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
+      sameSite: 'strict', // Ngăn chặn CSRF
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
+    });
+    res.cookie('accessToken', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
+      sameSite: 'strict', // Ngăn chặn CSRF
+      maxAge: 5 * 60 * 1000, 
+    });
+    res.status(200).json("Refreshed");
   }catch(error){
     next(error);
   }

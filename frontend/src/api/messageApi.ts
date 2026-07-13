@@ -1,6 +1,4 @@
 // api/messageApi.ts
-import { getToken } from "./apiClient";
-
 export type FileUpload = {
   data: string;
   fileName: string;
@@ -19,29 +17,6 @@ export type SSEHandlers = {
   onError?: (err: Error) => void;
 };
 
-// Defensive: if the chunk is still JSON (Flowise quirk), extract the text
-const extractChunkText = (payload: string): string => {
-  try {
-    // Không dùng .trim() ở payload, parse trực tiếp JSON thô
-    const parsed = JSON.parse(payload); 
-    
-    // Nếu là định dạng chuẩn OpenAI/Groq/OpenRouter như log bạn gửi:
-    if (parsed.choices && Array.isArray(parsed.choices) && parsed.choices.length > 0) {
-      const delta = parsed.choices[0].delta;
-      if (delta && typeof delta.content === "string") {
-        return delta.content; // Trả về chính xác token (Giữ nguyên dấu cách, \n)
-      }
-    }
-    
-    // Định dạng Flowise
-    if (parsed.event === "token" && typeof parsed.data === "string") return parsed.data;
-    if (parsed.event) return "";
-    if (typeof parsed.text === "string") return parsed.text;
-  } catch {
-    // Trường hợp là plain text do backend đã bóc tách sẵn
-  }
-  return payload; 
-};
 export const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -60,7 +35,6 @@ export const streamPrompt = async (
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(data),
     signal: signal,

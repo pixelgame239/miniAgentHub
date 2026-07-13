@@ -5,17 +5,27 @@ services:
     container_name: my_postgres_db
     restart: always
     environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: my_fullstack_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: miniagenthub
     ports:
-      - "5433:5432" # Máy thật kết nối qua 5433, các container khác kết nối qua database:5432
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - my_network
 
-  # 2. Dịch vụ Backend
+  # ⭐ THÊM VÀO: 2. Dịch vụ Redis
+  redis-cache:
+    image: redis:alpine
+    container_name: miniagenthub_redis
+    restart: always
+    ports:
+      - "6379:6379" # Cho phép máy thật kết nối (nếu cần dùng tool UI kiểm tra)
+    networks:
+      - my_network
+
+  # 3. Dịch vụ Backend
   backend-app:
     build: ./backend
     container_name: my_backend
@@ -26,10 +36,11 @@ services:
       - ./backend/.env
     depends_on:
       - database
+      - redis-cache # ⭐ Thêm dependencies để Redis lên trước Backend
     networks:
       - my_network
 
-  # 3. Dịch vụ Frontend
+  # 4. Dịch vụ Frontend
   frontend-app:
     build: ./frontend
     container_name: my_frontend
@@ -44,7 +55,6 @@ services:
 volumes:
   postgres_data:
 
-# Tạo một mạng chung để các container tự nhận diện tên của nhau
 networks:
   my_network:
     driver: bridge

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router";
 import { login } from "../api/authApi";
 import styles from "../styles/login.module.css"; 
 import { useAuth } from "../hooks/authHook";
-import { getToken } from "../api/apiClient";
 import { useTranslation } from "react-i18next";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
 import NotificationPopup from "../component/NotificationPopup";
@@ -38,8 +37,7 @@ const LoginPage = () => {
   }, []);
 
   useEffect(() => {
-    const token = getToken();
-    if (user || token) {
+    if (user) {
       nav("/chat");
     }
   }, [user, nav]);
@@ -86,11 +84,7 @@ const LoginPage = () => {
 
     const { data, error } = await login(formData);
     if (data && data.token) {
-      localStorage.setItem("accessToken", data.token);
       setUser(data.userData);
-      if (data.userData.APIKey) {
-        localStorage.setItem("APIKey", data.userData.APIKey);
-      }
       nav("/chat");
     } else if (error) {
       // Nhận phản hồi lỗi từ backend, map thẳng vào ô password

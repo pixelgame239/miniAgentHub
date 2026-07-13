@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import styles from "../styles/settings.module.css"; 
 import { useNavigate } from "react-router";
 import { useAuth } from "../hooks/authHook";
-import { removeToken } from "../api/apiClient";
 import UpdatePasswordModal from "../component/UpdatePasswordModal";
 import { changePassword } from "../api/authApi";
 import { useTranslation } from "react-i18next";
@@ -48,7 +47,6 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleLogout = () => {
-    removeToken();
     setUser(null);
     localStorage.removeItem("APIKey"); 
     nav("/");

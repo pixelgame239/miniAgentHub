@@ -13,7 +13,6 @@ let transporter: nodemailer.Transporter;
 
 // KIỂM TRA ĐIỀU KIỆN ĐỘNG
 if (PROXY_URL) {
-    console.log(`[SMTP Setup] Cấu hình tích hợp Proxy nội sàn...`);
     
     const proxyConfig: any = {
         host: 'smtp.gmail.com',
@@ -38,7 +37,6 @@ if (PROXY_URL) {
     
     transporter = nodemailer.createTransport(proxyConfig);
 } else {
-    console.log("[SMTP Setup] Không tìm thấy PROXY_URL. Chạy kết nối trực tiếp qua cổng 587...");
     
     const emailPort = Number(process.env.EMAIL_PORT) || 587;
     
@@ -92,18 +90,18 @@ export class EmailService {
             const htmlContent = this.getEmailHtmlContent(fullname, email, temporaryPassword, lang);
 
             const mailOptions = {
-                from: `"Hệ Thống Đăng Ký" <${emailUser}>`, // Tên hiển thị người gửi
+                from: `${lang=== "vi" ? "Hệ Thống Đăng Ký" : "System Registration"} <${emailUser}>`, // Tên hiển thị người gửi
                 to: email,                                           // Email người nhận
-                subject: 'Chào mừng bạn! Thông tin tài khoản mới',    // Tiêu đề Email
+                subject: `${lang=== "vi" ? "Chào mừng bạn!" : "Welcome!"} ${lang=== "vi" ? "Thông tin tài khoản mới" : "New Account Information"}`,    // Tiêu đề Email
                 html: htmlContent,                                    // Nội dung dạng HTML
             };
 
             // Thực hiện gửi email qua SMTP Gmail
             const info = await transporter.sendMail(mailOptions);
-            console.log(`[SMTP] Email đã được gửi tới ${email}. Message ID: ${info.messageId}`);
+            console.log(`[SMTP] Email sent to ${email}. Message ID: ${info.messageId}`);
             
         } catch (error) {
-            console.error(`[SMTP Error] Lỗi khi gửi email tới ${email}:`, error);
+            console.error(`[SMTP Error] Error sending email to ${email}:`, error);
             throw new MyError("Cannot send email", 500);
         }
     }

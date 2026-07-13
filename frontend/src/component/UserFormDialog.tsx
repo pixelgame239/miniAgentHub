@@ -241,7 +241,7 @@ const UserFormDialog = ({
                     }}
                     className={styles["group-select"]}
                   >
-                    <option value="">Add group...</option>
+                    <option value="">...</option>
                     {groups
                       .filter((g) => !selectedGroupIds.includes(g.id))
                       .map((g) => (

@@ -21,7 +21,7 @@ model User {
   active    Boolean @default(false)
   phoneNumber  String?
   address   String?
-  FlowiseURL  String?
+  FlowiseUrl  String?
   FlowiseAPIKey String?
   GroqAPIKey  String?
   OpenRouterAPIKey String?
@@ -60,4 +60,11 @@ model SharedConversation{
   snapShotData Json 
   @@index([id])
 }
-    
+model RefreshToken{
+  id Int @id @default(autoincrement())
+  refreshToken String
+  revoked Boolean @default(false)
+  expiredTime   DateTime
+  userId  Int
+  user  User  @relation(fields: [userId], references:[id], onDelete:Cascade)
+}

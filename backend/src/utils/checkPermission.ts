@@ -3,33 +3,15 @@
 import type { NextFunction, Request, Response } from "express";
 import { MyError } from "./MyError";
 import { prisma } from "../../lib/prisma";
+import { FORBIDDEN_ERROR } from "./generalKey";
 
-// export const narrowCheckPermission = (requiredPermission: string) => {
-//   return async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//       const user = req.user;
-
-//       if (!user || !user.groups) {
-//         throw new MyError("Forbidden", 403);
-//       }
-//       const hasPermission = requiredPermission === "USER" ? user.userAccess : requiredPermission === "GROUP" ? user.groupAccess : false;
-
-//       if (!hasPermission) {
-//         throw new MyError("Forbidden", 403);
-//       }
-//       next();
-//     } catch (error) {
-//       next(error);
-//     }
-//   };
-// };
 export const checkPermission = (requiredPermission:string) => {
   return async(req:Request, res:Response, next:NextFunction) => {
     try {
       const user = req.user; 
 
       if (!user || !user.groups) {
-        throw new MyError("Forbidden",403)
+        throw new MyError(FORBIDDEN_ERROR,403)
       }
       const groupIds = user.groups.map((group)=>group.id);
       const hasPermission = await prisma.group.findFirst({
@@ -43,13 +25,22 @@ export const checkPermission = (requiredPermission:string) => {
 
       if (!hasPermission) {
         console.log(`User does not have required permission: ${requiredPermission}`);
-        throw new MyError("Forbidden",403)
+        throw new MyError(FORBIDDEN_ERROR,403)
       }
       next();
     } catch (error) {
       next(error);
     }
   };
+};
+export const checkAdmin = (req:Request) => {
+    const user = req.user;
+    if (!user || !user.groups) {
+      throw new MyError(FORBIDDEN_ERROR,403)
+    }
+    const groupIds = user.groups.map((group)=>group.groupName);
+    const isAdmin = groupIds.includes("ADMIN");
+    return isAdmin;
 };
 const getPermissionsForGroup = async (groupId: number): Promise<string[]> => {
   const permissions = await prisma.group.findUnique({

@@ -8,13 +8,17 @@
 ```
 
 ---
-
+### Khởi tạo Redis
+```bash
+docker compose up -d redis-cache
+```
 ## 2. Chuẩn bị trước khi chạy
 
 Yêu cầu:
 
 * Đã cài đặt node
 * PostgreSQL đang hoạt động
+* Đã khởi tạo và chạy Redis
 
 ### Cấu hình Backend
 
@@ -34,7 +38,6 @@ npx prisma generate
 ```
 
 ---
-
 ## 3. Chạy dự án
 
 Mở 2 terminal riêng biệt.

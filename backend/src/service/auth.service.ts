@@ -1,26 +1,32 @@
 import { prisma } from "../../lib/prisma";
+import { redisClient } from "../../server";
 import type { LoginRequest, RegisterRequest } from "../dto/auth.dto";
 import { EmailService } from "../email/emailService";
 import { MyError } from "../utils/MyError";
 import { createRandomPassword } from "../utils/passwordGenerator";
 import { comparePassword, hashPassword } from "../utils/passwordHashing";
-import { generateAccessToken } from "../utils/tokenGenerator";
+import { generateAccessToken, generateRefreshToken } from "../utils/tokenGenerator";
+import { GroupService } from "./group.service";
+import jwt, { type SignOptions } from 'jsonwebtoken';
 
+const groupService = new GroupService();
 export class AuthService{
     public async authRegister(userData: any, lang: string = "en"){
         const existingUser = await prisma.user.findUnique({where:{email:userData.email}});
         if(existingUser){
             throw new MyError("Email existed", 403);
         }
+        //Map through all group IDs and check if any of them is the admin group
+
         const randomPassword = createRandomPassword();
-        const hashedPassword = await hashPassword(randomPassword)
+        const hashedPassword = await hashPassword(randomPassword);
         try {
                 await EmailService.sendSMTPEmail(userData.email, userData.fullname, randomPassword, lang);
                 console.log(`Email sent to ${userData.email}`);
             } catch (error) {
                 console.error(`Failed to send email to ${userData.email}:`, error);
                 // Ngăn không cho đăng ký tiếp nếu lỗi gửi mail (Tuỳ bạn quyết định)
-                throw new MyError("Không thể gửi email kích hoạt, vui lòng thử lại.", 500);
+                throw new MyError("Cannot send email", 500);
             }
         const newUser = await prisma.user.create({
             data:{
@@ -65,18 +71,22 @@ export class AuthService{
         const passwordCorrect = await comparePassword(userData.userPassword, existingUser.userPassword);
         if(passwordCorrect){
             const userPermissions = existingUser.groups.flatMap((group: any) => group.permissions);
-            // let userAccess = false;
-            // let groupAccess = false;
-            // if(userPermissions.some((permission: string) => permission.startsWith("USER"))){
-            //     userAccess = true;
-            // }
-            // if(userPermissions.some((permission: string) => permission.startsWith("GROUP"))){
-            //     groupAccess = true;
-            // }
-            // console.log("User permissions:", userPermissions);
+            const tokenPayload = {
+                id: existingUser.id,
+                email: existingUser.email,
+                address: existingUser.address,
+                phoneNumber: existingUser.phoneNumber,
+                permissions: userPermissions,
+                fullname: existingUser.fullname,
+                active: existingUser.active,
+                groups: existingUser.groups.map((group: any) => ({ id: group.id, groupName: group.groupName }))
+            };
+            const refreshToken = generateRefreshToken(existingUser.id);
+            await redisClient.set(`refreshToken:${refreshToken}`, existingUser.id, {'EX': 7 * 24 * 60 * 60});
             return{
                 message: "Logged in!",
-                token: generateAccessToken(existingUser.id, existingUser.email, existingUser.address, existingUser.phoneNumber, userPermissions, existingUser.fullname, existingUser.active, existingUser.groups.map((group: any) => ({ id: group.id, groupName: group.groupName }))),
+                token: generateAccessToken(tokenPayload),
+                refreshToken: refreshToken,
                 userData: {
                     id: existingUser.id,
                     fullname: existingUser.fullname,
@@ -111,5 +121,42 @@ export class AuthService{
         const hashedPassword = await hashPassword(formData.newPassword);
         const updatedUser = await prisma.user.update({where:{id:formData.id}, data:{userPassword:hashedPassword, active:true}});
         return { message: "Password is successfully updated"};
+    }
+    public async authRefreshToken(refreshToken: string, accessToken: string){
+        if(!refreshToken){
+            throw new MyError("Refresh token is required", 400);
+        }
+        const userId = await redisClient.get(`refreshToken:${refreshToken}`);
+        if(!userId){
+            throw new MyError("Invalid refresh token", 401);
+        }
+        jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET as string, (err:any, decoded:any) => {
+            if(err){
+                throw new MyError("Invalid refresh token", 401);
+            }
+        });
+        const decodedAccessToken = jwt.decode(accessToken) as any;
+        if(!decodedAccessToken || !decodedAccessToken.id || decodedAccessToken.id.toString() !== userId){
+            throw new MyError("Invalid access token", 401);
+        }
+        await redisClient.del(`refreshToken:${refreshToken}`);
+        const newRefreshToken = generateRefreshToken(parseInt(userId));
+        await redisClient.set(`refreshToken:${newRefreshToken}`, userId, {'EX': 7 * 24 * 60 * 60});
+        const newAccessTokenPayload = {
+            id: parseInt(userId),
+            email: decodedAccessToken.email,
+            address: decodedAccessToken.address,
+            phoneNumber: decodedAccessToken.phoneNumber,
+            permissions: decodedAccessToken.permissions,
+            fullname: decodedAccessToken.fullname,
+            active: decodedAccessToken.active,
+            groups: decodedAccessToken.groups
+        };
+        const newAccessToken = generateAccessToken(newAccessTokenPayload);
+        return {
+            message: "Token refreshed!",
+            token: newAccessToken,
+            refreshToken: newRefreshToken
+        }
     }
 }

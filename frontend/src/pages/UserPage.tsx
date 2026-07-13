@@ -116,28 +116,6 @@ const UserPage = () => {
     );
     closeDeleteDialog();
   };
-  // const toggleSelectAll = () => {
-  //   if (selectedIds.length === users.length) {
-  //     setSelectedIds([]);
-  //   } else {
-  //     setSelectedIds(users.map((u) => u.id));
-  //   }
-  // };
-
-  // const toggleUser = (id: number) => {
-  //   setSelectedIds((prev) =>
-  //     prev.includes(id)
-  //       ? prev.filter((x) => x !== id)
-  //       : [...prev, id]
-  //   );
-  // };
-
-  // const isAllSelected =
-  //   users.length > 0 &&
-  //   selectedIds.length === users.length;
-  // if (users.length === 0) {
-  //   return <h1>{t("common.noPermission")}</h1>
-  // }
   return (
     <div className={styles.userContent}>
       <header className={styles.userHeader}>

@@ -3,6 +3,7 @@ import app from "./src/app.js";
 import 'reflect-metadata';
 import { createRandomPassword } from "./src/utils/passwordGenerator.js";
 import { hashPassword } from "./src/utils/passwordHashing.js";
+import { createClient } from "redis";
 const PORT = 3000;
 const ADMIN_PERMISSIONS = [
   "USER_C",
@@ -28,6 +29,8 @@ const USER_PERMISSIONS = [
   "CONV_U",
   "CONV_D"
 ];
+export const redisClient = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
+
 const initServer = async()=>{
     try{
         const userCount = await prisma.user.count();
@@ -69,7 +72,11 @@ const initServer = async()=>{
         process.exit(1);
     }
 }
-const startServer = () =>{
+const startServer = async () =>{
+    redisClient.on("error", (err) => console.error("Redis Client Error", err)); 
+    console.log("Connecting to Redis...");
+    await redisClient.connect();
+    console.log("Connected to Redis");
     const server = app.listen(PORT, () => {
         console.log(`🚀 Server ready at: http://localhost:${PORT}`);
     });
