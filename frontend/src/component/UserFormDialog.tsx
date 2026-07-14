@@ -272,7 +272,7 @@ const UserFormDialog = ({
             <button 
               type="submit" 
               className={styles["submit-btn"]} 
-              disabled={submitting || Object.keys(errors).length > 0}
+              disabled={submitting || Object.keys(errors).length > 0 || !form.fullname.trim() || (mode === "create" && !form.email.trim()) || (mode === "create" && !validateEmailFormat(form.email)) || (mode === "create" && form.groups.length === 0) || (mode === "edit" && selectedGroupIds.length === 0)}
             >
               {submitting ? t("common.loading") : mode === "create" ? t("users.createUser") : t("users.updateUser")}
             </button>

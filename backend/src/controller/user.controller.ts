@@ -1,8 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { UserService } from "../service/user.service";
 import { MyError } from "../utils/MyError";
-import { checkPermission } from "../utils/checkPermission";
-import { error } from "node:console";
 import { AIService } from "../service/ai.service";
 
 const userService = new UserService();

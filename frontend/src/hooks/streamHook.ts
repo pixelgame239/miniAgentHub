@@ -39,16 +39,6 @@ export const useSSEStream = (conversationId: number | undefined) => {
         payload,
         {
           onChunk: (token, responseId) => {
-            // if (fullAccumulated.startsWith("{") && fullAccumulated.includes('"error":')) {
-            //   try {
-            //     const parsed = JSON.parse(fullAccumulated);
-            //     if (parsed.error) {
-            //       onErrorCallback?.(500, parsed.error);
-            //       return;
-            //     }
-            //   } catch {}
-            // }
-            
             // Ghi nhận vào biến Ref liên tục
             if(controller.signal.aborted) {
               console.warn("[FRONTEND] Tín hiệu abort đã được phát ra, bỏ qua onChunk cuối cùng.");

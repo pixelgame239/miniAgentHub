@@ -346,3 +346,36 @@ display: flex;
     transform: translateY(0);
   }
 }
+/* Container căn lề phải cho nút Quên mật khẩu */
+.forgot-password-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.25rem;
+}
+
+/* Link quên mật khẩu đổi màu tinh tế theo theme */
+.forgot-password-link {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease-in-out;
+}
+
+.forgot-password-link:hover {
+  color: var(--dialog-accent);
+  text-decoration: underline;
+}
+
+/* Tự động biến đổi con trỏ và màu sắc của nút Submit khi bị disable */
+.login-button:disabled {
+  background: var(--bg-subtle) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: not-allowed;
+}

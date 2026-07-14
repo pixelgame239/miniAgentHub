@@ -1,6 +1,5 @@
 import React, {createContext, useEffect, useState, type ReactNode } from "react";
 import { getMe } from "../api/authApi";
-import { getToken, removeToken } from "../api/apiClient";
 
 interface UserType{
     id?:number;
@@ -27,7 +26,6 @@ export const AuthProvider = ({children}:AuthProviderProps) =>{
     const [user, setUser] = useState<UserType | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     useEffect(()=>{
-        const token = getToken();
         const getUserData = async()=>{
             const {data, error} = await getMe();
             if(data){
@@ -36,17 +34,11 @@ export const AuthProvider = ({children}:AuthProviderProps) =>{
             }
             if(error){
                 console.error("Failed to fetch user data:", error);
-                removeToken();
                 throw new Error(error.message);
             }
             setLoading(false);
         }
-        if(token){
-            setLoading(true);
-            getUserData();      
-        }else{
-            setLoading(false);
-        }
+        getUserData();
     },[]);
     return(
         <AuthContext.Provider value={{user, setUser, loading, setLoading }}>

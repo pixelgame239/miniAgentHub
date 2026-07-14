@@ -4,13 +4,9 @@ import { useState, useEffect } from "react";
 import Sidebar from "./SideBar.tsx";
 import styles from "../styles/layout.module.css"; 
 import ErrorBoundary from "./ErrorBoundary.tsx";
-import NotificationPopup from "./NotificationPopup.tsx";
-import Toast from "./Toast.tsx"; 
-import { useNotificationPopup } from "../context/NotificationPopupContext.tsx";
 
 const Layout = () => {
   // Lấy chính xác cụm dữ liệu phân tách từ Context mới
-  const { popup, toast, closePopup, closeToast } = useNotificationPopup();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -51,22 +47,6 @@ const Layout = () => {
           </ErrorBoundary>
         </div>
       </main>
-
-      {/* ── TOAST THÔNG BÁO TẠM THỜI (Hỗ trợ cả Đỏ/Xanh linh hoạt) ── */}
-      <Toast 
-        isOpen={toast.isOpen} 
-        message={toast.message} 
-        type={toast.type} 
-        onClose={closeToast} 
-      />
-
-      {/* ── POPUP BẮT NGƯỜI DÙNG XÁC NHẬN (Hỗ trợ cả Đỏ/Xanh linh hoạt) ── */}
-      <NotificationPopup 
-        isOpen={popup.isOpen}
-        message={popup.message}
-        type={popup.type}
-        onClose={closePopup} 
-      />
     </div>
   );
 };

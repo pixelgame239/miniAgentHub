@@ -2,11 +2,20 @@ import { prisma } from "../../lib/prisma";
 import { MyError } from "../utils/MyError";
 
 export class ConversationService {
-    public async getConversations(id: number){
-        const response = await prisma.conversation.findMany({where:{userId:id}, orderBy:{
-            id:"desc"
-        }});
-        return response;
+    public async getConversations(id: number, page: number){
+        const [totalItems, conversations] = await prisma.$transaction([
+            prisma.conversation.count({
+                where: { userId: id }
+            }),
+            prisma.conversation.findMany({
+                where: { userId: id },
+                orderBy: { id: "desc" },
+                skip: (page) * 10,
+                take: 10,
+            })
+        ]);
+        const totalPages = Math.ceil(totalItems / 10);
+        return { totalPages, conversations }
     }
     public async createNewConversation(id: number, title:string){
         const response = await prisma.conversation.create({data:{title: title,userId:id}, select:{
@@ -20,21 +29,25 @@ export class ConversationService {
         }});
         return response;
     }
-    public async getConversationDetail(userId:number, convId: number){
+    public async getConversationDetail(userId:number, convId: number, page: number){
         if(isNaN(convId)){
             throw new MyError("Not found", 404);
         }
-        const response = await prisma.conversation.findUnique({where: {userId: userId, id:convId}, include:{
+        const  [data, totalItems] = await prisma.$transaction([
+            prisma.conversation.findUnique({where: {userId: userId, id:convId}, include:{
             messages: {
                 orderBy: {
                     createdAt:"asc"
-                }
+                }, skip: (page) * 10, take: 10
             }
-        }})
-        if(!response){
+        }}),
+        prisma.message.count({where:{conversationId: convId}})
+        ])
+        if(!data){
             throw new MyError("Not found", 404);
         }
-        return response;
+        const totalPages = Math.ceil(totalItems / 10);
+        return { id: data.id, title: data.title,messages: data.messages, totalPages: totalPages };
     }
     public async deleteConversation(convId:number, userId: number){
         const response = await prisma.conversation.findFirst({where:{id: convId, userId:userId}});

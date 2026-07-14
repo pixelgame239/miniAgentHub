@@ -1,6 +1,6 @@
 import { useState, useId, type SubmitEvent, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { login } from "../api/authApi";
+import { getMe, login } from "../api/authApi";
 import styles from "../styles/login.module.css"; 
 import { useAuth } from "../hooks/authHook";
 import { useTranslation } from "react-i18next";
@@ -39,6 +39,15 @@ const LoginPage = () => {
   useEffect(() => {
     if (user) {
       nav("/chat");
+    }else{
+      const initUser = async () => {
+        const { data, error } = await getMe();
+        if (data) {
+          setUser(data);
+          nav("/chat");
+        } 
+      };
+      initUser();
     }
   }, [user, nav]);
 
@@ -83,8 +92,9 @@ const LoginPage = () => {
     }
 
     const { data, error } = await login(formData);
-    if (data && data.token) {
-      setUser(data.userData);
+    console.log("Login response:", { data, error }); // Debug: log phản hồi từ backend
+    if (data) {
+      setUser(data);
       nav("/chat");
     } else if (error) {
       // Nhận phản hồi lỗi từ backend, map thẳng vào ô password
@@ -158,6 +168,23 @@ const LoginPage = () => {
                 className={`${styles["form-input"]} ${loginError ? styles["input-error"] : ""}`}
                 placeholder={t("login.enterPassword")}
               />
+              <div className={styles["input-icon"]}>
+                <svg 
+                  width="20" 
+                  height="20" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  {/* Thân khóa */}
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  {/* Quai khóa */}
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
               <button
                 type="button"
                 className={styles["password-toggle"]}
@@ -175,6 +202,15 @@ const LoginPage = () => {
                 {loginError}
               </span>
             )}
+          </div>
+          <div className={styles["forgot-password-wrapper"]}>
+            <button
+              type="button"
+              className={styles["forgot-password-link"]}
+              onClick={() => nav("/forgotPassword")}
+            >
+              {t("login.forgotPassword") || "Quên mật khẩu?"}
+            </button>
           </div>
 
           <button 

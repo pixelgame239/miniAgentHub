@@ -5,21 +5,24 @@ const getSharedConversationRequest = client.createRequest<{response:Conversation
     {
         method: "GET",
         endpoint: "/share/conversation/:shareId",
-        auth: false
     }
 )
 const shareConversationRequest = client.createRequest<{params: {conversationId: number}}>()(
     {
         method: "POST",
         endpoint: "/share/:conversationId",
-        auth: true
+        options: {
+            credentials: "include"
+        }
     }
 )
 const shareMessageRequest = client.createRequest<{params: {messageId: number}}>()(
     {
         method: "POST",
         endpoint: "/share/message/:messageId",
-        auth: true
+        options: {
+            credentials: "include"
+        }
     }
 )
 export const shareConversation = async(conversationId: number)=>{

@@ -4,14 +4,18 @@ const getGroqModelsRequest = client.createRequest<{ payload: { APIKey: string } 
     {
         method:"GET",
         endpoint: "/ai/groqModels",
-        auth: true
+        options: {
+            credentials: "include"
+        }
     }
 )
 const getOpenRouterModelsRequest = client.createRequest<{ payload: { APIKey: string } }>()(
     {
         method:"GET",
         endpoint: "/ai/openRouterModels",
-        auth: true
+        options: {
+            credentials: "include"
+        }
     }
 )
 export const getOpenRouterModels = async(APIKey: string)=>{

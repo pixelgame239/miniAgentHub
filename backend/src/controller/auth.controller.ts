@@ -30,14 +30,14 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       res.cookie('refreshToken', result.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
-        sameSite: 'strict', // Ngăn chặn CSRF
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // Ngăn chặn CSRF
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
       });
       res.cookie('accessToken', result.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
-        sameSite: 'strict', // Ngăn chặn CSRF
-        maxAge: 5 * 60 * 1000, 
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // Ngăn chặn CSRF
+        maxAge: 15 * 60 * 1000, 
       });
       res.status(200).json(result.userData);
     } else {
@@ -76,8 +76,8 @@ export const changePassword = async(req:Request, res: Response, next:NextFunctio
             res.cookie('accessToken', newToken, {
               httpOnly: true,
               secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
-              sameSite: 'strict', // Ngăn chặn CSRF
-              maxAge: 5 * 60 * 1000, 
+              sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // Ngăn chặn CSRF
+              maxAge: 15 * 60 * 1000, 
             });
             res.status(200).json(newToken);
           }
@@ -95,8 +95,8 @@ export const changePassword = async(req:Request, res: Response, next:NextFunctio
 }
 export const refreshAccessToken = async(req:Request, res: Response, next:NextFunction)=>{
   try{
-    const refreshToken = req.body.refreshToken;
-    const accessToken = req.body.accessToken;
+    const refreshToken = req.cookies.refreshToken;
+    const accessToken = req.cookies.accessToken;
     if(!refreshToken || !accessToken){
       res.status(400).json({message: "Refresh token and access token are required"});
       return;
@@ -107,16 +107,31 @@ export const refreshAccessToken = async(req:Request, res: Response, next:NextFun
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
-      sameSite: 'strict', // Ngăn chặn CSRF
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // Ngăn chặn CSRF
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
     });
     res.cookie('accessToken', result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
-      sameSite: 'strict', // Ngăn chặn CSRF
-      maxAge: 5 * 60 * 1000, 
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // Ngăn chặn CSRF
+      maxAge: 15 * 60 * 1000, 
     });
     res.status(200).json("Refreshed");
+  }catch(error){
+    next(error);
+  }
+}
+export const logout = async(req:Request, res: Response, next:NextFunction)=>{
+  try{
+    const refreshToken = req.cookies.refreshToken;
+    if(!refreshToken){
+      res.status(400).json({message: "Refresh token is required"});
+      return;
+    }
+    await authService.authLogout(refreshToken);
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    res.status(200).json({message: "Logged out successfully"});
   }catch(error){
     next(error);
   }

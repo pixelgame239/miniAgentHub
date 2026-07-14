@@ -2,11 +2,12 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useLoaderData } from "react-router";
 import { useTranslation } from "react-i18next";
-import styles from "../styles/chat.module.css";
+// 📝 ĐỔI ĐƯỜNG DẪN IMPORT CSS TẠI ĐÂY:
+import styles from "../styles/sharedChat.module.css"; 
 
 interface Message {
   content: string;
-  type: "prompt" | "model" | "response"; // Thêm "response" vào đây để tương thích dữ liệu API
+  type: "prompt" | "model" | "response";
   createdAt?: string;
   fileUrl?: string;
   fileName?: string;
@@ -19,10 +20,8 @@ const SharedChatPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const apiUrl = import.meta.env.VITE_API_URL;
 
-  // ⚡ Ép kiểu dữ liệu động từ Loader để TypeScript hiểu cấu trúc snapShotData
   const snapShotData = useLoaderData() as any;
 
-  // 2. Ép kiểu và Parse an toàn nếu snapShotData là chuỗi String JSON
   let sharedData = null;
   if (snapShotData?.snapShotData) {
     try {
@@ -34,24 +33,18 @@ const SharedChatPage = () => {
     }
   }
 
-  // Trích xuất thông tin an toàn từ API payload
   const sharedTitle = sharedData?.title;
   const chatMessages: Message[] = (sharedData?.messages || []).map((msg: any) => ({
     ...msg,
-    type: msg.type === "response" ? "model" : msg.type // Chuẩn hóa "response" về "model" để ăn giao diện
+    type: msg.type === "response" ? "model" : msg.type
   }));
-  useEffect(() => {
-    if (!sharedData) {
-      console.error("No shared data found");
-    }
-    console.log("Shared data loaded:", sharedData);
-  }, []);
+
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "light");
+    // Cuộn xuống cuối trang ở lần đầu load dữ liệu chat thành công
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  // --- HÀM FORMAT TEXT ---
   const formatInline = (text: string) =>
     text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
       part.startsWith("**") && part.endsWith("**")
@@ -142,10 +135,11 @@ const SharedChatPage = () => {
       </header>
 
       {/* Messages View */}
-      <div className={styles.chatMessages} style={{ paddingBottom: "60px" }}>
+      {/* Bỏ thuộc tính style={{ paddingBottom: "60px" }} không cần thiết gây lệch layout */}
+      <div className={styles.chatMessages}>
         {chatMessages.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px", color: "var(--text-dimmed)" }}>
-            Không tìm thấy dữ liệu hoặc cuộc hội thoại trống.
+            {t("chat.noData")}
           </div>
         ) : (
           chatMessages.map((msg, index) => (
@@ -189,7 +183,7 @@ const SharedChatPage = () => {
                 <div className={msg.type === "prompt" ? styles.messageMeta : styles.modelMeta}>
                   {msg.type !== "prompt" && (
                     <>
-                      <span className={styles.modelMetaName}>AI RESPONDER</span>
+                      <span className={styles.modelMetaName}>AI</span>
                       <span className={styles.modelMetaDot}>•</span>
                     </>
                   )}

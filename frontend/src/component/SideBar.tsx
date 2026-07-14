@@ -7,9 +7,9 @@ import { useChat } from "../hooks/chatHook";
 import {
   deleteConversation,
   getConversationDetail,
+  getConversations,
   updateConversationTitle,
 } from "../api/conversationApi";
-import type { AIModels } from "../loader/aiLoader";
 import { useTranslation } from "react-i18next";
 import ReusableDialog from "./ReusableDialogProps";
 import type { Conversation } from "../loader/groupLoader";
@@ -18,6 +18,7 @@ import { shareConversation } from "../api/shareApi";
 import { exportAllMessages } from "../api/exportApi";
 import ExportModal from "./ExportModal";
 import { generateDocx, generatePdf } from "../utils/export";
+import SuccessLinkShared from "./SuccessLinkShared";
 
 type ConversationItem = {
   id: number;
@@ -29,13 +30,12 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
-  const { conversations } = useRouteLoaderData("layout-data-loader") as {
+  const { conversations, totalPages } = useRouteLoaderData("layout-data-loader") as {
     conversations: Conversation[];
+    totalPages: number;
   };
   const { currentConversation, setCurrentConversation, groupConversations, setGroupConversations } =
     useChat();
-  const [showNewChatModal, setShowNewChatModal] = useState(false);
-  const [newChatTitle, setNewChatTitle] = useState("");
   const { t } = useTranslation();
   const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -43,18 +43,71 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
   const [activeConversation, setActiveConversation] = useState<ConversationItem | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const { user } = useAuth();
-  const { showError, showToast, showInfo } = useNotificationPopup();
+  const { showError, showToast } = useNotificationPopup();
   const nav = useNavigate();
   const [isExportOpen, setIsExportOpen] = useState(false);
   const curTheme = localStorage.getItem("app-theme") || "light";
   const [exportID, setExportID] = useState<number | null>(null);
+  const [sharedLink, setSharedLink] = useState<string>(""); // State để lưu link chia sẻ
+  const [sharedSuccess, setSharedSuccess] = useState(false); // State để hiển thị thông báo chia sẻ thành công
   // Tạo ref để theo dõi vùng bao quanh danh sách menu hành động
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [page, setPage] = useState(0); // Lưu trang hiện tại (Trang đầu tiên từ loader là 0)
+  const [hasMore, setHasMore] = useState(true); // Kiểm tra xem còn data để load không
+  const [isLoadingMore, setIsLoadingMore] = useState(false); // Tránh trigger gọi API trùng lặp
+  const chatListRef = useRef<HTMLDivElement | null>(null); // Ref cho container cuộn
 
   useEffect(() => {
     setGroupConversations(conversations);
-  }, [conversations, setGroupConversations]);
+    setPage(0); // Reset page khi loader data thay đổi
+    setHasMore(totalPages>1); // Giả sử mỗi trang có 10 cuộc trò chuyện
+  }, [conversations, totalPages, setGroupConversations]);
+  const handleScroll = async () => {
+    if (!chatListRef.current || isLoadingMore || !hasMore) return;
 
+    const { scrollTop, scrollHeight, clientHeight } = chatListRef.current;
+    
+    // Kiểm tra nếu người dùng cuộn gần tới đáy (cách đáy khoảng 15px)
+    if (scrollHeight - scrollTop <= clientHeight + 15) {
+      setIsLoadingMore(true);
+      const nextPage = page + 1;
+      
+      // SỬA ĐỔI ĐỂ PHÙ HỢP CẤU TRÚC OBJECT TỪ API TRẢ VỀ
+      const response = await getConversations(nextPage) as {
+        data: { conversations: Conversation[], totalPages: number } | null;
+        error: any;
+      };
+      
+      if (response.error) {
+        console.error("Failed to load more conversations:", response.error);
+        setIsLoadingMore(false);
+        return;
+      }
+
+      // Lấy mảng cuộc trò chuyện từ data.conversations thay vì trực tiếp từ data
+      const newConversations = response.data?.conversations || [];
+      const currentTotalPages = response.data?.totalPages || totalPages;
+
+      if (newConversations.length > 0) {
+        // Lọc trùng ID đề phòng trường hợp data bị cập nhật liên tục ở backend
+        setGroupConversations((prev) => {
+          const existingIds = new Set(prev.map(item => item.id));
+          const filteredNewData = newConversations.filter(item => !existingIds.has(item.id));
+          return [...prev, ...filteredNewData];
+        });
+        
+        setPage(nextPage);
+        
+        // Kiểm tra xem đã đạt tới trang cuối cùng chưa
+        if (nextPage >= currentTotalPages - 1) {
+          setHasMore(false);
+        }
+      } else {
+        setHasMore(false);
+      }
+      setIsLoadingMore(false);
+    }
+  };
   // SỬA ĐỔI: Xử lý click outside đóng menu ba chấm
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -75,7 +128,7 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
 
   const openConversation = async (convId: number) => {
     if(onClose) onClose(); // Đóng sidebar nếu đang ở chế độ mobile
-    const {data, error} = await getConversationDetail(convId);
+    const {data, error} = await getConversationDetail(convId, 0);
     if (data) {
       setCurrentConversation(data);
     }
@@ -93,7 +146,8 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
   const handleShareConversation = async (conversationId: number) => {
     const { data, error } = await shareConversation(conversationId);
     if (data) {
-      showInfo(t("common.success") + ": " + window.location.origin + data);
+      setSharedLink(window.location.origin + data);
+      setSharedSuccess(true);
     }
     if (error) {
       showError(t("common.failed"));
@@ -281,19 +335,15 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
 
       {/* CHAT SECTION */}
       <div className={styles.chatSection}>
-        {/* <button className={styles.newConversationBtn} onClick={() => handleCreateNewChat()}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          {t("sidebar.newChat")}
-        </button> */}
-
         {groupConversations.length > 0 ? (
           <>
             <span className={styles.chatListLabel}>{t("sidebar.recent") ?? "Recent"}</span>
             {/* Gắn ref vào bọc danh sách chat để lắng nghe click outside */}
-            <div className={styles.chatList} ref={menuRef}>
+            <div className={styles.chatList} ref={(el) => {
+              menuRef.current = el
+              chatListRef.current = el; // Gắn ref cho container cuộn
+            }} onScroll={handleScroll}
+            style={{ overflowY: 'auto', maxHeight: '100%' }}>
               {groupConversations.map((chat) => (
                 <div key={chat.id} className={styles.chatRow}>
                   <button
@@ -353,6 +403,11 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
                   </div>
                 </div>
               ))}
+              {isLoadingMore && (
+                <div style={{ textAlign: 'center', padding: '10px', fontSize: '14px', color: '#888' }}>
+                  {t("common.loading")}
+                </div>
+              )}
             </div>
           </>
         ) : (
@@ -413,58 +468,21 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
         onClose={() => setIsExportOpen(false)} 
         onExport={async (format: "docx" | "pdf") => await handleExport(format)}
       />
-
-      {/* NEW CHAT MODAL */}
-      {/* {showNewChatModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowNewChatModal(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h2>{t("sidebar.newConversation")}</h2>
-              <button className={styles.modalCloseBtn} onClick={() => setShowNewChatModal(false)}>
-                ×
-              </button>
-            </div>
-
-            <div className={styles.modalBody}>
-              <div className={styles.formGroup}>
-                <label>{t("sidebar.conversationTitle")}</label>
-                <input
-                  type="text"
-                  placeholder={t("sidebar.enterConversationTitle")}
-                  value={newChatTitle}
-                  onChange={(e) => setNewChatTitle(e.target.value)}
-                  className={styles.formInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label>{t("sidebar.aiModel")}</label>
-                <select
-                  value={selectedModel?.id}
-                  onChange={(e) => setSelectedModel({ id: e.target.value })}
-                  className={styles.formSelect}
-                >
-                  {AIModels.map((model) => (
-                    <option key={model.id} value={model.id}>
-                      {model.id}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.modalFooter}>
-              <button className={styles.cancelBtn} onClick={() => setShowNewChatModal(false)}>
-                {t("common.cancel")}
-              </button>
-              <button className={styles.createBtn} onClick={handleCreateNewChat}>
-                {t("sidebar.createChat")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )} */}
-
+      <ReusableDialog
+        open={sharedSuccess}
+        title={t("sidebar.shareTitle")}
+        onClose={() => setSharedSuccess(false)}
+        footer={
+          <button 
+            className={styles.createBtn} 
+            onClick={() => setSharedSuccess(false)}
+          >
+            {t("common.close") || "Đóng"}
+          </button>
+        }
+      >
+        <SuccessLinkShared linkToCopy={sharedLink} />
+      </ReusableDialog>
       {/* FOOTER */}
       <div className={styles.sidebarFooter}>
         <div className={styles.userProfile}>

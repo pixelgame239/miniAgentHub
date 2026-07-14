@@ -221,6 +221,7 @@
   display: block;
 }
 
+/* Sửa lại class .select hiện tại để bổ sung hiệu ứng và tương tác */
 .select {
   width: 100%;
   height: 56px;
@@ -232,6 +233,29 @@
   outline: none;
   appearance: none;
   font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Hiệu ứng focus đồng bộ với các Input khác trong hệ thống của bạn */
+.select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+/* Đổi màu phần menu dropdown khi click xổ xuống */
+.select-option {
+  background-color: var(--bg-surface); /* Tự động đổi: Đen đậm ở Dark, Trắng ở Light */
+  color: var(--text-primary);          /* Tự động đổi: Chữ trắng ở Dark, Chữ đen ở Light */
+  padding: 12px;
+}
+
+/* Tối ưu riêng trên Mobile cho chiều cao 48px như bạn đã config */
+@media (max-width: 768px) {
+  .select {
+    height: 48px;
+    border-radius: 10px;
+  }
 }
 
 .select-wrap svg {
@@ -519,6 +543,11 @@
   cursor: pointer;
   transition: 0.2s ease;
 }
+.dialog-save-btn:disabled {
+  background: var(--bg-subtle);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
 .dialog-save-btn:hover {
   background: var(--accent-hover);
 }
@@ -553,5 +582,141 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+/* Container bao bọc toàn bộ Dropdown */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Nút bấm chính trigger menu */
+.custom-select-trigger {
+  width: 100%;
+  height: 56px;
+  padding: 0 20px;
+  border-radius: 14px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.custom-select-trigger:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+
+/* Hiệu ứng Active / Focus tương thích hệ thống */
+.custom-select-trigger:focus,
+.custom-select-trigger.open {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+  background: var(--bg-subtle);
+}
+
+/* Icon mũi tên */
+.custom-select-arrow {
+  width: 18px;
+  height: 18px;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+/* Xoay ngược mũi tên khi mở menu */
+.custom-select-trigger.open .custom-select-arrow {
+  transform: rotate(180deg);
+  color: var(--text-primary);
+}
+
+/* Lớp phủ vô hình giúp click bên ngoài để đóng */
+.custom-select-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: transparent;
+}
+
+/* Hộp thoại Menu Dropdown (Cùng tone với Panel và Dialog của bạn) */
+.custom-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+  margin: 0;
+  list-style: none;
+  
+  /* Shadow giảm nhẹ khi ở Lightmode và đậm đà khi ở Darkmode */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  
+  /* Tái sử dụng animation trượt nhẹ từ dialog của bạn */
+  animation: slideInDialog 0.15s ease-out;
+}
+
+/* Từng dòng option lựa chọn */
+.custom-select-option {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+/* Trạng thái Hover option */
+.custom-select-option:hover {
+  background: var(--bg-hover);
+  color: var(--text-heading);
+}
+
+/* Trạng thái Option đang được chọn */
+.custom-select-option.selected {
+  background: var(--accent-dim);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+/* Dấu tích nhỏ xinh bên cạnh ngôn ngữ đã chọn */
+.selected-indicator {
+  font-size: 14px;
+  color: var(--accent-text);
+}
+
+/* ── TỐI ƯU TRÊN MOBILE TRÙNG breakpoint 768px CỦA BẠN ── */
+@media (max-width: 768px) {
+  .custom-select-trigger {
+    height: 48px;
+    font-size: 13px;
+    border-radius: 10px;
+    padding: 0 16px;
+  }
+
+  .custom-select-menu {
+    border-radius: 10px;
+    padding: 4px;
+  }
+
+  .custom-select-option {
+    padding: 10px 12px;
+    font-size: 13px;
+    border-radius: 8px;
   }
 }

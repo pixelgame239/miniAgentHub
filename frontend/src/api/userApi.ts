@@ -9,48 +9,66 @@ const getUserRequest = client.createRequest<{response:User[]}>()(
     {
         method:"GET",
         endpoint: "/users/",
-        auth: true
+        options: {
+            credentials: "include"
+        }
     }
 )
 const updateUserRequest = client.createRequest<{payload: UpdateRequestType, params: {userId: string|number}}>()({
     endpoint: "/users/updateUser/:userId",
     method:"PUT",
-    auth:true
+    options: {
+        credentials: "include"
+    }
 });
 const deleteUserRequest = client.createRequest<{params: {userId: string|number}}>()({
     endpoint: "/users/deleteUser/:userId",
     method:"DELETE",
-    auth:true
-})
+    options: {
+        credentials: "include"
+    }
+});
 const deleteAccountRequest = client.createRequest()({
     endpoint:"/users/deleteAccount",
     method:"DELETE",
-    auth:true
-})
+    options: {
+        credentials: "include"
+    }
+});
 const getGroupUsersRequest =client.createRequest<{params:{groupId:number}}>()({
     method:"GET",
     endpoint: "/users/:groupId",
-    auth: true
+    options: {
+        credentials: "include"
+    }
 });
 const findUsersRequest = client.createRequest<{queryParams:{input: string}}>()({
     method:"GET",
     endpoint:"/users/find",
-    auth:true
+    options: {
+        credentials: "include"
+    }
 })
 const updateAddressRequest = client.createRequest<{payload: {address: string}, params: {userId: string|number}}>()({
     endpoint: "/users/updateAddress/:userId",
     method:"PUT",
-    auth:true
+    options: {
+        credentials: "include"
+    }
 });
 const updatePhoneNumberRequest = client.createRequest<{payload: {phoneNumber: string}, params: {userId: string|number}}>()({
     endpoint: "/users/updatePhoneNumber/:userId",
     method:"PUT",
-    auth:true
+    options: {
+        credentials: "include"
+    }
 });
 const updateUserAIConfigRequest = client.createRequest<{payload: {FlowiseAPIKey?: string, FlowiseURL?: string, GroqAPIKey?: string, OpenRouterAPIKey?: string}, params: {userId: string|number}}>()({
     endpoint: "/users/updateAIConfig/:userId",
     method:"PUT",
-    auth:true
+    options: {
+        credentials: "include"
+    }
 });
 export const getUsers = async()=>{
     return await getUserRequest.send();

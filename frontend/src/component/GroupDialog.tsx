@@ -369,7 +369,7 @@ const GroupDialog: React.FC<GroupDialogProps> = ({
           <button 
             type="submit" 
             className={styles.submitBtn}
-            disabled={!!errors.groupName} // Khóa nút khi dữ liệu rỗng và đang lỗi
+            disabled={!!errors.groupName||!groupName.trim()} // Khóa nút khi dữ liệu rỗng và đang lỗi
           >
             {submitLabel}
           </button>

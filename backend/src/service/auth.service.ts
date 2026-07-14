@@ -82,7 +82,7 @@ export class AuthService{
                 groups: existingUser.groups.map((group: any) => ({ id: group.id, groupName: group.groupName }))
             };
             const refreshToken = generateRefreshToken(existingUser.id);
-            await redisClient.set(`refreshToken:${refreshToken}`, existingUser.id, {'EX': 7 * 24 * 60 * 60});
+            await redisClient.set(`refreshToken:${refreshToken}`, String(existingUser.id), {'EX': 7 * 24 * 60 * 60});
             return{
                 message: "Logged in!",
                 token: generateAccessToken(tokenPayload),
@@ -98,6 +98,8 @@ export class AuthService{
                     groups: existingUser.groups.map((group: any) => ({id: group.id, groupName: group.groupName})),
                 }
             }
+        }else{
+            throw new MyError("Email or password is incorrect", 404);
         }
     }
     public async authChangePassword(formData:any){
@@ -158,5 +160,16 @@ export class AuthService{
             token: newAccessToken,
             refreshToken: newRefreshToken
         }
+    }
+    public async authLogout(refreshToken: string){
+        if(!refreshToken){
+            throw new MyError("Refresh token is required", 400);
+        }
+        const userId = await redisClient.get(`refreshToken:${refreshToken}`);
+        if(!userId){
+            throw new MyError("Invalid refresh token", 401);
+        }
+        await redisClient.del(`refreshToken:${refreshToken}`);
+        return { message: "Logged out successfully"};
     }
 }

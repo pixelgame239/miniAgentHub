@@ -1,17 +1,24 @@
-/* chat.module.css – all colors via CSS variables */
-
 /* ========================================
-   MAIN PAGE
+   MAIN PAGE & SCROLL FIX
 ======================================== */
-
 .chatPage {
-  height: 100%;
-  min-height: 100vh;
+  height: 100vh; 
+  height: -webkit-fill-available; 
+  
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
   color: var(--text-primary);
-  overflow: hidden;
+  
+  overflow: hidden; 
+  position: relative;
+  
+  min-height: 0; 
+  flex-grow: 1;
+
+  /* ── SỬA TẠI ĐÂY ── */
+  /* Ghi đè triệt để text-align: center kế thừa từ #root */
+  text-align: left !important; 
 }
 
 /* ========================================
@@ -372,7 +379,45 @@
 /* ========================================
    MESSAGE META
 ======================================== */
+.abortChatStatus {
+  font-size: 11px;
+  font-style: italic;          /* Làm chữ nghiêng */
+  font-weight: 500;
+  
+  /* Màu sắc: Dùng màu cam đỏ trầm để tạo cảm giác "đã dừng" nhưng không bị quá chói */
+  color: #e06c75;              
+  
+  /* Tạo một khung nền mờ nhẹ bao quanh chữ để nổi bật hơn */
+  background: rgba(224, 108, 117, 0.08); 
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(224, 108, 117, 0.15);
+  
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.02em;
+  
+  /* Hiệu ứng chuyển động mượt nếu trạng thái xuất hiện bất ngờ */
+  animation: fadeInStatus 0.2s ease-in-out;
+  user-select: none;
+}
 
+/* Thêm một dấu chấm tròn nhỏ màu đỏ nhấp nháy nhẹ phía trước chữ (Tùy chọn giúp tăng độ tinh tế) */
+.abortChatStatus::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  background-color: #e06c75;
+  border-radius: 50%;
+  display: inline-block;
+  opacity: 0.7;
+}
+
+@keyframes fadeInStatus {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
 .messageMeta {
   display: flex;
   justify-content: flex-end;
@@ -404,7 +449,7 @@
 }
 
 .modelMetaTime {
-  color: var(--text-dimmed);
+  color: var(--text-dimmed);;
 }
 
 .modelActions {

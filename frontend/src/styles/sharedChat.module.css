@@ -1,0 +1,257 @@
+/* src/styles/shared-chat.module.css */
+
+/* src/styles/shared-chat.module.css */
+
+/* ========================================
+   MAIN PAGE & SCROLL FIX
+======================================== */
+.chatPage {
+  /* Ép chiều cao cố định bằng đúng chiều cao view-port */
+  height: 100vh; 
+  height: 100svh;
+  max-height: 100vh;
+  max-height: 100svh;
+  width: 100%;
+  
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  
+  /* Khóa cứng cuộn ở page ngoài, chỉ cho phép con cuộn */
+  overflow: hidden; 
+  position: relative;
+  
+  /* Triệt tiêu thuộc tính text-align: center kế thừa từ #root */
+  text-align: left; 
+}
+
+/* ========================================
+   HEADER
+======================================== */
+.chatHeader {
+  height: 60px;
+  min-height: 60px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+  position: relative; 
+  z-index: 20;
+  flex-shrink: 0; /* Không cho phép header bị bóp méo khi tin nhắn nhiều */
+}
+
+.chatTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ========================================
+   MESSAGES AREA
+======================================== */
+.chatMessages {
+  /* Giải pháp quyết định: 
+     flex-grow: 1 (chiếm hết chỗ trống), 
+     flex-shrink: 1 (co lại khi hết chỗ), 
+     flex-basis: 0% (không tính toán kích thước ban đầu theo nội dung text bên trong) */
+  flex: 1 1 0%; 
+  
+  /* Kích hoạt thanh cuộn nội bộ ngay tại đây */
+  overflow-y: auto; 
+  -webkit-overflow-scrolling: touch; /* Mượt mà trên thiết bị Apple iOS */
+  
+  padding: 32px 28px 60px 28px; 
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  white-space: pre-wrap; 
+  word-break: break-word;
+}
+
+.messageRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Căn hàng tin nhắn user về bên phải */
+.userRow {
+  flex-direction: row-reverse;
+  justify-content: flex-start; 
+}
+
+/* Căn hàng tin nhắn AI về bên trái */
+.modelRow {
+  flex-direction: row;
+  justify-content: flex-start; 
+}
+
+.aiAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.messageBubbleWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 75%; /* Tăng độ rộng tối đa để chứa nhiều text hơn trước khi xuống dòng */
+}
+
+/* Tin nhắn User: Căn sát lề phải, chữ căn phải */
+.userRow .messageBubbleWrapper {
+  align-items: flex-end;
+  margin-left: auto; /* Đẩy toàn bộ wrapper sang bên phải */
+}
+
+/* Tin nhắn AI: Căn sát lề trái, chữ căn trái */
+.modelRow .messageBubbleWrapper {
+  align-items: flex-start;
+  margin-right: auto; /* Đẩy toàn bộ wrapper sang bên trái */
+}
+
+.messageBubble {
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  /* Tránh bong bóng chat bị kéo giãn 100% chiều ngang không cần thiết */
+  width: fit-content; 
+  text-align: left; /* Đảm bảo nội dung chữ bên trong luôn căn trái */
+}
+
+.userRow .messageBubble {
+  border-bottom-right-radius: 4px;
+  background: var(--bg-user-bubble, var(--bg-card)); /* Bạn có thể đổi màu riêng cho bóng chat user tại đây */
+}
+
+.modelRow .messageBubble {
+  border-bottom-left-radius: 4px;
+}
+
+.messageText {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-primary);
+  white-space: pre-wrap; 
+  word-break: break-word;
+}
+
+.messageParagraph {
+  margin: 0 0 10px;
+}
+
+.messageParagraph:last-child {
+  margin-bottom: 0;
+}
+
+.messageBullet {
+  margin-left: 20px;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+/* ========================================
+   MESSAGE META
+======================================== */
+.messageMeta {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.messageTime {
+  font-size: 11px;
+  color: var(--text-dimmed);
+}
+
+.modelMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dimmed);
+  padding: 0 2px;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.modelMetaName {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.modelMetaDot {
+  color: var(--text-dimmed);
+}
+
+/* Custom thanh cuộn vùng tin nhắn */
+.chatMessages::-webkit-scrollbar {
+  width: 6px;
+}
+.chatMessages::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chatMessages::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 10px;
+}
+
+/* ========================================
+   RESPONSIVE (MOBILE)
+======================================== */
+@media (max-width: 768px) {
+  .chatHeader {
+    padding: 0 12px 0 16px;
+    height: 56px;
+    min-height: 56px;
+  }
+
+  .chatTitle {
+    font-size: 15px; 
+  }
+
+  .chatMessages {
+    padding: 16px 12px 40px 12px;
+    gap: 16px; 
+  }
+
+  .aiAvatar {
+    width: 32px; 
+    height: 32px;
+  }
+
+  .messageBubbleWrapper {
+    max-width: calc(100% - 48px); 
+  }
+
+  .messageBubble {
+    padding: 10px 14px; 
+    border-radius: 14px;
+  }
+
+  .messageText {
+    font-size: 13.5px; 
+  }
+
+  .chatImagePreview img {
+    max-width: 100% !important;
+    max-height: 140px !important;
+    object-fit: cover;
+  }
+}

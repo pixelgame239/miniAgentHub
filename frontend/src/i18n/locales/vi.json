@@ -21,7 +21,9 @@
     "share": "Chia sẻ",
     "export": "Xuất",
     "noAPIKey": "Groq API Key không hợp lệ. Vui lòng truy cập cài đặt để cập nhật API Key của bạn.",
-    "shared": "Chia sẻ"
+    "shared": "Chia sẻ",
+    "backToLogin": "Quay lại đăng nhập",
+    "close": "Đóng"
   },
   "export":{
     "title": "Xuất cuộc hội thoại",
@@ -64,7 +66,11 @@
     "deleteConfirmation": "Bạn có chắc muốn xóa cuộc trò chuyện này? Hành động này không thể hoàn tác.",
     "deleteTitle": "Xóa cuộc trò chuyện",
     "share": "Chia sẻ",
-    "export": "Xuất"
+    "export": "Xuất",
+    "copyLinkInstructions": "Sao chép liên kết bên dưới để chia sẻ cuộc trò chuyện này với người khác. Bất kỳ ai có liên kết đều có thể xem cuộc trò chuyện.",
+    "copyLink": "Sao chép",
+    "copied": "Đã sao chép!",
+    "shareTitle": "Chia sẻ cuộc trò chuyện"
   },
 
   "chat": {
@@ -75,7 +81,9 @@
     "aiResponse": "Phản hồi AI",
     "promptPlaceholder": "Nhập nội dung...",
     "wrongConfiguration": "Cấu hình mô hình AI không chính xác. Vui lòng kiểm tra cài đặt của bạn.",
-    "abortChat": "Bạn đã dừng câu trả lời này."
+    "abortChat": "Bạn đã dừng câu trả lời này.",
+    "noData": "Cuộc trò chuyện trống hoặc dữ liệu không khả dụng.",
+    "shareMessageTitle": "Chia sẻ tin nhắn"
   },
 
   "login": {
@@ -92,7 +100,13 @@
     "showPassword": "Hiện mật khẩu",
     "hidePassword": "Ẩn mật khẩu",
     "invalidEmail": "Địa chỉ email không hợp lệ",
-    "error": "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập và thử lại."
+    "error": "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập và thử lại.",
+    "forgotPassword": "Quên mật khẩu?",
+    "forgotPasswordTitle": "Quên mật khẩu",
+    "forgotPasswordDesc": "Nhập địa chỉ email của bạn bên dưới và chúng tôi sẽ gửi lại mật khẩu mới.",
+    "sendResetLink": "Gửi mật khẩu mới",
+    "emailSentSuccess": "Đã gửi liên kết đặt lại mật khẩu thành công!",
+    "emailSentFailed": "Gửi liên kết đặt lại mật khẩu thất bại."
   },
 
   "settings": {
@@ -172,7 +186,8 @@
     "deleteWarning": "Cảnh báo: Việc xóa người dùng sẽ loại bỏ vĩnh viễn quyền truy cập và dữ liệu của họ. Vui lòng xác nhận hành động này.",
     "groupRequired": "Ít nhất một nhóm phải được chọn cho người dùng.",
     "emailRequired": "Email là bắt buộc",
-    "fullNameRequired": "Họ tên là bắt buộc"
+    "fullNameRequired": "Họ tên là bắt buộc",
+    "resetPassword": "Đặt lại mật khẩu"
   },
 
   "password": {

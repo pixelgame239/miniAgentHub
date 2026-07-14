@@ -4,7 +4,6 @@ import styles from "../styles/initResetPassword.module.css";
 import { changePassword } from "../api/authApi";
 import { useAuth } from "../hooks/authHook";
 import { useTranslation } from "react-i18next";
-import { setToken } from "../api/apiClient";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
 
 const InitResetPassword = () => {
@@ -58,7 +57,6 @@ const InitResetPassword = () => {
     setUser({...user, active: true});
     if(data){
       console.log("Token setted");
-      setToken(data);
     }
     if(error){
       showError(t("password.errorChange"));

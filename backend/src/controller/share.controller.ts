@@ -51,6 +51,7 @@ export const getSharedConversation = async (req: Request, res: Response, next: N
     const result = await shareService.getSharedConversation(sharedId);
     res.status(200).json(result);
   } catch (error) {
+    console.error("Error in getSharedConversation controller:", error);
     next(error);
   }
 }

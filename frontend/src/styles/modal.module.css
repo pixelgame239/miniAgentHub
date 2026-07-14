@@ -134,7 +134,11 @@
   cursor: pointer;
   transition: 0.2s ease;
 }
-
+.primary-btn:disabled {
+  background: var(--bg-subtle);;
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
 .secondary-btn {
   background: transparent;
   border: 1px solid var(--border-strong);

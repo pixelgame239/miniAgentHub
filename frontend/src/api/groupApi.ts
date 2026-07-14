@@ -3,46 +3,51 @@ import { client } from "./apiClient";
 const getAllGroupsRequest = client.createRequest<{response: []}>()({
     endpoint: "/groups/",
     method: "GET",
-    auth:true
+    options: {
+        credentials: "include"
+    }
 });
-// const getUserGroupsRequest = client.createRequest<{response: Group[]}>()(
-//     {
-//         endpoint:"/groups/mygroups",
-//         method:"GET",
-//         auth:true
-//     }
-// );
 const deleteGroupRequest = client.createRequest<{params:{groupId:number}}>()(
     {
         endpoint:"/groups/delete/:groupId",
         method:"DELETE",
-        auth:true
+        options: {
+            credentials: "include"
+        }
     }
 )
 const createGroupRequest = client.createRequest<{payload:{groupName: string, permissions: string[], userIds: number[]}}>()({
     endpoint:"/groups/create",
     method: "POST",
-    auth:true
+    options: {
+        credentials: "include"
+    }
 })
 const addUserRequest = client.createRequest<{params: {groupId:number}, payload: {userIds: number[]}}>()(
     {
         endpoint:"/groups/addUser/:groupId",
         method:"PATCH",
-        auth:true
+        options: {
+            credentials: "include"
+        }
     }
 )
 const removeUserRequest = client.createRequest<{params: {groupId:number, userId: number}}>()(
     {
         endpoint:"/groups/removeUser/:groupId/:userId",
         method:"PATCH",
-        auth:true
+        options: {
+            credentials: "include"
+        }
     }
 )
 const updateGroupDataRequest = client.createRequest<{payload: {groupName: string, permissions:string[], userIds: number[]}, params: {groupId: number}}>()(
     {
         endpoint:"/groups/updateGroup/:groupId",
         method:"PUT",
-        auth:true
+        options: {
+            credentials: "include"
+        }
     }
 )
 export const getAllGroups = async() =>{

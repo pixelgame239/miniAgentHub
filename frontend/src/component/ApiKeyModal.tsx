@@ -75,7 +75,7 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
   const validateField = (name: "apiKey" | "flowiseUrl", value: string) => {
     let errorMsg = "";
     
-    if (name === "apiKey" && !value.trim()) {
+    if (name === "apiKey" && !value.trim() && !isFlowise) {
       errorMsg = t("APIKeyModal.apiKeyRequired");
     }
     
@@ -145,7 +145,7 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
           {/* Cụm Input 1: API Key */}
           <div className={styles.formGroup}>
             <label htmlFor="apiKey" className={styles.label}>
-              {getInputLabel()} <span className={styles.requiredStar}>*</span>
+              {getInputLabel()} <span className={isFlowise ? "": styles.requiredStar}>*</span>
             </label>
             <input
               id="apiKey"
@@ -207,7 +207,7 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
             <button 
               type="submit" 
               className={styles.submitBtn}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isFlowise && !flowiseUrl.trim() || !isFlowise && !apiKey.trim()}
             >
               {isSubmitting ? t("common.loading") : "OK"}
             </button>

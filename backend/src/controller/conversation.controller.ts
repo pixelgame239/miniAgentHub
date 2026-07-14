@@ -1,17 +1,22 @@
 import type { NextFunction, Request, Response } from "express";
 import { ConversationService } from "../service/conversation.service";
 import { MyError } from "../utils/MyError";
+import { UNAUTHORIZED_ERROR } from "../utils/generalKey";
 
 const conversationService = new ConversationService();
 
 export const fetchAllConversations = async(req: Request, res:Response, next: NextFunction)=>{
     try{
+        const page = parseInt(req.query.page as string, 10);
+        if(isNaN(page)){
+            throw new MyError("Invalid page parameter", 400);
+        }
         if(req.user){
-            const response = await conversationService.getConversations(req.user?.id);
+            const response = await conversationService.getConversations(req.user?.id, page);
             res.status(200).json(response);
             return;
         }
-        throw new MyError("Unauthorized", 401);
+        throw new MyError(UNAUTHORIZED_ERROR, 401);
     } catch(error){
         console.log(error);
         next(error);
@@ -19,13 +24,17 @@ export const fetchAllConversations = async(req: Request, res:Response, next: Nex
 }
 export const fetchConversationDetail = async(req: Request, res: Response, next: NextFunction) =>{
     try{
+        const page = parseInt(req.query.page as string, 10);
+        if(isNaN(page)){
+            throw new MyError("Invalid page parameter", 400);
+        }
         if(req.user){
             const convId = parseInt(req.params.convId as string, 10);
-            const response = await conversationService.getConversationDetail(req.user.id, convId); 
+            const response = await conversationService.getConversationDetail(req.user.id, convId, page); 
             res.status(200).json(response);
             return;
         }
-        throw new MyError("Unauthorized", 401);
+        throw new MyError(UNAUTHORIZED_ERROR, 401);
     } catch(error){
         next(error);
     }
@@ -37,7 +46,7 @@ export const createNewConversation = async(req: Request, res: Response, next: Ne
             res.status(201).json(response);
             return;
         }
-        throw new MyError("Unauthorized", 401);
+        throw new MyError(UNAUTHORIZED_ERROR, 401);
     } catch(error){
         next(error);
     }
@@ -50,7 +59,7 @@ export const deleteConversation = async(req: Request, res: Response, next: NextF
             res.status(201).json(response);
             return;
         }
-        throw new MyError("Unauthorized", 401);
+        throw new MyError(UNAUTHORIZED_ERROR, 401);
     } catch(error){
         next(error);
     }
@@ -62,7 +71,7 @@ export const deleteAllConversations = async(req: Request, res: Response, next: N
             res.status(201).json(response);
             return;
         }
-        throw new MyError("Unauthorized", 401);
+        throw new MyError(UNAUTHORIZED_ERROR, 401);
     } catch(error){
         next(error);
     }
@@ -76,7 +85,7 @@ export const updateConversationTitle = async(req: Request, res: Response, next: 
             res.status(201).json(response);
             return;
         }
-        throw new MyError("Unauthorized", 401);
+        throw new MyError(UNAUTHORIZED_ERROR, 401);
     } catch(error){
         next(error);
     }

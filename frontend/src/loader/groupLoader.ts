@@ -1,7 +1,5 @@
 import type { LoaderFunction } from "react-router";
 import { getAllGroups } from "../api/groupApi";
-import type { AIModels } from "./aiLoader";
-import { getGroqModels } from "../api/aiApi";
 import { getConversations } from "../api/conversationApi";
 
 export interface Group {
@@ -26,37 +24,15 @@ export const groupLoader:LoaderFunction = async():Promise<Group[]>=>{
     }
     return [];
 };
-// export const userGroupLoader:LoaderFunction = async():Promise<Group[]>=>{
-//     try {
-//         const response = await getUserGroups();
-//         if(response.data){
-//             return response.data;
-//         }
-//         return [];
-//     } catch(err){
-//         console.error(err);
-//         return [];
-//     }
-// }
-export const layoutLoader: LoaderFunction = async():Promise<{conversations: Conversation[]}> => {
-        // const userGroups = await getUserGroups();
-    // const APIKey = localStorage.getItem("APIKey");
-    // if(!APIKey){
-    //     console.error("API key not found in localStorage");
-    //     return {AIModels: [], conversations: []};
-    // }
-    // const { data: aiModels, error: aiModelsError } = await getGroqModels(APIKey);
-    const { data: conversations, error: conversationsError } = await getConversations();
-    // if(aiModels&&conversations){
-    //     return {AIModels: aiModels||[], conversations: conversations||[]};
-    // }
-    // if(aiModelsError){
-    //     console.error("Failed to fetch AI models:", aiModelsError);
-    // }
-    if(conversationsError){
-        console.error("Failed to fetch conversations:", conversationsError);
-        return { conversations: [] };
-    }
-    return { conversations: conversations||[] };
 
+export const layoutLoader: LoaderFunction = async():Promise<{conversations: Conversation[], totalPages: number}> => {
+    const { data, error } = await getConversations(0) as { 
+        data: { conversations: Conversation[], totalPages: number } | null, 
+        error: any 
+    };
+    if(error){
+        console.error("Failed to fetch conversations:", error);
+        return { conversations: [], totalPages: 0 };
+    }
+    return { conversations: data?.conversations || [], totalPages: data?.totalPages || 0 };
 }

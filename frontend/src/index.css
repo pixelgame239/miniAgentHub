@@ -67,58 +67,6 @@
     --special-text: #ffffff
 
 }
-
-/* ================================================
-   NIGHT THEME
-   A cooler, more blue/violet dark mode
-================================================ */
-/* [data-theme="dark"] {
-  --bg-primary:      #020617;
-  --bg-secondary:    #0f172a;
-  --bg-card:         rgba(17, 24, 39, 0.97);
-  --bg-input:        rgba(15, 23, 42, 0.95);
-  --bg-overlay:      rgba(0, 0, 0, 0.80);
-  --bg-hover:        rgba(255, 255, 255, 0.03);
-  --bg-subtle:       rgba(255, 255, 255, 0.02);
-  --bg-surface:      rgba(15, 23, 42, 0.98);
-
-  --border:          rgba(255, 255, 255, 0.05);
-  --border-hover:    rgba(255, 255, 255, 0.12);
-  --border-focus:    rgba(139, 92, 246, 0.70);
-  --border-strong:   rgba(255, 255, 255, 0.06);
-
-  --text-primary:    #e2e8f0;
-  --text-secondary:  #94a3b8;
-  --text-muted:      #64748b;
-  --text-heading:    #f1f5f9;
-  --text-dimmed:     #475569;
-
-  --accent:          #8b5cf6;
-  --accent-hover:    #7c3aed;
-  --accent-dim:      rgba(139, 92, 246, 0.12);
-  --accent-border:   rgba(139, 92, 246, 0.24);
-  --accent-glow:     rgba(109, 40, 217, 0.35);
-  --accent-focus:    rgba(109, 40, 217, 0.12);
-  --accent-text:     #c4b5fd;
-
-  --danger:          #f87171;
-  --danger-dim:      rgba(248, 113, 113, 0.12);
-  --danger-border:   rgba(248, 113, 113, 0.24);
-  --danger-bg:       rgba(78, 27, 36, 0.85);
-
-  --success:         #34d399;
-
-  --sidebar-bg:            #020617;
-  --sidebar-border:        rgba(255, 255, 255, 0.05);
-  --sidebar-active-bg:     rgba(139, 92, 246, 0.18);
-  --sidebar-active-border: rgba(167, 139, 250, 0.14);
-  --sidebar-active-accent: #a78bfa;
-
-  --dialog-accent:          #a78bfa;
-  --dialog-accent-dim:      rgba(167, 139, 250, 0.15);
-  --dialog-accent-border:   rgba(167, 139, 250, 0.25);
-  --dialog-accent-glow:     rgba(124, 58, 237, 0.35);
-} */
 [data-theme="light"] {
   --bg-primary:      #ffffff;
   --bg-secondary:    #f8fafc;
@@ -175,18 +123,30 @@
    BASE RESET
 ================================================ */
 #root {
+  width: 100%;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
-  min-height: 100svh;
+  
+  /* Chiều cao chuẩn tuyệt đối */
+  height: 100vh;
+  height: 100svh; 
+  
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Khóa cuộn tại đây */
 }
-
 body {
   margin: 0;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Bổ sung để khóa cuộn toàn trang web, ép cuộn nội bộ thành công */
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
 
   transition:
     background 0.25s ease,

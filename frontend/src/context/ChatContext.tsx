@@ -20,6 +20,7 @@ export interface Conversation {
   title: string;
   AIModel: string;
   messages?: Message[];
+  totalPages?: number;
 }
 
 // Stream state per conversation — lives in context so it survives tab switches
@@ -38,6 +39,7 @@ interface ChatContextType {
   convMessagesMap: Map<number, Message[]>;
   initConvMessages: (convId: number, messages: Message[]) => void;
   appendMessage: (convId: number, message: Message) => void;
+  prependConvMessages: (convId: number, olderMessages: Message[]) => void;
 
   // Stream state, keyed by convId — survives tab switches
   streamMap: Map<number, ConvStreamState>;
@@ -85,7 +87,28 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       return next;
     });
   }, []);
+  const prependConvMessages = useCallback((convId: number, olderMessages: Message[]) => {
+    setConvMessagesMap(prev => {
+      const currentMessages = prev.get(convId) || [];
+      const next = new Map(prev);
 
+      // 1. Tạo một Set chứa ID của tất cả tin nhắn hiện tại để chống trùng lặp
+      const currentIds = new Set(
+        currentMessages
+          .map(m => m.id)
+          .filter((id): id is number => id !== undefined)
+      );
+
+      // 2. Lọc bỏ các tin nhắn cũ từ API nếu nó đã vô tình tồn tại trong danh sách hiện tại
+      const uniqueOlderMessages = olderMessages.filter(
+        msg => msg.id === undefined || !currentIds.has(msg.id)
+      );
+
+      // 3. Gộp: Tin cũ đã lọc trùng đứng đầu + Toàn bộ tin hiện tại (giữ nguyên các tin đang stream / abort ở cuối)
+      next.set(convId, [...uniqueOlderMessages, ...currentMessages]);
+      return next;
+    });
+  }, []);
   const appendMessage = useCallback((convId: number, message: Message) => {
     setConvMessagesMap(prev => {
       const next = new Map(prev);
@@ -99,7 +122,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       currentConversation, setCurrentConversation,
       groupConversations, setGroupConversations,
       convMessagesMap, initConvMessages, appendMessage,
-      streamMap, setStreamState, clearStreamState,
+      streamMap, setStreamState, clearStreamState, prependConvMessages,
       abortMapRef,
     }}>
       {children}

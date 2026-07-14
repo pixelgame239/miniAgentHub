@@ -4,7 +4,7 @@ import styles from "../styles/settings.module.css";
 import { useNavigate } from "react-router";
 import { useAuth } from "../hooks/authHook";
 import UpdatePasswordModal from "../component/UpdatePasswordModal";
-import { changePassword } from "../api/authApi";
+import { changePassword, logout } from "../api/authApi";
 import { useTranslation } from "react-i18next";
 import { deleteAllConversations } from "../api/conversationApi";
 import { deleteAccount, updateAddress, updatePhoneNumber } from "../api/userApi";
@@ -21,6 +21,12 @@ const SettingsPage: React.FC = () => {
   const [language, setLanguage] = useState(localStorage.getItem("app-lang")||"vi");
   const [openPasswordModal, setOpenPasswordModal] = useState(false);
   const [passwordError, setPasswordError] = useState(""); 
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const languageOptions = [
+  { value: "en", label: "English" },
+  { value: "vi", label: "Tiếng Việt" }
+];
+  const currentLanguageLabel = languageOptions.find(opt => opt.value === language)?.label || language;
   
   const [editableField, setEditableField] = useState<EditableField | null>(null);
   const [editableValue, setEditableValue] = useState("");
@@ -46,9 +52,9 @@ const SettingsPage: React.FC = () => {
     setLanguage(lang);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async() => {
+    await logout(); // Gọi API logout để xóa refresh token ở server
     setUser(null);
-    localStorage.removeItem("APIKey"); 
     nav("/");
   };
 
@@ -178,8 +184,7 @@ const SettingsPage: React.FC = () => {
       if (dialogType === "delete-account") {
         const { data, error } = await deleteAccount();
         if (data) {
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("APIKey");
+          await handleLogout(); // Đăng xuất sau khi xóa tài khoản
           setUser(null);
           nav("/");
         }
@@ -269,18 +274,48 @@ const SettingsPage: React.FC = () => {
               <h3 className={styles["panel-title"]}>{t("settings.language")}</h3>
               <p className={styles["panel-description"]}>{t("settings.languageDescription")}</p>
             </div>
+            <div className={styles["custom-select-container"]}>
+                {/* Nút bấm kích hoạt dropdown */}
+                <button
+                  type="button"
+                  className={`${styles["custom-select-trigger"]} ${isDropdownOpen ? styles["open"] : ""}`}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  <span>{currentLanguageLabel}</span>
+                  <ChevronDownIcon/>
+                </button>
 
-            <label className={styles["select-wrap"]}>
-              <select
-                className={styles["select"]}
-                value={language}
-                onChange={(e) => changeLanguage(e.target.value)}
-              >
-                <option>en</option>
-                <option>vi</option>
-              </select>
-              <ChevronDownIcon />
-            </label>
+                {/* Menu lựa chọn hiển thị khi open */}
+                {isDropdownOpen && (
+                  <>
+                    {/* Lớp phủ backdrop lờ mờ ẩn phía sau để khi click ra ngoài tự động đóng dropdown */}
+                    <div 
+                      className={styles["custom-select-overlay"]} 
+                      onClick={() => setIsDropdownOpen(false)} 
+                    />
+                    
+                    <ul className={styles["custom-select-menu"]}>
+                      {languageOptions.map((option) => (
+                        <li
+                          key={option.value}
+                          className={`${styles["custom-select-option"]} ${
+                            language === option.value ? styles["selected"] : ""
+                          }`}
+                          onClick={() => {
+                            changeLanguage(option.value);
+                            setIsDropdownOpen(false);
+                          }}
+                        >
+                          {option.label}
+                          {language === option.value && (
+                            <span className={styles["selected-indicator"]}>✓</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
           </div>
         </div>
       </section>
@@ -327,7 +362,7 @@ const SettingsPage: React.FC = () => {
             title={t("settings.signOut")}
             description={t("settings.logoutDescription")}
             actionLabel={t("settings.signOut")}
-            onAction={() => handleLogout()}
+            onAction={async () => await handleLogout()}
           />
         </div>
       </section>
@@ -374,7 +409,7 @@ const SettingsPage: React.FC = () => {
               <button 
                 className={styles["dialog-save-btn"]} 
                 onClick={handleSaveField} 
-                disabled={savingField || !!fieldError} // Vô hiệu hóa nút Lưu nếu đang tải hoặc đang có lỗi validate
+                disabled={savingField || !!fieldError || !editableValue.trim()} // Vô hiệu hóa nút Lưu nếu đang tải hoặc đang có lỗi validate
               >
                 {savingField ? "Saving..." : t("settings.update")}
               </button>
@@ -527,7 +562,7 @@ function SunIcon() {
 
 function ChevronDownIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={styles["custom-select-arrow"]}>
       <path d="m6 9 6 6 6-6" />
     </svg>
   );

@@ -4,7 +4,7 @@ import styles from "../styles/chat.module.css";
 import { useRouteLoaderData } from "react-router";
 import type { AIModels } from "../loader/aiLoader";
 import { useChat } from "../hooks/chatHook";
-import { createConversation } from "../api/conversationApi";
+import { createConversation, getConversationDetail } from "../api/conversationApi";
 import type { Group } from "../loader/groupLoader";
 import { useTranslation } from "react-i18next";
 import { useSSEStream } from "../hooks/streamHook";
@@ -18,6 +18,8 @@ import { SettingsIcon } from "./GroupsPage";
 import ApiKeyModal from "../component/ApiKeyModal";
 import StreamingBubble from "../component/StreamingBubble";
 import { ChatActionButtons } from "../component/ChatActionButtons";
+import SuccessLinkShared from "../component/SuccessLinkShared";
+import ReusableDialog from "../component/ReusableDialogProps";
 
   const formatInline = (text: string) =>
     text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
@@ -33,12 +35,12 @@ const ChatPage = () => {
   const {
     currentConversation, setCurrentConversation,
     groupConversations, setGroupConversations,
-    convMessagesMap, initConvMessages, appendMessage,
+    convMessagesMap, initConvMessages, appendMessage, prependConvMessages,
   } = useChat();
 
   // Định nghĩa mảng providers cố định kèm danh sách model chính xác
     const providers = [
-    { id: "flowise", name: "Flowise", icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/flowise.png", models: ["flowise-default", "flowise-custom"] },
+    { id: "flowise", name: "Flowise", icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/flowise.png", models: ["flowise"] },
     { id: "openRouter", name: "OpenRouter", icon: "https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/openrouter-icon.png", models: ["poolside/laguna-m.1:free", "google/gemma-4-26b-a4b-it:free"] },
     { id: "groq", name: "Groq", icon: "https://images.seeklogo.com/logo-png/60/1/groq-icon-logo-png_seeklogo-605779.png", models: ["llama-3.3-70b-versatile", "openai/gpt-oss-120b"] },
   ];
@@ -57,8 +59,17 @@ const ChatPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatMessages = activeConvId ? (convMessagesMap.get(activeConvId) ?? []) : [];
+  console.log("RENDER LẠI UI - Số lượng tin nhắn hiện tại:", chatMessages.length);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [activeProvider, setActiveProvider] = useState<string | null>("flowise");
+  const [shareSuccess, setShareSuccess] = useState(false);
+  const [shareLink, setShareLink] = useState<string>("");
+  const chatMessagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const [chatPage, setChatPage] = useState(0);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [isLoadingOldMessages, setIsLoadingOldMessages] = useState(false);
+  const isInitialLoadRef = useRef(true);
+  const isFetchingRef = useRef(false);
   useEffect(() => {
       setSelectedModel({ id: providers[0].models[0] });
   },[]);
@@ -99,6 +110,9 @@ const ChatPage = () => {
       // setSelectedModel({ id: currentConversation.AIModel });
       setActiveConvId(currentConversation.id);
       initConvMessages(currentConversation.id, currentConversation.messages ?? []);
+      setChatPage(0);
+      setHasMoreMessages(currentConversation.totalPages !== undefined && currentConversation.totalPages > 1);
+      isInitialLoadRef.current = true;
     } else {
       setActiveConvId(undefined);
     }
@@ -107,10 +121,86 @@ const ChatPage = () => {
   useEffect(() => {
     return () => setCurrentConversation(null);
   }, []);
+  useEffect(() => {
+    const container = chatMessagesContainerRef.current;
+    if (!container) return;
+
+    if (isInitialLoadRef.current && chatMessages.length > 0) {
+      // Lần đầu tải cuộc trò chuyện: scroll thẳng xuống đáy ngay lập tức
+      container.scrollTop = container.scrollHeight;
+      isInitialLoadRef.current = false;
+    } else if (!isFetchingRef.current) {
+      // Chỉ tự động scroll xuống đáy khi không phải hoạt động tải tin nhắn cũ
+      // Sử dụng API scrollTo trực tiếp trên container để mượt mà hơn trên mọi trình duyệt
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth"
+      });
+    }
+  }, [chatMessages, liveText]);
+  // ---- XỬ LÝ SỰ KIỆN CUỘN LÊN ĐỂ TẢI TIN NHẮN CŨ (Đã tối ưu cho totalPages) ----
+  const chatMessagesRef = useRef(chatMessages);
+  const chatPageRef = useRef(chatPage);
+
+  // Luôn đồng bộ mảng tin nhắn và số trang hiện tại vào Refs
+  useEffect(() => {
+    chatMessagesRef.current = chatMessages;
+  }, [chatMessages]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages, liveText]);
+    chatPageRef.current = chatPage;
+  }, [chatPage]);
+// ---- XỬ LÝ SỰ KIỆN CUỘN LÊN ĐỂ TẢI TIN NHẮN CŨ (An toàn cho Stream & Abort) ----
+  const handleChatScroll = async () => {
+    const container = chatMessagesContainerRef.current;
+    if (!container || isLoadingOldMessages || !hasMoreMessages || !activeConvId) return;
+
+    if (container.scrollTop <= 15) {
+      setIsLoadingOldMessages(true);
+      isFetchingRef.current = true; // Khóa auto scroll-down
+
+      const nextChatPage = chatPage + 1; // Sử dụng state chatPage bình thường
+      const previousScrollHeight = container.scrollHeight;
+      const previousScrollTop = container.scrollTop;
+
+      const { data, error } = await getConversationDetail(activeConvId, nextChatPage);
+
+      if (error) {
+        console.error("Failed to load older messages:", error);
+        setIsLoadingOldMessages(false);
+        isFetchingRef.current = false;
+        return;
+      }
+
+      const oldMessages = data?.messages || [];
+      const totalPages = data?.totalPages || 1;
+
+      if (oldMessages.length > 0) {
+        // GỌI HÀM CHUYÊN BIỆT: Chèn tin nhắn cũ lên đầu một cách an toàn, tự lọc trùng lặp
+        prependConvMessages(activeConvId, oldMessages);
+        
+        setChatPage(nextChatPage);
+
+        if (nextChatPage >= totalPages - 1) {
+          setHasMoreMessages(false);
+        }
+        
+        // Neo giữ vị trí cuộn tránh giật màn hình
+        requestAnimationFrame(() => {
+          const newScrollHeight = container.scrollHeight;
+          container.scrollTop = (newScrollHeight - previousScrollHeight) + previousScrollTop;
+          
+          setTimeout(() => {
+            isFetchingRef.current = false;
+          }, 100);
+        });
+      } else {
+        setHasMoreMessages(false);
+        isFetchingRef.current = false;
+      }
+      setIsLoadingOldMessages(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -131,52 +221,12 @@ const ChatPage = () => {
   const handleShareMessage = async(messageId: number) =>{
       const { data, error } = await shareMessage(messageId);
       if (data) {
-        showInfo(t("common.success") + ":" + window.location.origin + data);
+        setShareLink(window.location.origin + data);
+        setShareSuccess(true);
       } else if (error) {
       showError(t("common.failed"));
       }
     }
-    
-//   async function optimizeBase64Image(base64Str: string, maxEdge: number = 1024, quality: number = 0.75): Promise<string> {
-//     return new Promise((resolve, reject) => {
-//         const img = new Image();
-//         img.src = base64Str;
-
-//         img.onload = () => {
-//             let width = img.width;
-//             let height = img.height;
-
-//             if (width > height) {
-//                 if (width > maxEdge) {
-//                     height = Math.round((height * maxEdge) / width);
-//                     width = maxEdge;
-//                 }
-//             } else {
-//                 if (height > maxEdge) {
-//                     width = Math.round((width * maxEdge) / height);
-//                     height = maxEdge;
-//                 }
-//             }
-
-//             const canvas = document.createElement('canvas');
-//             canvas.width = width;
-//             canvas.height = height;
-
-//             const ctx = canvas.getContext('2d');
-//             if (!ctx) {
-//                 return reject(new Error('Failed to acquire a 2D Canvas Context pipeline.'));
-//             }
-
-//             ctx.drawImage(img, 0, 0, width, height);
-
-//             const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-//             resolve(compressedBase64);
-//         };
-
-//         img.onerror = (error) => reject(error);
-//     });
-// }
-
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -256,22 +306,14 @@ const ChatPage = () => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
   const handleSendClick = useCallback(async () => {
     await sendMessage();
     const textarea = document.querySelector(`.${styles.chatInput}`) as HTMLTextAreaElement;
     if (textarea) textarea.style.height = "auto";
   }, [sendMessage]);
 
-  // 2. Tính toán sẵn biến boolean, không truyền cả string inputText vào nút bấm
   const canSend = inputText.trim().length > 0;
 
-// ChatPage.tsx
     const formatMessageText = useCallback((text: string) => {
       return formatInline(text);
     }, []);
@@ -284,14 +326,6 @@ const ChatPage = () => {
       dateStyle: "medium", timeStyle: "short",
     }).format(ts);
   };
-
-  // SVG icons
-  const ThumbsUpIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/>
-      <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
-    </svg>
-  );
   
   const ExportIcon = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -328,17 +362,6 @@ const ChatPage = () => {
       <line x1="18" y1="6" x2="6" y2="18"/>
       <line x1="6" y1="6" x2="18" y2="18"/>
     </svg>
-  );
-
-  const AIAvatar = () => (
-    <div className={styles.aiAvatar}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <circle cx="8.5" cy="8.5" r="1.5"/>
-        <circle cx="15.5" cy="8.5" r="1.5"/>
-        <path d="M9 15a3 3 0 0 0 6 0"/>
-      </svg>
-    </div>
   );
   return (
     <div className={styles.chatPage}>
@@ -421,10 +444,15 @@ const ChatPage = () => {
       </header>
 
       {/* Messages */}
-      <div className={styles.chatMessages}>
+      <div className={styles.chatMessages} ref={chatMessagesContainerRef} onScroll={handleChatScroll}>
+        {isLoadingOldMessages && (
+          <div style={{ textAlign: 'center', padding: '10px', fontSize: '13px', color: '#888' }}>
+            {t("common.loading")}
+          </div>
+        )}
         {chatMessages.map((msg, index) => (
           <div
-            key={index}
+            key={msg.id ? `msg-${msg.id}` : `idx-${index}`}
             className={`${styles.messageRow} ${msg.type === "prompt" ? styles.userRow : styles.modelRow}`}
           >
             {/* {msg.type !== "prompt" && <AIAvatar />} */}
@@ -456,7 +484,7 @@ const ChatPage = () => {
                         style={{ display: "flex", alignItems: "center", gap: "6px", textDecoration: "none", color: "inherit" }}
                       >
                         <span>📎</span> 
-                        <span style={{ textDecoration: "underline" }}>{msg.fileName || "Xem file đính kèm"}</span>
+                        <span style={{ textDecoration: "underline" }}>{msg.fileName}</span>
                       </a>
                     )}
                   </div>
@@ -479,7 +507,7 @@ const ChatPage = () => {
                   <span className={styles.modelMetaTime}>
                     {msg.createdAt ? formatMessageTime(msg.createdAt) : ""}
                   </span>
-                  {!msg.isCompleted && <span className={styles.modelMetaDot}>{t("chat.abortChat")}</span>}
+                  {!msg.isCompleted && <span className={styles.abortChatStatus}>{t("chat.abortChat")}</span>}
                   <div className={styles.modelActions}>
                     <button className={styles.actionBtn} title={t("common.copy")} onClick={() => navigator.clipboard?.writeText(msg.content)}><CopyIcon /></button>
                     <button className={styles.actionBtn} title={t("common.share")} onClick={async() => await handleShareMessage(msg.id as number)}><ShareIcon /></button>
@@ -491,23 +519,6 @@ const ChatPage = () => {
           </div>
         ))}
         {streaming && (
-          // <div className={`${styles.messageRow} ${styles.modelRow}`}>
-          //   {/* <AIAvatar /> */}
-          //   <div className={styles.messageBubbleWrapper}>
-          //       <div className={`${styles.messageBubble} ${liveText.trim() === "" ? styles.loadingBubble : ""}`}>
-          //         <div className={styles.messageText}> {/* Class này đã có pre-wrap */}
-          //         {liveText.trim() !== "" 
-          //           ? formatMessageText(liveText)
-          //           : <div className={styles.typingIndicator}>
-          //             <span></span>
-          //             <span></span>
-          //             <span></span>
-          //           </div>
-          //         }
-          //       </div>
-          //     </div>
-          //   </div>
-          // </div>
           <StreamingBubble streaming={streaming} liveText={liveText} formatMessageText={formatMessageText} />
         )}
         <div ref={messagesEndRef} />
@@ -575,18 +586,6 @@ const ChatPage = () => {
             // Thêm mẹo nhỏ này để textarea render mượt mà ngay từ dòng đầu tiên
             style={{ height: "auto" }} 
           />
-
-          {/* {streaming
-            ? <button className={styles.sendBtn} onClick={() => abort()}><StopIcon /></button>
-            : <button className={styles.sendBtn} 
-            onClick={async () => {
-              await sendMessage();
-              // Sau khi click gửi, tìm thẻ textarea và ép chiều cao nó về ban đầu
-              const textarea = document.querySelector(`.${styles.chatInput}`) as HTMLTextAreaElement;
-              if (textarea) textarea.style.height = "auto";
-            }}
-            disabled={!inputText.trim()}><SendIcon /></button>
-          } */}
         <ChatActionButtons 
           streaming={streaming}
           onAbort={abort}        // Hàm abort từ hook của bạn đã tối ưu useCallback
@@ -606,6 +605,28 @@ const ChatPage = () => {
         onClose={() => setIsApiKeyModalOpen(false)}
         provider={providers.find(p => p.models.includes(targetConfigModel || ""))?.id || "flowise"}
       />
+      <ReusableDialog
+        open={shareSuccess}
+        title={t("chat.shareMessageTitle")}
+        onClose={() => setShareSuccess(false)}
+        footer={
+          <button 
+            style={{
+              padding: "0.5rem 1rem",
+              borderRadius: "8px",
+              border: "1px solid var(--border)",
+              background: "var(--bg-subtle)",
+              color: "var(--text-primary)",
+              cursor: "pointer"
+            }}
+            onClick={() => setShareSuccess(false)}
+          >
+            {t("common.close") || "Đóng"}
+          </button>
+        }
+      >
+        <SuccessLinkShared linkToCopy={shareLink} />
+      </ReusableDialog>
     </div>
   );
 };

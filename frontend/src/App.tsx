@@ -1,7 +1,11 @@
 import { Outlet } from 'react-router';
 import "./i18n";
+import Toast from './component/Toast';
+import { useNotificationPopup } from './context/NotificationPopupContext';
+import NotificationPopup from './component/NotificationPopup';
 
 function App() {
+  const { toast, closeToast, popup, closePopup } = useNotificationPopup();
   return (
     <div style={{
       // backgroundColor: '#0b0f14', // Nên đổi thành màu nền tối trùng với var(--bg-primary) của bạn
@@ -14,6 +18,18 @@ function App() {
     }}>
       {/* Bỏ thẻ <main> ở đây đi vì trong Layout.tsx của bạn đã có thẻ <main> rồi */}
       <Outlet />
+      <Toast 
+        isOpen={toast.isOpen} 
+        message={toast.message} 
+        type={toast.type} 
+        onClose={closeToast} 
+      />
+      <NotificationPopup 
+        isOpen={popup.isOpen}
+        message={popup.message}
+        type={popup.type}
+        onClose={closePopup} 
+      />
     </div>
   );
 }

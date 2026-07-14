@@ -58,7 +58,7 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
   const handleRemoveUser = async (userId: number) => {
       const previousMembers = [...members];
       setMembers(members.filter((u) => u.id !== userId));
-      const { data, error, status } = await removeUser(group.id, userId);
+      const { data, error } = await removeUser(group.id, userId);
       if(error){
         setMembers(previousMembers); // Rollback UI change
         showError(t("common.failed"));

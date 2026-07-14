@@ -207,7 +207,7 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
             <button type="button" className={styles["secondary-btn"]} onClick={onClose}>
               {t("common.cancel")}
             </button>
-            <button type="submit" className={styles["primary-btn"]}>
+            <button type="submit" className={styles["primary-btn"]} disabled={Object.keys(errors).length > 0 || !currentPassword.trim() || !newPassword.trim() || newPassword.length < 6 || !confirmPassword.trim() || confirmPassword.length < 6 || newPassword !== confirmPassword}>
               {t("password.updatePassword")}
             </button>
           </div>

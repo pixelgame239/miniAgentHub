@@ -35,31 +35,51 @@ type ChangePasswordData ={
     currentPassword?: string,
     newPassword: string
 }
-const loginRequest = client.createRequest<{response: LoginResponse, payload: LoginRequest}>()(
+const loginRequest = client.createRequest<{response: UserData, payload: LoginRequest}>()(
     {
         method:"POST",
-        endpoint: "/auth/login"
+        endpoint: "/auth/login",
+        options: {
+            credentials: "include"
+        }
     }
 )
 const registerRequest = client.createRequest<{response: RegisterResponse, payload: RegisterRequest}>()(
     {
         method: "POST",
         endpoint: "/auth/register",
-        auth: true
+        options: {
+            credentials: "include"
+        }
     }
 )
 const meRequest= client.createRequest<{response:UserData}>()(
     {
         method:"GET",
         endpoint: "/auth/me",
-        auth:true
+        options: {
+            credentials: "include"
+        },
+        disableRequestInterceptors: true,
+        disableResponseInterceptors: true
     }
 )
 const changePasswordRequest = client.createRequest<{payload: ChangePasswordData}>()(
     {
         method: "PATCH",
         endpoint: "/auth/changePassword",
-        auth:true
+        options: {
+            credentials: "include"
+        }
+    }
+)
+const logoutRequest = client.createRequest<{}>()(
+    {
+        method: "POST",
+        endpoint: "/auth/logout",
+        options: {
+            credentials: "include"
+        }
     }
 )
 export const login = async(formData: LoginRequest)=>{
@@ -73,4 +93,7 @@ export const getMe = async()=>{
 }
 export const changePassword = async(formData: ChangePasswordData)=>{
     return await changePasswordRequest.send({payload: formData});
+}
+export const logout = async()=>{
+    return await logoutRequest.send();
 }

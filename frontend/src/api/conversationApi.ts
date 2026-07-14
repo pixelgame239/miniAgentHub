@@ -1,53 +1,65 @@
 import type { Conversation } from "../context/ChatContext";
 import { client } from "./apiClient";
 
-const getConversationsRequest = client.createRequest<{response:Conversation[]}>()(
+const getConversationsRequest = client.createRequest<{response:Conversation[], queryParams: {page: number}}>()(
     {
         method:"GET",
         endpoint: "/conversations/",
-        auth:true
+        options: {
+            credentials: "include"
+        }
     }
 )
-const getCOnversationDetailRequest = client.createRequest<{response:Conversation, params: {convId: number}}>()(
+const getCOnversationDetailRequest = client.createRequest<{response:Conversation, params: {convId: number}, queryParams: {page: number}}>()(
     {
         method: "GET",
         endpoint: "/conversations/detail/:convId",
-        auth: true
+        options: {
+            credentials: "include"
+        }
     }
 )
 const createConversationRequest = client.createRequest<{payload:{title:string}}>()(
     {
         method:"POST",
         endpoint: "/conversations/create",
-        auth:true
+        options: {
+            credentials: "include"
+        }
     }
 )
 const deleteConversationRequest = client.createRequest<{params: {convId: number}}>()(
     {
         method:"DELETE",
         endpoint: "/conversations/delete/:convId",
-        auth:true
+        options: {
+            credentials: "include"
+        }
     }
 );
 const deleteAllConversationsRequest = client.createRequest<{}>()(
     {
         method:"DELETE",
         endpoint: "/conversations/deleteAll",
-        auth:true
+        options: {
+            credentials: "include"
+        }
     }
 )
 const updateConversationTitleRequest = client.createRequest<{params: {convId: number}, payload:{title: string}}>()(
     {
         method:"PUT",
         endpoint: "/conversations/updateTitle/:convId",
-        auth:true
+        options: {
+            credentials: "include"
+        }
     }
 )
-export const getConversations = async()=>{
-    return await getConversationsRequest.send();
+export const getConversations = async(currentPage: number)=>{
+    return await getConversationsRequest.send({queryParams: {page: currentPage}});
 }
-export const getConversationDetail= async(convId: number)=>{
-    return await getCOnversationDetailRequest.send({params:{convId}});
+export const getConversationDetail= async(convId: number, page: number)=>{
+    return await getCOnversationDetailRequest.send({params:{convId}, queryParams: {page}});
 }
 export const createConversation = async(title:string)=>{
     return await createConversationRequest.send({payload:{title}});

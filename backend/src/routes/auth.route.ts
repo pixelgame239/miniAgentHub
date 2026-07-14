@@ -1,5 +1,5 @@
 import express, { Router } from 'express';
-import { register, login, getMe, changePassword, refreshAccessToken } from '../controller/auth.controller';
+import { register, login, getMe, changePassword, refreshAccessToken, logout } from '../controller/auth.controller';
 import { jwtVerify } from '../middleware/jwt.middleware';
 import { checkPermission } from '../utils/checkPermission';
 
@@ -8,6 +8,7 @@ const authRouter: Router = express.Router();
 authRouter.post('/login', login);
 authRouter.post("/refresh", refreshAccessToken);
 authRouter.use(jwtVerify);
+authRouter.post("/logout", logout);
 authRouter.post('/register', checkPermission("USER_C"), register);
 authRouter.get('/me', getMe);
 authRouter.patch('/changePassword', changePassword);

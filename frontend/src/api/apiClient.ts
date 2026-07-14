@@ -4,6 +4,7 @@ import { createClient } from "@hyper-fetch/core";
 export type GlobalErrorType = {
   message: string;
   status: number;
+  errorCode?: string;
 };
 const apiURL = import.meta.env.VITE_API_URL;
 export const client = createClient<{ error: GlobalErrorType }>({ 
@@ -17,16 +18,20 @@ export const client = createClient<{ error: GlobalErrorType }>({
     const isRefreshRequest =
       request.endpoint.includes("/auth/refresh");
 
-    if (error.status === 401 && !isLoginRequest && !isRefreshRequest && error.data.errorCode === "TOKEN_EXPIRED") {
+    if (error.status === 401 && !isLoginRequest && !isRefreshRequest && error.error&& error.error.errorCode === "TOKEN_EXPIRED") {
       try{
+        console.log("Expired token detected. Attempting to refresh...");
         const refreshRequest = client.createRequest<{}>()(
           {
                 method:"POST",
                 endpoint: "/auth/refresh",
-                auth: true
+                options:{
+                  credentials: "include"
+                }
             }
         )
         await refreshRequest.send();
+        console.log("Token refreshed successfully. Retrying the original request...");
         return await request.send(); // Retry the original request after refreshing the token
         } catch (refreshError) {
             console.error("Error refreshing token:", refreshError);
@@ -34,6 +39,7 @@ export const client = createClient<{ error: GlobalErrorType }>({
         }
     }
     if (error.status === 401 && !isLoginRequest) {
+      console.log("Unauthorized access detected. Redirecting to login...");
       window.location.href = "/";
     }
     // You can return the error to propagate it or return null to 'swallow' it

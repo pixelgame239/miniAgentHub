@@ -31,22 +31,56 @@ export const streamPrompt = async (
   handlers: SSEHandlers,
   signal: AbortSignal
 ): Promise<void> => {
-  const response = await fetch(`${apiURL}/messages/sendPrompt`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-    signal: signal,
-  });
+  let response: Response;
 
+  try {
+    response = await fetch(`${apiURL}/messages/sendPrompt`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+      signal: signal,
+      credentials: "include",
+    });
+  } catch (err: any) {
+    // Nếu là lỗi Abort do người dùng hủy request, ném ra ngoài luôn
+    throw err; 
+  }
+
+  // --- ĐOẠN KIỂM TRA HẾT HẠN TOKEN NẰM Ở ĐÂY ---
   if (!response.ok) {
     const errorObj = new Error(`Request failed with status ${response.status}`) as any;
     errorObj.status = response.status; 
+    
     try {
       const errBody = await response.json();
       if (errBody.message) errorObj.message = errBody.message;
-    } catch {}
+      
+      // Kiểm tra nếu Backend báo lỗi hết hạn token (TOKEN_EXPIRED)
+      if (errBody.errorCode === "TOKEN_EXPIRED" || response.status === 401) {
+        console.log("Access token expired. Attempting to refresh...");
+        
+        // Gọi API refresh token (Trình duyệt tự đính kèm cookie Refresh Token)
+        const refreshResponse = await fetch(`${apiURL}/auth/refreshAccessToken`, {
+          method: "POST",
+          credentials: "include",
+        });
+
+        if (refreshResponse.ok) {
+          console.log("Token refreshed successfully. Retrying the original request...");
+          // Đệ quy gọi lại chính hàm này để thực hiện lại request ban đầu
+          return await streamPrompt(data, handlers, signal);
+        } else {
+          console.error("Refresh token expired or invalid. Redirection to login needed.");
+          throw new Error("SESSION_EXPIRED");
+        }
+      }
+    } catch (e: any) {
+      // Nếu lỗi văng ra từ việc refresh token, ném lỗi đó ra ngoài
+      if (e.message === "SESSION_EXPIRED") throw e;
+    }
+    
     throw errorObj; 
   }
 
@@ -57,12 +91,9 @@ export const streamPrompt = async (
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  // let accumulated = "";
-  let isAnalysisChannel = false;
 
   try {
     while (true) {
-      // Nếu signal đã bị hủy trước loạt read tiếp theo, tự chủ động break/throw
       if (signal.aborted) {
         throw new DOMException("The user aborted a request.", "AbortError");
       }
@@ -75,7 +106,7 @@ export const streamPrompt = async (
       buffer = lines.pop() ?? "";
 
       for (const line of lines) {
-        if(signal.aborted) {
+        if (signal.aborted) {
           throw new DOMException("The user aborted a request.", "AbortError");
         }
         const trimmed = line.trim();
@@ -84,75 +115,25 @@ export const streamPrompt = async (
         const payload = trimmed.replace(/^data:\s?/, "");
         if (payload === "") continue;
 
-        try{
+        try {
           const parsedPayload = JSON.parse(payload);
-          // Xử lý báo lỗi từ server nếu có
           if (parsedPayload.error) {
             const customError = new Error(parsedPayload.message || "Stream error") as any;
             handlers.onError?.(customError);
             return;
           }
 
-          // Trích xuất ID và nội dung chữ từ chunk chuẩn hoá mới từ Backend gửi về
           const resId = parsedPayload.responseId;
           const token = parsedPayload.choices?.[0]?.delta?.content || "";
 
           if (token) {
-            // accumulated += token;
-            // // 🌟 Liên tục bắn ngược ID và text tích luỹ ra Hook xử lý
-            // handlers.onChunk(accumulated, resId); 
             handlers.onChunk(token, resId);
           }
-          // if (payload === "[DONE]") {
-          //   console.log("[FRONTEND API] Nhận tín hiệu kết thúc chính thức [DONE]. Giải phóng luồng.");
-          //   handlers.onDone({ 
-          //     fullText: accumulated, 
-          //     responseId: parsedPayload?.responseId, // 🔥 Tận dụng dữ liệu ID đã parse được từ block trước nếu có
-          //     completed: true 
-          //   });
-          //   return; 
-          // }
-          // if(parsedPayload&&parsedPayload.error){
-          //   const customError = new Error(parsedPayload.message || "Stream error") as any;
-          //   customError.status = parsedPayload.status || 500;
-          //   if(parsedPayload.responseId) {
-          //     handlers.onError?.(customError, { fullText: accumulated, responseId: parsedPayload.responseId, completed: false });
-          //   } else {
-          //     handlers.onError?.(customError, undefined);
-          //   }
-          //   return;
-          // }
-          // if(parsedPayload&&parsedPayload.streamFinished){
-          //   handlers.onDone({ fullText: accumulated, responseId: parsedPayload.responseId, completed: parsedPayload.completed });
-          //   return;
-          // }
-          // const delta = parsedPayload.choices?.[0]?.delta;
-          // if (delta) {
-          //   // Kiểm tra xem token này thuộc kênh nào
-          //   if (delta.channel === "analysis" || delta.reasoning !== undefined) {
-          //     isAnalysisChannel = true;
-          //   } else if (delta.content !== undefined || (delta.channel && delta.channel !== "analysis")) {
-          //     isAnalysisChannel = false;
-          //   }
-          // }
-          // let token = "";
-          // if (!isAnalysisChannel) {
-          //   if (delta && typeof delta.content === "string") {
-          //     token = delta.content;
-          //   } else if (parsedPayload.event === "token" && typeof parsedPayload.data === "string") {
-          //     token = parsedPayload.data; // Định dạng Flowise
-          //   }
-          // }
-          // if (token) {
-          //   accumulated += token;
-          //   handlers.onChunk(accumulated);
-          // }
-        }catch{}
+        } catch {}
       }
     }
     handlers.onDone();
   } catch (err: any) {
-    // Nếu là lỗi hủy, ném ra ngoài cho hook useSSEStream xử lý, TUYỆT ĐỐI không gọi handlers.onDone
     throw err;
   } finally {
     reader.releaseLock();
