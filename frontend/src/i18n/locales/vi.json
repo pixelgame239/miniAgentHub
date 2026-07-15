@@ -23,7 +23,8 @@
     "noAPIKey": "Groq API Key không hợp lệ. Vui lòng truy cập cài đặt để cập nhật API Key của bạn.",
     "shared": "Chia sẻ",
     "backToLogin": "Quay lại đăng nhập",
-    "close": "Đóng"
+    "close": "Đóng",
+    "confirm": "Xác nhận"
   },
   "export":{
     "title": "Xuất cuộc hội thoại",
@@ -187,7 +188,9 @@
     "groupRequired": "Ít nhất một nhóm phải được chọn cho người dùng.",
     "emailRequired": "Email là bắt buộc",
     "fullNameRequired": "Họ tên là bắt buộc",
-    "resetPassword": "Đặt lại mật khẩu"
+    "resetPassword": "Đặt lại mật khẩu",
+    "resendEmailTitle": "Gửi lại email xác thực",
+    "resendEmailConfirmation": "Bạn có chắc chắn muốn gửi lại email xác thực cho"
   },
 
   "password": {

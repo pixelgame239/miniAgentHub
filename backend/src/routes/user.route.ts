@@ -1,5 +1,5 @@
 import express, { Router } from 'express';
-import { deleteAccount, deleteUser, fetchAllUsers, findUsers, getGroupUsers, updateAIConfig, updateAddress, updatePhoneNumber, updateUser } from '../controller/user.controller';
+import { deleteAccount, deleteUser, fetchAllUsers, findUsers, getGroupUsers, resendVerificationEmail, updateAIConfig, updateAddress, updatePhoneNumber, updateUser } from '../controller/user.controller';
 import { checkPermission } from '../utils/checkPermission';
 
 export const userRouter: Router = express.Router();
@@ -14,3 +14,4 @@ userRouter.get("/find", checkPermission("USER_R"), checkPermission("GROUP_ADD_US
 userRouter.get("/:groupId", checkPermission("USER_R"), getGroupUsers);
 userRouter.put("/updateUser/:userId" , checkPermission("USER_U"), updateUser)
 userRouter.delete("/deleteUser/:userId", checkPermission("USER_D"), deleteUser);
+userRouter.post("/resendVerificationEmail", checkPermission("USER_R"), resendVerificationEmail);

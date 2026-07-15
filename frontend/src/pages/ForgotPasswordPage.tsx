@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
 import styles from "../styles/login.module.css"; // Dùng chung file CSS để đồng bộ giao diện
+import { sendResetPasswordMagicLink } from "../api/authApi";
 
 const ForgotPasswordPage = () => {
   const nav = useNavigate();
@@ -14,6 +15,7 @@ const ForgotPasswordPage = () => {
   const [emailError, setEmailError] = useState("");
   const [isTouched, setIsTouched] = useState(false);
   const [loading, setLoading] = useState(false);
+  const appLang = localStorage.getItem("app-lang") || "en";
 
   const validateEmailFormat = (val: string) => {
     return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/.test(val);
@@ -54,16 +56,22 @@ const ForgotPasswordPage = () => {
     setLoading(true);
     try {
       // Giả lập kết quả gọi API khôi phục mật khẩu
-      const isSuccess = false; 
-
-      if (isSuccess) {
+      const { data, error } = await sendResetPasswordMagicLink(email, appLang);
+      if (error) {
+        if(error.status!==500){
+          showError(error.message);
+        }
+        else{
+          showError(t("login.emailSentFailed"));
+        }
+        console.error(error);
+        return;
+      }else{
         // 1. Kích hoạt thông báo thành công (Popup nằm ở file App.tsx/Layout cha sẽ nhận diện được)
         showToast(t("login.emailSentSuccess"), "success"); 
         
         // 2. Chuyển hướng trực tiếp về trang login mà không cần qua bước trung gian
         nav("/");
-      } else {
-        showError(t("login.emailSentFailed")); 
       }
     } catch (err) {
       showError(t("login.emailSentFailed"));

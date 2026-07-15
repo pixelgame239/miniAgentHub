@@ -55,17 +55,7 @@ export class GroupService{
             permissions: response.permissions
         };
     }
-    // public async getUserGroups(id:number){
-    //     return await prisma.group.findMany({
-    //             where: {
-    //                 users: {
-    //                     some: {
-    //                         id: id
-    //                     }
-    //                 }
-    //             }
-    //         });
-    // }
+
     public async addUserToGroup(groupId:number, userIds:number[], isAdmin:boolean){
         const isAdminGroup = await this.checkIfModifyAdminGroup(groupId);
         if(isAdminGroup){

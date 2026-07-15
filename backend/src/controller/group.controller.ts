@@ -14,17 +14,6 @@ export const fetchAllGroups = async(req: Request, res: Response, next: NextFunct
         next(error);
     }
 }
-// export const fetchUserGroups = async(req:Request, res:Response, next: NextFunction)=>{
-//     try{
-//         if(req.user){
-//             const groups = await groupService.getUserGroups(req.user.id);
-//             res.status(200).json(groups);
-//         }
-//         throw new MyError("Unauthorized", 401);
-//     }catch(error){
-//         next(error);
-//     }
-// }
 export const createNewGroup = async(req:Request, res:Response, next: NextFunction)=>{
     try{
         if(req.user){

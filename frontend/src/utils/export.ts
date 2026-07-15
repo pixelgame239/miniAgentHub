@@ -25,7 +25,7 @@ async function imageUrlToSharedBuffer(url: string): Promise<ArrayBuffer | null> 
     const blob = await response.blob();
     return await blob.arrayBuffer();
   } catch (error) {
-    console.error("Lỗi lấy ArrayBuffer cho ảnh:", error);
+    console.error("Cannot retrieve ArrayBuffer for image:", error);
     return null;
   }
 }
@@ -42,7 +42,7 @@ async function imageUrlToBase64(url: string): Promise<string | null> {
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.error("Lỗi chuyển đổi Base64 cho ảnh:", error);
+    console.error("Cannot convert image to Base64:", error);
     return null;
   }
 }

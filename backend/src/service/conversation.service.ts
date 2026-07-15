@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import { MyError } from "../utils/MyError";
+import fs from "fs";
 
 export class ConversationService {
     public async getConversations(id: number, page: number){
@@ -53,10 +54,12 @@ export class ConversationService {
         const response = await prisma.conversation.findFirst({where:{id: convId, userId:userId}});
         if(!response) throw new MyError("Forbidden",403);
         const deleteRes = await prisma.conversation.delete({where:{id: convId}});
+        await fs.promises.rm(`./files/${userId}/${convId}`, { recursive: true, force: true });
         return deleteRes;
     }   
     public async deleteAllConversations(userId:number){
         const response = await prisma.conversation.deleteMany({where:{userId: userId}});
+        await fs.promises.rm(`./files/${userId}`, { recursive: true, force: true });
         return response;
     }
     public async updateConversationTitle(userId: number, convId: number, title: string){

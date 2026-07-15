@@ -2,8 +2,9 @@ import { prisma } from "../../lib/prisma";
 import { redisClient } from "../../server";
 import type { LoginRequest, RegisterRequest } from "../dto/auth.dto";
 import { EmailService } from "../email/emailService";
+import { checkAdmin } from "../utils/checkPermission";
 import { MyError } from "../utils/MyError";
-import { createRandomPassword } from "../utils/passwordGenerator";
+import { createRandomMagicLink, createRandomPassword } from "../utils/passwordGenerator";
 import { comparePassword, hashPassword } from "../utils/passwordHashing";
 import { generateAccessToken, generateRefreshToken } from "../utils/tokenGenerator";
 import { GroupService } from "./group.service";
@@ -14,20 +15,12 @@ export class AuthService{
     public async authRegister(userData: any, lang: string = "en"){
         const existingUser = await prisma.user.findUnique({where:{email:userData.email}});
         if(existingUser){
-            throw new MyError("Email existed", 403);
+            throw new MyError("Email existed", 409);
         }
         //Map through all group IDs and check if any of them is the admin group
 
         const randomPassword = createRandomPassword();
         const hashedPassword = await hashPassword(randomPassword);
-        try {
-                await EmailService.sendSMTPEmail(userData.email, userData.fullname, randomPassword, lang);
-                console.log(`Email sent to ${userData.email}`);
-            } catch (error) {
-                console.error(`Failed to send email to ${userData.email}:`, error);
-                // Ngăn không cho đăng ký tiếp nếu lỗi gửi mail (Tuỳ bạn quyết định)
-                throw new MyError("Cannot send email", 500);
-            }
         const newUser = await prisma.user.create({
             data:{
                 email: userData.email,
@@ -49,6 +42,14 @@ export class AuthService{
                 active:true
             }
         });
+        try{
+            await EmailService.sendSMTPEmail(userData.email, userData.fullname, randomPassword, lang);
+            console.log(`Email sent to ${userData.email}`);
+        } catch (error) {
+            console.error(`Failed to send email to ${userData.email}:`, error);
+            // Ngăn không cho đăng ký tiếp nếu lỗi gửi mail (Tuỳ bạn quyết định)
+            throw new MyError("Cannot send email", 500);
+        }
         return {
             message: "Registered successfully, check the link below for the password",
             userData: newUser,
@@ -171,5 +172,45 @@ export class AuthService{
         }
         await redisClient.del(`refreshToken:${refreshToken}`);
         return { message: "Logged out successfully"};
+    }
+        public async sendResetPasswordMagicLink(email: string, lang: string = "en") {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) {
+            return { message: "If the email exists, a reset password email has been sent" };
+        }
+        if(await redisClient.get(`resetPassword:${email}`)){
+            throw new MyError(lang==="vi"? "Một email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư đến hoặc đợi 5 phút trước khi yêu cầu lại." : "A reset password email has already been sent. Please check your inbox or wait for 5 minutes before requesting again.", 429);
+        }
+        const randomMagicLinkToken = createRandomMagicLink();
+        await redisClient.set(`resetPassword:${email}`, randomMagicLinkToken, {'EX': 300});
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const resetPasswordLink = `${frontendUrl}/resetPassword?token=${randomMagicLinkToken}&email=${encodeURIComponent(email)}`;
+        await EmailService.sendResetPasswordEmail(email, resetPasswordLink, lang);
+        return { message: "Reset password email sent" };
+    }
+    public async verifyResetPasswordToken(email: string, token: string) {
+        const storedToken = await redisClient.get(`resetPassword:${email}`);
+        if (storedToken === token) {
+            return true;
+        } else {
+            console.error(`[Token Verification] Invalid or expired token for email: ${email}`);
+            return false;
+        }
+    }
+    public async resetPassword(email: string, token: string, newPassword: string) {
+        const isTokenValid = await this.verifyResetPasswordToken(email, token);
+        if (!isTokenValid) {
+            throw new MyError("Invalid or expired token", 400);
+        }
+        if (newPassword.length < 6) {
+            throw new MyError("New password cannot be less than 6 characters", 400);
+        }
+        const hashedPassword = await hashPassword(newPassword);
+        await prisma.user.update({
+            where: { email },
+            data: { userPassword: hashedPassword }
+        });
+        await redisClient.del(`resetPassword:${email}`);
+        return { message: "Password has been reset successfully" };
     }
 }

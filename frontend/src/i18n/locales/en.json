@@ -23,7 +23,8 @@
     "noAPIKey": "Groq API Key is invalid. Please visit settings to update your API Key.",
     "shared": "Shared",
     "backToLogin": "Back to Login",
-    "close": "Close"
+    "close": "Close",
+    "confirm": "Confirm"
   },
   "export":{
     "title": "Export Conversation",
@@ -185,7 +186,9 @@
     "groupRequired": "At least one group must be selected for the user.",
     "emailRequired": "Email is required",
     "fullNameRequired": "Full name is required",
-    "resetPassword": "Reset Password"
+    "resetPassword": "Reset Password",
+    "resendEmailTitle": "Resend Email Confirmation",
+    "resendEmailConfirmation": "Are you sure you want to resend the email confirmation to"
   },
 
   "password": {

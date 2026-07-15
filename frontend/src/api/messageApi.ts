@@ -129,7 +129,9 @@ export const streamPrompt = async (
           if (token) {
             handlers.onChunk(token, resId);
           }
-        } catch {}
+        } catch {
+          throw new Error("Failed to parse SSE payload: " + payload);
+        }
       }
     }
     handlers.onDone();

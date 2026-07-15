@@ -6,9 +6,10 @@ import crypto from "crypto";
 import fs from "fs";
 import { extractFileContent } from "../utils/fileExtractor";
 import { MyError } from "../utils/MyError";
+import { decrypt } from "../utils/APIHash";
+import { FLOWISE_RECOGNITION, OPENROUTER_RECOGNITION } from "../utils/generalKey";
 
 const aiService = new AIService();
-
 
 export class MessageService {
   private readonly SKIP_EVENTS = new Set([
@@ -37,7 +38,6 @@ export class MessageService {
       return typeof parsed.data === "string" ? parsed.data : "";
     }
 
-    // Bỏ qua tất cả các event khác (nextAgentFlow, agentFlowExecutedData, metadata, end...)
     return "";
   }
 
@@ -60,7 +60,6 @@ export class MessageService {
       this.activeControllers.get(convId)?.abort();
       this.activeControllers.delete(convId);
     }
-
     // Tạo mới và lưu vào Map toàn cục của Service
     const axiosController = new AbortController();
     this.activeControllers.set(convId, axiosController);
@@ -70,26 +69,23 @@ export class MessageService {
     let currentFileContent: string | null = null; // Variable to hold the extracted file content
     const primaryFile = files && files.length > 0 ? files[0] : null;    
     let APIKey: string|null = null;
-    let APIUrl: string|null = null;
-    if(model.startsWith("flowise")){
-      let APIInformation;
-      if(model.includes("custom")){
-        APIInformation = await prisma.user.findUnique({
+    let APIUrl;
+    if(model.startsWith(FLOWISE_RECOGNITION)){
+      const APIInformation = await prisma.user.findUnique({
           where: { id: userId },
           select: { FlowiseAPIKey: true, FlowiseURL: true }
         });
-        if(!APIInformation?.FlowiseAPIKey || !APIInformation?.FlowiseURL){
-          throw new MyError("Flowise API key or URL not found",400);
+        if(!APIInformation?.FlowiseURL){
+          throw new MyError("Flowise API URL not found",400);
         }
-      }
-      APIKey = APIInformation?.FlowiseAPIKey || "";
-      APIUrl = APIInformation?.FlowiseURL || "";
-    } else if(model.includes("free")){
+      APIKey = decrypt(APIInformation?.FlowiseAPIKey || "");
+      APIUrl = decrypt(APIInformation?.FlowiseURL || "");
+    } else if(model.includes(OPENROUTER_RECOGNITION)){
       const APIInformation = await prisma.user.findUnique({
         where: { id: userId },
         select: { OpenRouterAPIKey: true }
       });
-      APIKey = APIInformation?.OpenRouterAPIKey || "";
+      APIKey = decrypt(APIInformation?.OpenRouterAPIKey || "");
       if(!APIKey) {
         throw new MyError("OpenRouter API key not found", 400);
       }
@@ -98,7 +94,7 @@ export class MessageService {
         where: { id: userId },
         select: { GroqAPIKey: true }
       });
-      APIKey = APIInformation?.GroqAPIKey || "";
+      APIKey = decrypt(APIInformation?.GroqAPIKey || "");
       if(!APIKey) {
         throw new MyError("Groq API key not found", 400);
       }
@@ -125,12 +121,9 @@ export class MessageService {
           console.error("File Extraction Error:", error);
           throw new MyError(`Failed to extract content from file`, 500);
         }
-      
-
         const randomSuffix = crypto.randomBytes(3).toString("hex"); // 6 ký tự ngẫu nhiên
         const uniqueFileName = `${primaryFile.fileName}-${randomSuffix}${fileExt}`;
-
-        const dirPath = path.join(process.cwd(), "files", convId.toString());
+        const dirPath = path.join(process.cwd(), "files", userId.toString(), convId.toString());
         const filePath = path.join(dirPath, uniqueFileName);
 
         if (!fs.existsSync(dirPath)) {
@@ -145,7 +138,7 @@ export class MessageService {
         dbFileType = primaryFile.mimeType;
       }
     }
-    await prisma.message.create({
+    const newMessage = await prisma.message.create({
       data: { 
         content, 
         conversationId: convId, 
@@ -158,20 +151,23 @@ export class MessageService {
       },
     });
     let stream;
-    if(model.startsWith("flowise")){
+    if(model.startsWith(FLOWISE_RECOGNITION)){
       const finalContent = currentFileContent ? `${content}\n\n[Attached File Data]:\n<file_content>\n${currentFileContent}\n</file_content>` : content;
+      if(!APIUrl || APIUrl.trim() === "") {
+        throw new MyError("Flowise API URL is required", 400);
+      }
       stream = await aiService.promptToFlowise(finalContent, APIKey, APIUrl, convId, axiosController.signal);
     }
     else {
       const previousContext = await prisma.message.findMany({
-        where: { conversationId: convId },
-        orderBy: { createdAt: "asc" },
+        where: { conversationId: convId, id: { not: newMessage.id } },
+        orderBy: { createdAt: "desc" },
         select: { content: true, type: true, fileContent: true },
-        take: 10 
+        take: 10
       });
       //Add the previous context to the current content, formatting it as needed <fileContent> xml to indicate the content of the file, and also indicate whether the message is from the user or the AI
 // 1. Format the chat history (Each message keeps its own file if it has one)
-      const contextText = previousContext
+      const contextText = previousContext.reverse()
         .map(msg => {
           const sender = msg.type === "prompt" ? "User" : "AI";
           
@@ -203,11 +199,7 @@ export class MessageService {
       // 4. Send to your AI Provider
       stream = await aiService.promptToAIProvider(finalPrompt, model, APIKey, axiosController.signal);
     }
-//     if (files && files.length > 0) {
-//     for (const file of files) {
-//         await aiService.upsertFile(convId.toString(), file);
-//     }
-// }
+
     const placeholderAiMessage = await prisma.message.create({
       data: {
         content: "", 
@@ -231,8 +223,6 @@ export class MessageService {
       isStreamFinished = true;
       this.activeControllers.delete(convId);
       const savedText = cleanAccumulatedContent.trim();
-      // Phân tích text thu thập được để lấy content sạch và analysis text
-      // const { content: cleanContent } = this.extractTextFromRawText(fullResponse);
       if(!savedText) {
         if (!res.writableEnded) {
           res.end();
@@ -251,53 +241,26 @@ export class MessageService {
             type: "response",
             AIModel: model,
             isCompleted: finalCompletedStatus
-            // Bạn có thể thêm trường `analysisText: cleanAnalysis` vào prisma schema nếu muốn lưu
           },
         });
 
-        // Đẩy dòng dữ liệu JSON cuối cùng báo hiệu kết thúc chứa ID thật về Frontend 🌟
-        // if (!res.writableEnded) {
-        //   res.write(`data: ${JSON.stringify({ 
-        //     streamFinished: true, 
-        //     responseId: savedAiMessage.id,
-        //     completed: finalCompletedStatus
-        //   })}\n\n`);
-        // }
       } catch (err) {
-        console.error("[🔴 DB ERROR] Ghi nhận phản hồi thất bại:", err);
+        console.error("[DB ERROR] Saved to Database failed:", err);
       }
 
       if (!res.writableEnded) {
         res.end();
       }
     };
-    // const saveAIResponse = async (completed: boolean) => {
-    //   if (!fullResponse.trim()) return;
-    //   try {
-    //     await prisma.message.create({
-    //       data: {
-    //         content: fullResponse,
-    //         conversationId: convId,
-    //         type: "response",
-    //         AIModel: model,
-    //         isCompleted: completed 
-    //       },
-    //     });
-    //     console.log(`[🟢 DB SAVED] Model: ${model} | Completed: ${completed} | Length: ${fullResponse.length} chars`);
-    //   } catch (err) {
-    //     console.error("[🔴 DB ERROR] Ghi nhận phản hồi thất bại:", err);
-    //   }
-    // };
-
     const cleanup = async () => {
       if (isStreamFinished) {
         wasAbortedByUser = true;
-        console.log(`[⚠️ ABORT IGNORED] Client gửi tín hiệu đóng kết nối nhưng luồng của ${model} ĐÃ KẾT THÚC trước đó.`);
+        console.log(`[ABORT IGNORED] Client sent abort signal for ${model} which has already finished.`);
         return; 
       }
       wasAbortedByUser = true;
-      console.log(`[🚨 ABORT DETECTED] ===== USER BẤM ABORT THÀNH CÔNG =====`);
-      console.log(`[🚨 ABORT DETECTED] Thời gian: ${new Date().toISOString()} | Model đang chạy: ${model}`);
+      console.log(`[ABORT DETECTED] ===== Abortion successful =====`);
+      console.log(`[ABORT DETECTED] Time: ${new Date().toISOString()} | Model: ${model}`);
       
       // Gỡ bỏ ngay lập tức listener để tránh rò rỉ bộ nhớ
       res.removeListener("close", cleanup);   
@@ -316,7 +279,7 @@ export class MessageService {
         this.activeControllers.delete(convId);
       }
       // Hủy request Axios 
-      console.log(`[🚨 ABORT ACTION] Đang gửi lệnh hủy request tới Axios Provider...`);
+      console.log(`[ABORT ACTION] Sending abort request to Axios Provider...`);
       axiosController.abort();
       await handleFinalizeAndSendId(false);
     };
@@ -329,9 +292,6 @@ export class MessageService {
         if (isStreamFinished || axiosController.signal.aborted || res.writableEnded) {
           return;
         }
-        // res.write(chunk);
-        // console.log(chunk.toString("utf-8"));
-        // buffer += chunk.toString("utf8");
         streamBuffer+=chunk.toString("utf-8");
         const lines = streamBuffer.split("\n");
         streamBuffer = lines.pop() ?? "";
@@ -360,7 +320,6 @@ export class MessageService {
               if (textToken) {
                 const cleanToken = textToken.replace(/\r/g, "").replace(/\u0000/g, "");
                 cleanAccumulatedContent += cleanToken;
-                // cleanAccumulatedContent += textToken.replace(/\r/g, "").replace(/\u0000/g, "");
                 if (!res.writableEnded) {
                   res.write(`data: ${JSON.stringify({
                     choices: [{ delta: { content: cleanToken } }],
@@ -373,105 +332,21 @@ export class MessageService {
             // chunk cắt dòng nửa vời bị lỗi JSON parse tại vòng lặp này sẽ được gom lại và xử lý chính xác ở chunk tiếp theo
           }
         }
-        // if (chunkCount % 10 === 0 || chunkCount === 1) {
-        //   console.log(`[📶 STREAMING DATA] Model: ${model} | Chunk #${chunkCount}`);
-        // }
-        
-        // let isAnalysisChannel = false;
-
-        // for (const line of lines) {
-        //   // Bẻ gãy vòng lặp đồng bộ NGAY LẬP TỨC nếu client bấm hủy hoặc res đóng
-        //   if (isStreamFinished || axiosController.signal.aborted || res.writableEnded) {
-        //     console.log(`[🛑 LOOP BREAKER] Vòng lặp từ chunk #${chunkCount} bị chặn đứng ngay lập tức do đã Abort!`);
-        //     break; 
-        //   }
-
-        //   if (!line.match(/^\s*data:/)) continue;
-
-        //   const jsonStr = line.replace(/^\s*data:\s*/, "").trim();
-        //   if (!jsonStr) continue;
-
-        //   // XỬ LÝ TÍN HIỆU [DONE] THÔ TRƯỚC VÌ NÓ KHÔNG PHẢI JSON
-        //   if (jsonStr === "[DONE]") {
-        //     if (isAnalysisChannel) {
-        //       console.log(`[⚠️ FALSE DONE BLOCKED] Phát hiện tín hiệu [DONE] giả từ ${model} khi đang ở channel: analysis.`);
-        //       continue; 
-        //     }
-        //     console.log(`[🏁 PROVIDER DONE] Nhận được tín hiệu [DONE] chính thức từ ${model}`);
-        //     continue;
-        //   }
-
-        //   // CHỈ DÙNG 1 KHỐI TRY-CATCH DUY NHẤT CHO JSON DƯỚI ĐÂY
-        //   try {
-        //     const parsed = JSON.parse(jsonStr);
-        //     // 1. Kiểm tra lỗi Flowise integration
-        //     if (parsed.event === "error" || parsed.status === "error") {
-        //       console.error(`[🚨 FLOWISE ERROR DETECTED]: ${jsonStr}`);
-        //       res.write(`data: ${JSON.stringify({ error: true, status: 400, message: parsed.data || "Flowise Integration Error" })}\n\n`);
-        //       res.end();
-        //       return; 
-        //     }
-
-        //     // 2. Bỏ qua các sự kiện end/bổ trợ của Flowise
-        //     if (parsed.event === "end" || parsed.event === "agentFlowEvent") continue;
-
-        //     // 3. Thẩm định kênh truyền (analysis vs content)
-        //     const delta = parsed.choices?.[0]?.delta;
-        //     if (delta) {
-        //       if (delta.channel === "analysis") {
-        //         isAnalysisChannel = true;
-        //       } else if (delta.content !== undefined || (delta.channel && delta.channel !== "analysis")) {
-        //         isAnalysisChannel = false;
-        //       }
-        //     }
-
-        //     // 4. Bóc tách chữ và viết xuống stream
-        //     const text = this.extractText(parsed);
-        //     if (!text) continue;
-
-        //     const normalized = text.replace(/\r/g, "").replace(/\u0000/g, "");
-            
-        //     // Re-check abort ngay trước khi ghi
-        //     if (isStreamFinished || axiosController.signal.aborted || res.writableEnded) break;
-
-        //     fullResponse += normalized;
-
-        //     if (normalized !== "") {
-        //       res.write(`data: ${normalized}\n\n`);
-        //     }
-        //   } catch (err) {
-        //     // Trường hợp dòng không parse được (text thô hoặc format lạ) nhưng không phải lỗi hệ thống
-        //   }
-        // }
       });
 
       stream.on("end", async () => {
-        console.log(`[🔚 STREAM END] Sự kiện stream.on("end") kích hoạt cho model ${model}`);
-        // if (!isStreamFinished) {
-        //   isStreamFinished = true; 
+        console.log(`[STREAM END] Stream end triggered for model ${model}`);
           res.removeListener("close", cleanup); 
           this.activeControllers.delete(convId);
-          // await saveAIResponse(true); 
           await handleFinalizeAndSendId(true);
-          // if (!res.writableEnded) {
-          //   res.write("data: [DONE]\n\n");
-          //   res.end();
-          // }
-        // }
         resolve();
       });
 
       stream.on("error", async (err: any) => {
-        console.log(`[💥 STREAM ERROR] Xuất hiện lỗi luồng từ model ${model}: ${err.message}`);
-        // if (!isStreamFinished) {
-        //   isStreamFinished = true;
-        //   cleanup();
-        // }
+        console.log(`[STREAM ERROR] Error occured in ${model}: ${err.message}`);
         res.removeListener("close", cleanup);
-        // this.activeControllers.delete(convId);
-
         if (err.name !== 'CanceledError' && err.message !== 'canceled' && err.code !== 'ERR_CANCELED') {
-          console.error("[🔴 REAL ERROR]", err);
+          console.error("[REAL ERROR]", err);
           if (!res.writableEnded) {
             res.write(`data: [ERROR] ${err.message}\n\n`);
             res.end();

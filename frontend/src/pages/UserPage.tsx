@@ -6,11 +6,12 @@ import { register } from "../api/authApi";
 import type { User } from "../loader/userLoader";
 import { useLoaderData, useNavigate } from "react-router";
 import type { Group } from "../loader/groupLoader";
-import { deleteUser, updateUser } from "../api/userApi";
+import { deleteUser, resendVerificationEmail, updateUser } from "../api/userApi";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/authHook";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
 import { SettingsIcon, TrashIcon } from "./GroupsPage";
+import ResendEmailConfirmDialog from "../component/ResendEmailConfirmDialog";
 
 const KeyIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -30,6 +31,9 @@ const UserPage = () => {
   const { user } = useAuth();
   const { showInfo, showError, showToast } = useNotificationPopup();
   const [submitting, setSubmitting] = useState(false);
+  const [resendEmailUser, setResendEmailUser] = useState<User | null>(null);
+  const [resendDialogOpen, setResendDialogOpen] = useState(false);
+  const [resendSubmitting, setResendSubmitting] = useState(false);
   const nav = useNavigate();
   useEffect(()=>{
     document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "dark");
@@ -67,10 +71,27 @@ const UserPage = () => {
     setDeleteDialogOpen(false);
     setDeletedUser(null);
   };
+  const handleResendEmail = async () => {
+    if (!resendEmailUser) return;
+    
+    // Đóng dialog trước
+    setResendSubmitting(true);
+    const { data, error } = await resendVerificationEmail(resendEmailUser.id, resendEmailUser.email, resendEmailUser.fullname, localStorage.getItem("app-lang") || "vi");
+    if (data) {
+      showToast(t("common.success"), "success");
+    }
+    if (error) {
+      showError(t("common.failed"+":"+error.message));
+      console.error(error);
+    }
+    setResendSubmitting(false);
+    setResendDialogOpen(false);
+    setResendEmailUser(null);
+  };
   const handleFormSubmit = async (formData: {
     email: string;
     fullname: string;
-    groups: number[];
+    groups: Group[];
   }) => {
     setSubmitting(true);
     if (dialogMode === "create") {
@@ -201,11 +222,14 @@ const UserPage = () => {
                 {/* Ô hành động gán class riêng cho mobile */}
                 <td className={`${styles.actionsCol} ${styles.mobileActions}`}>
                   <div className={styles.actions}>
-                    {user?.permissions?.includes("USER_U") && (
+                    {user?.groups?.find((g) => g.groupName === "ADMIN") && !sing.active && (
                       <button
                         className={`${styles.actionBtn} ${styles.resetPwdBtn}`}
                         title={t("users.resetPassword")}
-                        onClick={() => showInfo(t("users.sendEmail"))}
+                        onClick={() => {
+                          setResendEmailUser(sing);
+                          setResendDialogOpen(true);
+                        }}
                       >
                         <KeyIcon />
                       </button>
@@ -243,7 +267,7 @@ const UserPage = () => {
               ? {
                   fullname: editingUser.fullname,
                   email: editingUser.email,
-                  groups: editingUser.groups.map((g) => g.id),
+                  groups: editingUser.groups,
                 }
               : undefined
           }
@@ -302,6 +326,19 @@ const UserPage = () => {
           </div>
         </div>
       )}
+      <ResendEmailConfirmDialog
+        isOpen={resendDialogOpen}
+        user={resendEmailUser}
+        submitting={resendSubmitting} // <-- Truyền state vào đây
+        onClose={() => {
+          // Chỉ cho phép đóng dialog thủ công khi không trong quá trình gửi
+          if (!resendSubmitting) {
+            setResendDialogOpen(false);
+            setResendEmailUser(null);
+          }
+        }}
+        onConfirm={handleResendEmail}
+      />
     </div>
   );
 };

@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 interface UserFormData {
   email: string;
   fullname: string;
-  groups: number[]; 
+  groups: Group[]; 
 }
 
 interface UserFormDialogProps {
@@ -34,7 +34,7 @@ const UserFormDialog = ({
     email: "",
     groups: [],
   });
-  const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Group[]>([]);
 
   // States quản lý lỗi tại dòng input
   const [errors, setErrors] = useState<{
@@ -63,7 +63,7 @@ const UserFormDialog = ({
       setSelectedGroupIds(initialData.groups || []);
     } else {
       // Tìm nhóm USER mặc định, nếu không có thì lấy phần tử đầu tiên trong mảng groups
-      const defaultGroup = groups.find((g) => g.groupName === "USER")?.id || groups[0]?.id;
+      const defaultGroup = groups.find((g) => g.groupName === "USER")|| groups[0];
       if (defaultGroup) {
         setForm({ fullname: "", email: "", groups: [defaultGroup] });
         setSelectedGroupIds([defaultGroup]);
@@ -108,10 +108,17 @@ const UserFormDialog = ({
 
   const handleGroupSelect = (groupId: number) => {
     if (mode === "create") {
-      setForm((prev) => ({ ...prev, groups: [groupId] }));
+      //find group with groupId
+      const group = groups.find((g) => g.id === groupId);
+      if (group) {
+        setForm((prev) => ({ ...prev, groups: [group] }));
+      }
     } else {
+      //update selectedGroupIds
       setSelectedGroupIds((prev) =>
-        prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]
+        prev.some((single) => single.id === groupId)
+          ? prev.filter((single) => single.id !== groupId)
+          : [...prev, groups.find((g) => g.id === groupId)!]
       );
     }
   };
@@ -201,7 +208,7 @@ const UserFormDialog = ({
             </label>
             {mode === "create" ? (
               <select
-                value={form.groups[0] || ""}
+                value={form.groups[0]?.id || ""}
                 onChange={(e) => handleGroupSelect(Number(e.target.value))}
                 style={errors.groups ? { borderColor: warningColor } : {}}
                 className={`${styles["group-select"]} ${errors.groups ? styles["input-error"] : ""}`}
@@ -220,12 +227,12 @@ const UserFormDialog = ({
               >
                 <div className={styles["selected-tags"]}>
                   {selectedGroupIds.map((groupId) => (
-                    <span key={groupId} className={styles["tag"]}>
-                      {getGroupName(groupId)}
+                    <span key={groupId.id} className={styles["tag"]}>
+                      {getGroupName(groupId.id)}
                       <button
                         type="button"
                         className={styles["tag-remove"]}
-                        onClick={() => handleGroupSelect(groupId)}
+                        onClick={() => handleGroupSelect(groupId.id)}
                       >
                         ×
                       </button>
@@ -243,7 +250,7 @@ const UserFormDialog = ({
                   >
                     <option value="">...</option>
                     {groups
-                      .filter((g) => !selectedGroupIds.includes(g.id))
+                      .filter((g) => !selectedGroupIds.some((selected) => selected.id === g.id))
                       .map((g) => (
                         <option key={g.id} value={g.id}>
                           {g.groupName}

@@ -1,3 +1,4 @@
+import type { Group } from "../loader/groupLoader"
 import type { User } from "../loader/userLoader"
 import { client } from "./apiClient"
 
@@ -12,7 +13,7 @@ type LoginResponse ={
 type RegisterRequest = {
     email: string,
     fullname: string,
-    groups: number[],
+    groups: Group[],
     lang: string
 }
 type RegisterResponse = {
@@ -82,6 +83,24 @@ const logoutRequest = client.createRequest<{}>()(
         }
     }
 )
+const sendResetPasswordMagicLinkRequest = client.createRequest<{payload: {email: string, lang: string}}>()(
+    {
+        method: "POST",
+        endpoint: "/auth/sendResetMagicLink",
+    }
+)
+const verifyResetPasswordTokenRequest = client.createRequest<{payload: {email: string, token: string}}>()(
+    {
+        method: "POST",
+        endpoint: "/auth/verifyResetMagicLink",
+    }
+)
+const resetPasswordRequest = client.createRequest<{payload: {email: string, token: string, newPassword: string}}>()(
+    {
+        method: "PUT",
+        endpoint: "/auth/resetPassword",
+    }
+)
 export const login = async(formData: LoginRequest)=>{
     return await loginRequest.send({payload: formData });
 }
@@ -96,4 +115,13 @@ export const changePassword = async(formData: ChangePasswordData)=>{
 }
 export const logout = async()=>{
     return await logoutRequest.send();
+}
+export const sendResetPasswordMagicLink = async(email: string, lang: string)=>{
+    return await sendResetPasswordMagicLinkRequest.send({payload: {email, lang}});
+}
+export const verifyResetPasswordToken = async(email: string, token: string)=>{
+    return await verifyResetPasswordTokenRequest.send({payload: {email, token}});
+}
+export const resetPassword = async(email: string, token: string, newPassword: string)=>{
+    return await resetPasswordRequest.send({payload: {email, token, newPassword}});
 }

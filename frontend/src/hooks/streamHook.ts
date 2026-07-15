@@ -86,7 +86,7 @@ export const useSSEStream = (conversationId: number | undefined) => {
       clearStreamState(convId);
       abortMapRef.current.delete(convId);
       if (isAbort) {
-        console.log("[FRONTEND] Tín hiệu abort đã được phát ra, bỏ qua onError cuối cùng.");
+        console.log("[FRONTEND] Abort signal detected, stream canceled by user.");
           if (cachedText && cachedText.trim()&& cachedResponseId) {
             appendMessage(convId, {
               id: cachedResponseId,
@@ -115,13 +115,13 @@ export const useSSEStream = (conversationId: number | undefined) => {
     currentIdRef.current = conversationId;
   }, [conversationId]);
   const abort = useCallback(() => {
-    console.log("[FRONTEND] Kích hoạt abort() từ Hook useSSEStream.", Date.now());
+    console.log("[FRONTEND] Activate abort signal", Date.now());
     const activeId = currentIdRef.current;
     if (activeId === undefined) return;
     clearStreamState(activeId);    
     const controller = abortMapRef.current.get(activeId);
     if (controller) {
-      console.log("[FRONTEND] Kích hoạt phát tín hiệu controller.abort() thành công.");
+      console.log("[FRONTEND] Activate abort signal on controller", Date.now());
       controller.abort();
       abortMapRef.current.delete(activeId);
     }

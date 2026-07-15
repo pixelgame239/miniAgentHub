@@ -59,7 +59,6 @@ const ChatPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatMessages = activeConvId ? (convMessagesMap.get(activeConvId) ?? []) : [];
-  console.log("RENDER LẠI UI - Số lượng tin nhắn hiện tại:", chatMessages.length);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [activeProvider, setActiveProvider] = useState<string | null>("flowise");
   const [shareSuccess, setShareSuccess] = useState(false);

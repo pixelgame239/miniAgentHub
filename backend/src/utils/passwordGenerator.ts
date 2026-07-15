@@ -11,5 +11,8 @@ const generateRandomPassword = (length: number): string => {
 const createRandomPassword = (): string => {
   return generateRandomPassword(6);
 };
+const createRandomMagicLink = (): string => {
+  return generateRandomPassword(32);
+}
 
-export { createRandomPassword };
+export { createRandomPassword, createRandomMagicLink };

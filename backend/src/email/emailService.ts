@@ -105,4 +105,28 @@ export class EmailService {
             throw new MyError("Cannot send email", 500);
         }
     }
+    public static async sendResetPasswordEmail(email: string, resetLink: string, lang: string = "en"): Promise<void> {
+        try {
+            const rootDir = process.cwd(); 
+            const templatePath = path.join(rootDir, 'src', 'email', `resetPasswordTemplate${lang === "vi" ? "Vi" : ""}.html`);
+            let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+            
+            htmlContent = htmlContent
+                .replace(/{{resetLink}}/g, resetLink);
+
+            const mailOptions = {
+                from: `MiniAgentHub`, 
+                to: email,                                           
+                subject: `${lang=== "vi" ? "Yêu cầu đặt lại mật khẩu" : "Password Reset Request"}`,    
+                html: htmlContent,                                    
+            };
+
+            const info = await transporter.sendMail(mailOptions);
+            console.log(`[SMTP] Reset password email sent to ${email}. Message ID: ${info.messageId}`);
+            
+        } catch (error) {
+            console.error(`[SMTP Error] Error sending reset password email to ${email}:`, error);
+            throw new MyError("Cannot send reset password email", 500);
+        }
+    }
 }

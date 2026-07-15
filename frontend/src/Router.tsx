@@ -12,6 +12,7 @@ import { groupLoader, layoutLoader } from "./loader/groupLoader";
 import SharedChatPage from "./pages/SharedChatPage";
 import { sharedLoader } from "./loader/sharedLoader";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 export const router = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ export const router = createBrowserRouter([
       {
         element: <ForgotPasswordPage />,
         path: "forgotPassword"
+      },
+      {
+        element: <ResetPasswordPage />,
+        path: "resetPassword" 
       },
       {
         element: <SharedChatPage />,

@@ -1,9 +1,10 @@
+import type { Group } from "../loader/groupLoader";
 import type { User } from "../loader/userLoader";
 import { client } from "./apiClient";   
 
 type UpdateRequestType = {
     fullname: string,
-    groups: number[]
+    groups: Group[]
 }
 const getUserRequest = client.createRequest<{response:User[]}>()(
     {
@@ -70,6 +71,13 @@ const updateUserAIConfigRequest = client.createRequest<{payload: {FlowiseAPIKey?
         credentials: "include"
     }
 });
+const resendVerificationEmailRequest = client.createRequest<{payload: {userId: number, email: string, fullname: string, lang: string}}>()({
+    endpoint: "/users/resendVerificationEmail",
+    method:"POST",
+    options: {
+        credentials: "include"
+    }
+});
 export const getUsers = async()=>{
     return await getUserRequest.send();
 } 
@@ -96,4 +104,7 @@ export const updatePhoneNumber = async(phoneNumber:string, userId:any)=>{
 }
 export const updateUserAIConfig = async(aiConfig: {FlowiseAPIKey?: string, FlowiseURL?: string, GroqAPIKey?: string, OpenRouterAPIKey?: string}, userId:any)=>{
     return await updateUserAIConfigRequest.send({payload: aiConfig, params: {userId}});
+}
+export const resendVerificationEmail = async(userId:number, email:string, fullname:string, lang:string)=>{
+    return await resendVerificationEmailRequest.send({payload: {userId, email, fullname, lang}});
 }
