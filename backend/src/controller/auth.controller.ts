@@ -3,6 +3,7 @@ import { AuthService } from '../service/auth.service';
 import type { LoginRequest, RegisterRequest } from '../dto/auth.dto';
 import { generateAccessToken } from '../utils/tokenGenerator';
 import { checkAdmin } from '../utils/checkPermission';
+import { INTERNAL_SERVER_ERROR, UNAUTHORIZED_ERROR } from '../utils/generalKey';
 
 const authService = new AuthService();
 
@@ -59,7 +60,7 @@ export const getMe = async(req:Request, res: Response, next:NextFunction) =>{
   if(req.user){
     res.status(200).json(req.user);
   } else{
-    res.status(401).json({ message: "Unauthorized"});
+    res.status(401).json({ message: UNAUTHORIZED_ERROR });
   }
 }
 export const changePassword = async(req:Request, res: Response, next:NextFunction)=>{
@@ -94,7 +95,7 @@ export const changePassword = async(req:Request, res: Response, next:NextFunctio
           }
         }
       } else{
-        res.status(500).json({message: "Unexpected Error"});
+        res.status(500).json({message: INTERNAL_SERVER_ERROR});
       }
     }
   }catch(error){

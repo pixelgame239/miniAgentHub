@@ -3,6 +3,7 @@ import { redisClient } from "../../server";
 import type { LoginRequest, RegisterRequest } from "../dto/auth.dto";
 import { EmailService } from "../email/emailService";
 import { checkAdmin } from "../utils/checkPermission";
+import { NOT_FOUND_ERROR } from "../utils/generalKey";
 import { MyError } from "../utils/MyError";
 import { createRandomMagicLink, createRandomPassword } from "../utils/passwordGenerator";
 import { comparePassword, hashPassword } from "../utils/passwordHashing";
@@ -27,7 +28,7 @@ export class AuthService{
                 fullname: userData.fullname,
                 userPassword: hashedPassword,
                 groups:{
-                    connect: userData.groups.map((id:number)=>({id}))
+                    connect: userData.groups.map((group: { id: number }) => ({ id: group.id }))
                 }
             }, select: {
                 id: true,
@@ -106,7 +107,7 @@ export class AuthService{
     public async authChangePassword(formData:any){
         const currentUser = await prisma.user.findUnique({where: {id:formData.id}});
         if(!currentUser){
-            throw new MyError("Not found", 404);
+            throw new MyError(NOT_FOUND_ERROR, 404);
         }
         if(formData.currentPassword){
             const comparedPassword = await comparePassword(formData.currentPassword, currentUser.userPassword);
@@ -212,5 +213,38 @@ export class AuthService{
         });
         await redisClient.del(`resetPassword:${email}`);
         return { message: "Password has been reset successfully" };
+    }
+    public async getUserMetadata(userId: number) {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                email: true,
+                fullname: true,
+                address: true,
+                phoneNumber: true,
+                active: true,
+                groups: {
+                    select: {
+                        id: true,
+                        groupName: true,
+                        permissions: true
+                    }
+                }
+            }
+        });
+        if (!user) {
+            throw new MyError(NOT_FOUND_ERROR, 404);
+        }
+        return { 
+            id: user.id,
+            email: user.email,
+            address: user.address,
+            phoneNumber: user.phoneNumber,
+            permissions: user.groups.flatMap((group: any) => group.permissions || []),
+            fullname: user.fullname,
+            active: user.active,
+            groups: user.groups.map((group: any) => ({ id: group.id, groupName: group.groupName }))
+         };
     }
 }

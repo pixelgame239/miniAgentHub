@@ -21,8 +21,10 @@ export function encrypt(text: string): string {
 
 // 2. Hàm giải mã để lấy lại API Key gốc khi gọi API
 export function decrypt(encryptedData: string): string {
+  if (!encryptedData) {
+    return '';
+  }
   const parts = encryptedData.split(':');
-  
   if (parts.length !== 3) {
     throw new Error('Invalid encrypted data format.');
   }
@@ -34,6 +36,7 @@ export function decrypt(encryptedData: string): string {
   const authTag = Buffer.from(authTagHex, 'hex');
   
   const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+  console.log(`[DECRYPTION] IV: ${ivHex}, AuthTag: ${authTagHex}, EncryptedText: ${encryptedText}, Decryption Key: ${ENCRYPTION_KEY}`);
   
   decipher.setAuthTag(authTag);
   

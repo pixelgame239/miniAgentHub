@@ -1,11 +1,8 @@
 // ChatPage.tsx
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "../styles/chat.module.css";
-import { useRouteLoaderData } from "react-router";
-import type { AIModels } from "../loader/aiLoader";
 import { useChat } from "../hooks/chatHook";
 import { createConversation, getConversationDetail } from "../api/conversationApi";
-import type { Group } from "../loader/groupLoader";
 import { useTranslation } from "react-i18next";
 import { useSSEStream } from "../hooks/streamHook";
 import { fileToBase64, type FileUpload } from "../api/messageApi";
@@ -29,7 +26,7 @@ import ReusableDialog from "../component/ReusableDialogProps";
     );
     
 const ChatPage = () => {
-  const { showError, showInfo, showToast } = useNotificationPopup();
+  const { showError, showToast } = useNotificationPopup();
   const { t } = useTranslation();
   
   const {
@@ -449,10 +446,16 @@ const ChatPage = () => {
             {t("common.loading")}
           </div>
         )}
-        {chatMessages.map((msg, index) => (
+        {chatMessages.map((msg, index) => {
+          const getRowClass = () =>{
+            if (msg.type === "prompt") return styles.userRow;
+            if (msg.type === "error") return styles.errorRow;
+            return styles.modelRow;
+          };
+          return (
           <div
             key={msg.id ? `msg-${msg.id}` : `idx-${index}`}
-            className={`${styles.messageRow} ${msg.type === "prompt" ? styles.userRow : styles.modelRow}`}
+            className={`${styles.messageRow} ${getRowClass()}`}
           >
             {/* {msg.type !== "prompt" && <AIAvatar />} */}
             <div className={styles.messageBubbleWrapper}>
@@ -488,8 +491,8 @@ const ChatPage = () => {
                     )}
                   </div>
                 )}
-                <div className={styles.messageText}>
-                  {msg.type === "prompt" ? msg.content : formatMessageText(msg.content)}
+                <div className={`${styles.messageText} ${msg.type === "error" ? styles.errorMessageText : ""}`}>
+                  {msg.type === "prompt" ? msg.content : msg.type==="error" ? t(msg.content || t("chat.errorMessage")) : formatMessageText(msg.content)}
                 </div>
               </div>
 
@@ -498,8 +501,18 @@ const ChatPage = () => {
                   <span className={styles.messageTime}>{formatMessageTime(msg.createdAt)}</span>
                 </div>
               )}
-
-              {msg.type !== "prompt" && (
+              {msg.type === "error" && (
+                <div className={styles.errorMeta}>
+                  <span className={styles.errorMessageLabel}>{t("chat.error")}</span>
+                  {msg.createdAt && (
+                    <>
+                      <span className={styles.modelMetaDot}>•</span>
+                      <span className={styles.modelMetaTime}>{formatMessageTime(msg.createdAt)}</span>
+                    </>
+                  )}
+                </div>
+              )}
+              {msg.type !== "prompt" && msg.type !== "error" && (
                 <div className={styles.modelMeta}>
                   <span className={styles.modelMetaName}>{msg.AIModel}</span>
                   <span className={styles.modelMetaDot}>•</span>
@@ -516,7 +529,7 @@ const ChatPage = () => {
               )}
             </div>
           </div>
-        ))}
+        )})}
         {streaming && (
           <StreamingBubble streaming={streaming} liveText={liveText} formatMessageText={formatMessageText} />
         )}

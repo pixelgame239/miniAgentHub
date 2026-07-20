@@ -15,6 +15,7 @@ const getUserRequest = client.createRequest<{response:User[]}>()(
         }
     }
 )
+
 const updateUserRequest = client.createRequest<{payload: UpdateRequestType, params: {userId: string|number}}>()({
     endpoint: "/users/updateUser/:userId",
     method:"PUT",
@@ -64,7 +65,7 @@ const updatePhoneNumberRequest = client.createRequest<{payload: {phoneNumber: st
         credentials: "include"
     }
 });
-const updateUserAIConfigRequest = client.createRequest<{payload: {FlowiseAPIKey?: string, FlowiseURL?: string, GroqAPIKey?: string, OpenRouterAPIKey?: string}, params: {userId: string|number}}>()({
+const updateUserAIConfigRequest = client.createRequest<{payload: {FlowiseAPIKey?: string, FlowiseUrl?: string, GroqAPIKey?: string, OpenRouterAPIKey?: string}, params: {userId: string|number}}>()({
     endpoint: "/users/updateAIConfig/:userId",
     method:"PUT",
     options: {
@@ -102,7 +103,7 @@ export const updateAddress = async(address:string, userId:any)=>{
 export const updatePhoneNumber = async(phoneNumber:string, userId:any)=>{
     return await updatePhoneNumberRequest.send({payload: {phoneNumber: phoneNumber}, params: {userId}});
 }
-export const updateUserAIConfig = async(aiConfig: {FlowiseAPIKey?: string, FlowiseURL?: string, GroqAPIKey?: string, OpenRouterAPIKey?: string}, userId:any)=>{
+export const updateUserAIConfig = async(aiConfig: {FlowiseAPIKey?: string, FlowiseUrl?: string, GroqAPIKey?: string, OpenRouterAPIKey?: string}, userId:any)=>{
     return await updateUserAIConfigRequest.send({payload: aiConfig, params: {userId}});
 }
 export const resendVerificationEmail = async(userId:number, email:string, fullname:string, lang:string)=>{

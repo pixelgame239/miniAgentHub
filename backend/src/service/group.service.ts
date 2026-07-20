@@ -1,7 +1,9 @@
 import { prisma } from "../../lib/prisma"
 import { FORBIDDEN_ERROR } from "../utils/generalKey";
 import { MyError } from "../utils/MyError";
+import { UserService } from "./user.service";
 
+const userService = new UserService();
 export class GroupService{
     public async checkIfModifyAdminGroup(groupId:number){
         const group = await prisma.group.findUnique({where:{id: groupId}, select:{groupName:true}});
@@ -56,12 +58,16 @@ export class GroupService{
         };
     }
 
-    public async addUserToGroup(groupId:number, userIds:number[], isAdmin:boolean){
+    public async addUserToGroup(groupId:number, selectedUser:{id:number, groups:{id:number, groupName:string}[]}[], isAdmin:boolean){
         const isAdminGroup = await this.checkIfModifyAdminGroup(groupId);
         if(isAdminGroup){
             if(!isAdmin){
                 throw new MyError(FORBIDDEN_ERROR,403);
             }
+        }
+        const isTargetAdmin = selectedUser.some(user => user.groups.some(group => group.groupName === "ADMIN"));
+        if(isTargetAdmin && !isAdmin){
+            throw new MyError(FORBIDDEN_ERROR,403);
         }
         const response = await prisma.group.update({
             where: {
@@ -69,7 +75,24 @@ export class GroupService{
             },
             data: {
                 users: {
-                    connect: userIds.map(id => ({ id }))
+                    connect: selectedUser.map(user => ({ id: user.id }))
+                }
+            }
+        });
+        return response;
+    }
+    public async initUserGroups(groupId:number, userIds:number[], isAdmin:boolean){
+        const isContainedAdmin = await prisma.user.findFirst({where:{id:{in:userIds}, groups:{some:{groupName:"ADMIN"}}}});
+        if(isContainedAdmin && !isAdmin){
+            throw new MyError(FORBIDDEN_ERROR,403);
+        }
+        const response = await prisma.group.update({
+            where: {
+                id: groupId
+            },
+            data: {
+                users: {
+                    connect: userIds.map((id) => ({ id: id }))
                 }
             }
         });
@@ -91,6 +114,10 @@ export class GroupService{
             if(!isAdmin){
                 throw new MyError(FORBIDDEN_ERROR,403);
             }
+        }
+        const isTargetAdmin = await userService.checkIfUserIsAdmin(userId);
+        if(isTargetAdmin && !isAdmin){
+            throw new MyError(FORBIDDEN_ERROR,403);
         }
         const response = await prisma.group.update({
             where: {

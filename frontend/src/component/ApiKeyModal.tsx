@@ -96,7 +96,7 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
 
     // Validate tổng lực lần cuối trước khi gửi data lên server
     const currentErrors: FormErrors = {};
-    if (!apiKey.trim()) {
+    if (!apiKey.trim()&& !isFlowise) {
       currentErrors.apiKey = t("APIKeyModal.apiKeyRequired");
     }
     if (isFlowise && !flowiseUrl.trim()) {
@@ -113,7 +113,7 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
     try {
       const configPayload = {
         FlowiseAPIKey: isFlowise ? apiKey.trim() : undefined,
-        FlowiseURL: isFlowise ? flowiseUrl.trim() : undefined,
+        FlowiseUrl: isFlowise ? flowiseUrl.trim() : undefined,
         GroqAPIKey: isGroq ? apiKey.trim() : undefined,
         OpenRouterAPIKey: isOpenRouter ? apiKey.trim() : undefined,
       };
@@ -145,7 +145,7 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
           {/* Cụm Input 1: API Key */}
           <div className={styles.formGroup}>
             <label htmlFor="apiKey" className={styles.label}>
-              {getInputLabel()} <span className={isFlowise ? "": styles.requiredStar}>*</span>
+              {getInputLabel()} <span className={isFlowise ? "": styles.requiredStar}>{isFlowise ? "" : "*"}</span>
             </label>
             <input
               id="apiKey"

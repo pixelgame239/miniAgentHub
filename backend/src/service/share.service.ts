@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma";
+import { INTERNAL_SERVER_ERROR, NOT_FOUND_ERROR } from "../utils/generalKey";
 import { MyError } from "../utils/MyError";
 import { ExportService } from "./export.service";
 
@@ -8,7 +9,7 @@ export class ShareService {
     try{
         const conversationData = await exportService.exportAllMessages(userId, conversationId);
         if(!conversationData){
-            throw new MyError("Conversation not found", 404);
+            throw new MyError(NOT_FOUND_ERROR, 404);
         }
         const sharedData = await prisma.sharedConversation.create({
         data: {
@@ -20,7 +21,7 @@ export class ShareService {
         return `/sharedChat/${sharedData.id}`;  
     } catch (error) {
         console.error("Error sharing conversation:", error);
-        throw new MyError("Failed to share conversation", 500);
+        throw new MyError(INTERNAL_SERVER_ERROR, 500);
     }
   }
   public async shareMessage(userId: number, messageId: number) {
@@ -39,7 +40,7 @@ export class ShareService {
     } catch (error) {
       console.error("Error sharing message pair:", error);
       if (error instanceof MyError) throw error;
-      throw new MyError("Failed to share message pair", 500);
+      throw new MyError(INTERNAL_SERVER_ERROR, 500);
     }
   }
   public async getSharedConversation(sharedId: string) {
@@ -51,13 +52,13 @@ export class ShareService {
       });
 
       if (!sharedData) {
-        throw new MyError("Shared conversation not found", 404);
+        throw new MyError(NOT_FOUND_ERROR, 404);
       }
 
       return sharedData;
     } catch (error) {
       console.error("Error retrieving shared conversation:", error);
-      throw new MyError("Failed to retrieve shared conversation", 500);
+      throw new MyError(INTERNAL_SERVER_ERROR, 500);
     }
   }
 }

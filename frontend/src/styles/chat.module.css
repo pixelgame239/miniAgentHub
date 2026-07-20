@@ -810,3 +810,33 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   }
 }
+/* Styling cho message dạng Error */
+.errorRow {
+  justify-content: flex-start;
+}
+
+.errorMessageBubble {
+  background-color: rgba(255, 77, 79, 0.08); /* Nền hồng/đỏ nhạt */
+  border: 1px solid rgba(255, 77, 79, 0.3);   /* Viền đỏ nhạt */
+}
+
+.errorMessageText {
+  color: #ff4d4f;            /* Màu chữ đỏ */
+  font-style: italic;        /* In nghiêng */
+}
+
+/* Thêm nhãn bên dưới tương tự stop response */
+.errorMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.errorMessageLabel {
+  color: #ff4d4f;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: italic;
+}

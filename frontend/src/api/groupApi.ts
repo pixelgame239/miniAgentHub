@@ -1,3 +1,4 @@
+import type { SelectedUser } from "../component/GroupMembersModal";
 import { client } from "./apiClient";
 
 const getAllGroupsRequest = client.createRequest<{response: []}>()({
@@ -23,7 +24,7 @@ const createGroupRequest = client.createRequest<{payload:{groupName: string, per
         credentials: "include"
     }
 })
-const addUserRequest = client.createRequest<{params: {groupId:number}, payload: {userIds: number[]}}>()(
+const addUserRequest = client.createRequest<{params: {groupId:number}, payload: {selectedUsers: SelectedUser[]}}>()(
     {
         endpoint:"/groups/addUser/:groupId",
         method:"PATCH",
@@ -62,8 +63,8 @@ export const deleteGroup = async(groupId: number) => {
 export const createGroup = async(formData:{groupName: string, permissions: string[], userIds: number[]})=>{
     return await createGroupRequest.send({payload:formData});
 }
-export const addUser = async(groupId: number, userIds: number[]) => {
-    return await addUserRequest.send({params:{groupId}, payload:{userIds}});
+export const addUser = async(groupId: number, selectedUsers: SelectedUser[]) => {
+    return await addUserRequest.send({params:{groupId}, payload:{selectedUsers}});
 }
 export const removeUser = async(groupId: number, userId: number) => {
     return await removeUserRequest.send({params:{groupId, userId}});

@@ -14,6 +14,11 @@ interface GroupMembersModalProps {
   onClose: () => void;
 }
 
+export type SelectedUser = {
+  id: number;
+  groups: { id: number; groupName: string }[];
+};
+
 const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
   open,
   group,
@@ -24,9 +29,12 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
   const [members, setMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [selectedUsersToAdd, setSelectedUsersToAdd] = useState<number[]>([]);
+  const [selectedUsersToAdd, setSelectedUsersToAdd] = useState<SelectedUser[]>([]);
   const { showError, showToast } = useNotificationPopup();
-  const { user } = useAuth(); // Lấy thông tin người dùng hiện tại từ hook useAuth
+  const { user } = useAuth();
+  useEffect(() => {
+    console.log("selectedUsersToAdd changed:", selectedUsersToAdd);
+  }, [selectedUsersToAdd]);
   useEffect(() => {
     if (open) {
       loadMembers();
@@ -37,56 +45,50 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
     setLoading(true);
     const { data, error } = await getGroupUsers(group.id);
     if (data) {
-      console.log(data);
       setMembers(data);
     }
     const { data: allUserData, error: allUserError } = await getUsers();
-    if(allUserData){
+    if (allUserData) {
       setAllUsers(allUserData);
     }
     setLoading(false);
-    if(error) {
-      showError(t("common.failed"));
-      return;
-    }
-    if(allUserError){
+    if (error || allUserError) {
       showError(t("common.failed"));
       return;
     }
   };
 
   const handleRemoveUser = async (userId: number) => {
-      const previousMembers = [...members];
-      setMembers(members.filter((u) => u.id !== userId));
-      const { data, error } = await removeUser(group.id, userId);
-      if(error){
-        setMembers(previousMembers); // Rollback UI change
-        showError(t("common.failed"));
-        return;
-      } 
-      if(data){
-        showToast(t("common.success"), "success");
-      }
-      setMembers(members.filter((u) => u.id !== userId));
+    const previousMembers = [...members];
+    setMembers(members.filter((u) => u.id !== userId));
+    const { data, error } = await removeUser(group.id, userId);
+    if (error) {
+      setMembers(previousMembers); // Rollback UI change
+      showError(t("common.failed"));
+      return;
+    }
+    if (data) {
+      showToast(t("common.success"), "success");
+    }
   };
 
   const handleAddUsers = async () => {
     if (selectedUsersToAdd.length === 0) return;
     setLoading(true);
     const { data, error } = await addUser(group.id, selectedUsersToAdd);
-    if(error){
+    if (error) {
       console.error("Failed to add users to group:", error);
       showError(t("common.failed"));
       setLoading(false);
       return;
     }
-    if(data){
-    // Reload members
+    if (data) {
+      // Reload members
       const { data: updatedMembers } = await getGroupUsers(group.id);
       if (updatedMembers) {
         setMembers(updatedMembers);
       }
-      
+
       setSelectedUsersToAdd([]);
       setShowAddDialog(false);
       showToast(t("common.success"), "success");
@@ -127,23 +129,22 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                   {members.length} {members.length === 1 ? "member" : "members"}
                 </div>
                 {user && user.permissions?.includes("GROUP_ADD_USER") && (
-                <button
-                  className={styles.addUserBtn}
-                  onClick={() => setShowAddDialog(true)}
-                >
-                  <PlusIcon />
-                  <span>{t("groups.addMember")}</span>
-                </button>)}
+                  <button
+                    className={styles.addUserBtn}
+                    onClick={() => setShowAddDialog(true)}
+                  >
+                    <PlusIcon />
+                    <span>{t("groups.addMember")}</span>
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Table */}
             {loading ? (
-              <div className={styles.loadingState}>Loading members...</div>
+              <div className={styles.loadingState}>{t("common.loading")}</div>
             ) : members.length === 0 ? (
-              <div className={styles.emptyState}>
-                {t("groups.noMembers")}
-              </div>
+              <div className={styles.emptyState}>{t("groups.noMembers")}</div>
             ) : (
               <div className={styles.table}>
                 <div className={styles.tableHead}>
@@ -166,12 +167,12 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                       {user && user.permissions?.includes("GROUP_DELETE_USER") && (
                         <button
                           className={`${styles.iconButton} ${styles.deleteBtn}`}
-                          onClick={() => handleRemoveUser(mem.id)}
+                          onClick={async () => await handleRemoveUser(mem.id)}
                           aria-label={`Remove ${mem.fullname}`}
                           title={t("groups.removeMember")}
                         >
-                        <TrashIcon />
-                      </button>
+                          <TrashIcon />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -207,29 +208,40 @@ const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                 <p>{t("groups.allUsersInGroup")}</p>
               ) : (
                 <div className={styles.userList}>
-                  {availableUsers.map((user) => (
-                    <label key={user.id} className={styles.userCheckbox}>
-                      <input
-                        type="checkbox"
-                        checked={selectedUsersToAdd.includes(user.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedUsersToAdd([
-                              ...selectedUsersToAdd,
-                              user.id,
-                            ]);
-                          } else {
-                            setSelectedUsersToAdd(
-                              selectedUsersToAdd.filter((id) => id !== user.id)
-                            );
-                          }
-                        }}
-                      />
-                      <span>
-                        {user.fullname} ({user.email})
-                      </span>
-                    </label>
-                  ))}
+                  {availableUsers.map((user) => {
+                    const isSelected = selectedUsersToAdd.some(
+                      (selected) => selected.id === user.id
+                    );
+
+                    return (
+                      <label key={user.id} className={styles.userCheckbox}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedUsersToAdd([
+                                ...selectedUsersToAdd,
+                                {
+                                  id: user.id,
+                                  groups: user.groups || [],
+                                },
+                              ]);
+                            } else {
+                              setSelectedUsersToAdd(
+                                selectedUsersToAdd.filter(
+                                  (selected) => selected.id !== user.id
+                                )
+                              );
+                            }
+                          }}
+                        />
+                        <span>
+                          {user.fullname} ({user.email})
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>

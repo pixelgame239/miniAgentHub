@@ -30,7 +30,7 @@ export const ChatActionButtons = React.memo(({
 }: ChatActionButtonsProps) => {
     
     // Log này bây giờ sẽ CHỈ CHẠY ĐÚNG 2 LẦN: 1 lần chuyển sang nút Stop, và 1 lần chuyển lại nút Send
-    console.log("[ChatActionButtons] Render kiểm tra hiệu năng!");
+    console.log("[ChatActionButtons] Rerendered");
 
     if (streaming) {
     return (

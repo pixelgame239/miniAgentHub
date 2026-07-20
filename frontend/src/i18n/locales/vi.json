@@ -84,7 +84,9 @@
     "wrongConfiguration": "Cấu hình mô hình AI không chính xác. Vui lòng kiểm tra cài đặt của bạn.",
     "abortChat": "Bạn đã dừng câu trả lời này.",
     "noData": "Cuộc trò chuyện trống hoặc dữ liệu không khả dụng.",
-    "shareMessageTitle": "Chia sẻ tin nhắn"
+    "shareMessageTitle": "Chia sẻ tin nhắn",
+    "errorMessage": "Đã xảy ra lỗi trong quá trình xử lý yêu cầu của bạn. Vui lòng kiểm tra lại cấu hình hoặc thử lại sau.",
+    "error": "Lỗi"
   },
 
   "login": {
@@ -165,7 +167,8 @@
     "editGroup": "Chỉnh sửa nhóm",
     "viewMembers": "Xem thành viên",
     "deleteGroup": "Xóa nhóm",
-    "groupNameRequired": "Tên nhóm là bắt buộc"
+    "groupNameRequired": "Tên nhóm là bắt buộc",
+    "noMembers": "Không có thành viên trong nhóm này"
   },
 
   "users": {

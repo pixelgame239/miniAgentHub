@@ -9,7 +9,8 @@ const userService = new UserService();
 const aiService = new AIService();
 export const fetchAllUsers = async(req: Request, res: Response, next: NextFunction) =>{
     try{
-        const users = await userService.getAllUsers();
+        const isAdmin = checkAdmin(req);
+        const users = await userService.getAllUsers(isAdmin);
         res.status(200).json(users);
         return;
     } catch(error){
@@ -22,7 +23,8 @@ export const getGroupUsers = async(req: Request, res: Response, next: NextFuncti
             throw new MyError(FORBIDDEN_ERROR, 403);
         }
         const groupId = parseInt(req.params.groupId as string,10);
-        const users = await userService.getGroupUsers(groupId);
+        const isAdmin = checkAdmin(req);
+        const users = await userService.getGroupUsers(groupId, isAdmin);
         res.status(200).json(users);
         return;
     }catch(error){
@@ -57,7 +59,8 @@ export const findUsers = async(req: Request, res: Response, next: NextFunction)=
     try{
         if(req.user){
             const input = req.query.input as string;
-            const response = await userService.queryUser(input);
+            const isAdmin = checkAdmin(req);
+            const response = await userService.queryUser(input, isAdmin);
             res.status(200).json(response);
             return;
         }
@@ -129,7 +132,7 @@ export const updateAIConfig = async(req:Request, res:Response, next:NextFunction
     try{
         if(req.user){
             const userId = req.user.id;
-            const {FlowiseAPIKey, FlowiseURL, GroqAPIKey, OpenRouterAPIKey} = req.body;
+            const {FlowiseAPIKey, FlowiseUrl, GroqAPIKey, OpenRouterAPIKey} = req.body;
             if(GroqAPIKey){
                 try{
                     await aiService.getGroqModels(GroqAPIKey);
@@ -146,7 +149,7 @@ export const updateAIConfig = async(req:Request, res:Response, next:NextFunction
                     throw new MyError("Invalid OpenRouter API Key", 400);
                 }
             }
-            const response = await userService.updateAIConfig(userId, {FlowiseAPIKey, FlowiseURL, GroqAPIKey, OpenRouterAPIKey});
+            const response = await userService.updateAIConfig(userId, {FlowiseAPIKey, FlowiseUrl, GroqAPIKey, OpenRouterAPIKey});
             res.status(201).json(response);
             return;
         }

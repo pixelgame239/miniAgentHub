@@ -2,14 +2,25 @@ import { prisma } from "../../lib/prisma";
 import { redisClient } from "../../server";
 import { EmailService } from "../email/emailService";
 import { encrypt } from "../utils/APIHash";
+import { NOT_FOUND_ERROR } from "../utils/generalKey";
 import { MyError } from "../utils/MyError";
 import { createRandomMagicLink, createRandomPassword } from "../utils/passwordGenerator";
 import { hashPassword } from "../utils/passwordHashing";
 import fs from "fs";
 
 export class UserService{
-    public async getAllUsers(){
-        const response = await prisma.user.findMany({select:{
+    public async getAllUsers(isAdmin: boolean){
+        const response = await prisma.user.findMany({
+            ...(!isAdmin && {
+                where: {
+                    groups: {
+                        none: {
+                            groupName: 'ADMIN'
+                        }
+                    }
+                }
+            }),
+            select:{
             id:true,
             fullname:true,
             email:true,
@@ -32,7 +43,7 @@ export class UserService{
         });
     
         if (!user) {
-            throw new MyError("User not found", 404);
+            throw new MyError(NOT_FOUND_ERROR, 404);
         }
     
         return user.groups.some(group => group.groupName === "ADMIN");
@@ -43,7 +54,7 @@ export class UserService{
         }, data:{
             fullname: formData.fullname,
             groups:{
-                set: formData.groups.map((id:number)=>({id:id}))
+                set: formData.groups.map((group: { id: number }) => ({ id: group.id }))
             }
         }, include:{
             groups:true
@@ -55,12 +66,17 @@ export class UserService{
         await fs.promises.rm(`./files/${userId}`, { recursive: true, force: true });
         return response;
     }
-    public async getGroupUsers(groupId:number){
+    public async getGroupUsers(groupId:number, isAdmin: boolean){
         const response = await prisma.user.findMany({where:{
             groups:{
                 some:{
                     id:groupId
-                }
+                },
+                ...(!isAdmin && {
+                    none: {
+                        groupName: 'ADMIN'
+                    }
+                })
             }
         }, select:{
             id:true,
@@ -75,7 +91,7 @@ export class UserService{
         }});
         return response;
     }
-    public async queryUser(input: string) {
+    public async queryUser(input: string, isAdmin:boolean) {
         const response = await prisma.user.findMany({
             where: {
                 OR: [
@@ -91,16 +107,28 @@ export class UserService{
                             mode: 'insensitive' 
                         } 
                     }
-                ]
+                ],
+                ...(!isAdmin && {
+                groups: {
+                    none: {
+                        groupName: 'ADMIN'
+                    }
+                }
+            })
             },
             take: 10,
             select:{
                 id:true,
                 fullname: true,
-                email:true
+                email:true,
+                groups: {
+                    select:{
+                        id: true,
+                        groupName: true
+                    }
+                },
             }
         });
-        
         return response;
     }
     public async updateAddress(userId: number, address: string){
@@ -117,7 +145,7 @@ export class UserService{
         });
         return response;
     }
-    public async updateAIConfig(userId: number, config: { FlowiseAPIKey?: string; FlowiseURL?: string; GroqAPIKey?: string; OpenRouterAPIKey?: string; }){
+    public async updateAIConfig(userId: number, config: { FlowiseAPIKey?: string; FlowiseUrl?: string; GroqAPIKey?: string; OpenRouterAPIKey?: string; }){
         if(config.FlowiseAPIKey && config.FlowiseAPIKey.trim() !== ""){
             const encryptedFlowiseAPIKey = encrypt(config.FlowiseAPIKey);
             config.FlowiseAPIKey = encryptedFlowiseAPIKey;
@@ -130,9 +158,9 @@ export class UserService{
             const encryptedOpenRouterAPIKey = encrypt(config.OpenRouterAPIKey);
             config.OpenRouterAPIKey = encryptedOpenRouterAPIKey;
         }
-        if(config.FlowiseURL && config.FlowiseURL.trim() !== ""){
-            const encryptedFlowiseURL = encrypt(config.FlowiseURL);
-            config.FlowiseURL = encryptedFlowiseURL;
+        if(config.FlowiseUrl && config.FlowiseUrl.trim() !== ""){
+            const encryptedFlowiseUrl = encrypt(config.FlowiseUrl);
+            config.FlowiseUrl = encryptedFlowiseUrl;
         }
         const response = await prisma.user.update({
             where: { id: userId },

@@ -34,7 +34,7 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
     conversations: Conversation[];
     totalPages: number;
   };
-  const { currentConversation, setCurrentConversation, groupConversations, setGroupConversations } =
+  const { currentConversation,  setCurrentConversation, groupConversations, setGroupConversations } =
     useChat();
   const { t } = useTranslation();
   const [menuOpenId, setMenuOpenId] = useState<number | null>(null);

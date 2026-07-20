@@ -33,7 +33,7 @@ cd backend
 Trong thư mục `backend`, chạy:
 
 ```bash
-npx prisma migrate dev --name init
+npx prisma migrate dev
 npx prisma generate
 ```
 

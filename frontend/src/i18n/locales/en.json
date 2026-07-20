@@ -83,7 +83,9 @@
     "wrongConfiguration": "The AI model configuration is incorrect. Please check your settings.",
     "abortChat": "You have stopped this response.",
     "noData": "The chat is empty or the data is not available.",
-    "shareMessageTitle": "Share Message"
+    "shareMessageTitle": "Share Message",
+    "errorMessage": "An error occurred while processing your request. Please verify your configuration or try again later.",
+    "error": "Error"
   },
 
   "login": {
@@ -163,7 +165,8 @@
     "editGroup": "Edit Group",
     "viewMembers": "View Members",
     "deleteGroup": "Delete Group",
-    "groupNameRequired": "Group name is required"
+    "groupNameRequired": "Group name is required",
+    "noMembers": "No members in this group"
   },
 
   "users": {

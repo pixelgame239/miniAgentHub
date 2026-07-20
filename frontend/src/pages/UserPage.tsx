@@ -101,16 +101,15 @@ const UserPage = () => {
         showInfo(t("users.sendEmail"));
       }
       if(error){
-        showError(t("common.failed"+":"+error.message));
+        showError(t("common.failed"));
         console.error(error);
       }
     } else{
         const { data, error } = await updateUser(formData, editingUser?.id);
         const updatedUser = data;
         if (error) {
-          showError(t("common.failed"+":"+error.message));
+          showError(t("common.failed"));
           console.error(error);
-          return;
         }
         if(updatedUser){
         showToast(t("common.success"), "success");

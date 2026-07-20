@@ -48,7 +48,8 @@ export class AIService{
     }
     public async promptToFlowise(content: string, APIKey: string|null, APIUrl: string, convId: any, signal?: AbortSignal) {
         const sessionId = convId.toString();
-        if(APIUrl && APIUrl.trim()!==""){
+        console.log("APIUrl:", APIUrl);
+        if(APIUrl.trim()===""){
             throw new MyError("Flowise URL is not configured", 404);
         }
         let response;
