@@ -9,7 +9,7 @@ import { hashPassword } from "../utils/passwordHashing";
 import fs from "fs";
 
 export class UserService{
-    public async getAllUsers(isAdmin: boolean){
+    public async getAllUsers(page: number =0, isAdmin: boolean){
         const response = await prisma.user.findMany({
             ...(!isAdmin && {
                 where: {
@@ -20,6 +20,8 @@ export class UserService{
                     }
                 }
             }),
+            take: 10,
+            skip: page * 10,
             select:{
             id:true,
             fullname:true,
@@ -33,6 +35,21 @@ export class UserService{
             active:true
         }});
         return response;
+    }
+    public async countUser(isAdmin:boolean){
+        const response = await prisma.user.count({
+            ...(!isAdmin && {
+                where: {
+                    groups: {
+                        none: {
+                            groupName: 'ADMIN'
+                        }
+                    }
+                }
+            })
+        });
+        const totalPages = Math.ceil(response / 10);
+        return totalPages;
     }
     public async checkIfUserIsAdmin(userId: number): Promise<boolean> {
         const user = await prisma.user.findUnique({
@@ -145,22 +162,22 @@ export class UserService{
         });
         return response;
     }
-    public async updateAIConfig(userId: number, config: { FlowiseAPIKey?: string; FlowiseUrl?: string; GroqAPIKey?: string; OpenRouterAPIKey?: string; }){
-        if(config.FlowiseAPIKey && config.FlowiseAPIKey.trim() !== ""){
-            const encryptedFlowiseAPIKey = encrypt(config.FlowiseAPIKey);
-            config.FlowiseAPIKey = encryptedFlowiseAPIKey;
+    public async updateAIConfig(userId: number, config: { flowiseApiKey?: string; flowiseUrl?: string; groqApiKey?: string; openRouterApiKey?: string; }){
+        if(config.flowiseApiKey && config.flowiseApiKey.trim() !== ""){
+            const encryptedFlowiseAPIKey = encrypt(config.flowiseApiKey);
+            config.flowiseApiKey = encryptedFlowiseAPIKey;
         }
-        if(config.GroqAPIKey && config.GroqAPIKey.trim() !== ""){
-            const encryptedGroqAPIKey = encrypt(config.GroqAPIKey);
-            config.GroqAPIKey = encryptedGroqAPIKey;
+        if(config.groqApiKey && config.groqApiKey.trim() !== ""){
+            const encryptedGroqAPIKey = encrypt(config.groqApiKey);
+            config.groqApiKey = encryptedGroqAPIKey;
         }
-        if(config.OpenRouterAPIKey && config.OpenRouterAPIKey.trim() !== ""){
-            const encryptedOpenRouterAPIKey = encrypt(config.OpenRouterAPIKey);
-            config.OpenRouterAPIKey = encryptedOpenRouterAPIKey;
+        if(config.openRouterApiKey && config.openRouterApiKey.trim() !== ""){
+            const encryptedOpenRouterAPIKey = encrypt(config.openRouterApiKey);
+            config.openRouterApiKey = encryptedOpenRouterAPIKey;
         }
-        if(config.FlowiseUrl && config.FlowiseUrl.trim() !== ""){
-            const encryptedFlowiseUrl = encrypt(config.FlowiseUrl);
-            config.FlowiseUrl = encryptedFlowiseUrl;
+        if(config.flowiseUrl && config.flowiseUrl.trim() !== ""){
+            const encryptedFlowiseUrl = encrypt(config.flowiseUrl);
+            config.flowiseUrl = encryptedFlowiseUrl;
         }
         const response = await prisma.user.update({
             where: { id: userId },

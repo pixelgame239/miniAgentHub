@@ -1,5 +1,5 @@
 import type { LoaderFunction } from "react-router";
-import { getUsers } from "../api/userApi";
+import { countUsers, getUsers } from "../api/userApi";
 import type { Group } from "./groupLoader";
 
 export interface User {
@@ -9,13 +9,20 @@ export interface User {
   groups: Group[];
   active: boolean;
 }
-export const userLoader:LoaderFunction = async ():Promise<User[]> => {
-    const { data: users, error } = await getUsers();
+export const userLoader:LoaderFunction = async ():Promise<{ totalPages: number, users: User[] }> => {
+    const { data: users, error } = await getUsers(0);
+    const { data: countData, error: countError } = await countUsers();
+    if(countError){
+        console.error("Failed to fetch user count:", countError);
+    } else {
+        
+        console.log("Total users:", countData);
+    }
     if(users){
-        return users;
+        return { totalPages: countData || 0, users };
     }
     if(error){
         console.error("Failed to fetch users:", error);
     }
-    return [];
+    return { totalPages: 0, users: [] };
 };

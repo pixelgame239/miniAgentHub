@@ -1,9 +1,9 @@
+import 'reflect-metadata';
 import { prisma } from "./lib/prisma.js";
 import app from "./src/app.js";
-import 'reflect-metadata';
 import { createRandomPassword } from "./src/utils/passwordGenerator.js";
 import { hashPassword } from "./src/utils/passwordHashing.js";
-import { createClient } from "redis";
+import Redis from "ioredis";
 const PORT = 3000;
 const ADMIN_PERMISSIONS = [
   "USER_C",
@@ -29,7 +29,10 @@ const USER_PERMISSIONS = [
   "CONV_U",
   "CONV_D"
 ];
-export const redisClient = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
+export const redisClient = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+redisClient.on("connect", () => console.log("⚡ Connecting to Redis..."));
+redisClient.on("ready", () => console.log("✅ Redis client ready to use!"));
+redisClient.on("error", (err) => console.error("❌ Redis Client Error:", err));
 
 const initServer = async()=>{
     try{
@@ -73,10 +76,6 @@ const initServer = async()=>{
     }
 }
 const startServer = async () =>{
-    redisClient.on("error", (err) => console.error("Redis Client Error", err)); 
-    console.log("Connecting to Redis...");
-    await redisClient.connect();
-    console.log("Connected to Redis");
     const server = app.listen(PORT, () => {
         console.log(`🚀 Server ready at: http://localhost:${PORT}`);
     });

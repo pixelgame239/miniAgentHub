@@ -78,7 +78,7 @@ export const useSSEStream = (conversationId: number | undefined) => {
                 conversationId: convId,
                 createdAt: new Date().toISOString(),
                 isCompleted: true,
-                AIModel: payload.model
+                aiModel: payload.model
               });
             }
           },
@@ -99,7 +99,7 @@ export const useSSEStream = (conversationId: number | undefined) => {
               conversationId: convId,
               createdAt: new Date().toISOString(),
               isCompleted: true,
-              AIModel: payload.model
+              aiModel: payload.model
             });
 
             onErrorCallback?.(status, err.message);
@@ -131,7 +131,7 @@ export const useSSEStream = (conversationId: number | undefined) => {
             conversationId: convId,
             createdAt: new Date().toISOString(),
             isCompleted: false,
-            AIModel: payload.model
+            aiModel: payload.model
           });
         }
       } else {

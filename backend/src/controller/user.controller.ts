@@ -10,8 +10,22 @@ const aiService = new AIService();
 export const fetchAllUsers = async(req: Request, res: Response, next: NextFunction) =>{
     try{
         const isAdmin = checkAdmin(req);
-        const users = await userService.getAllUsers(isAdmin);
+        const currentPage = parseInt(req.query.pageNumber as string, 10);
+        if(isNaN(currentPage) || currentPage < 0){
+            throw new MyError(FORBIDDEN_ERROR, 403);
+        }
+        const users = await userService.getAllUsers(currentPage, isAdmin);
         res.status(200).json(users);
+        return;
+    } catch(error){
+        next(error);
+    }
+}
+export const countUsers = async(req: Request, res: Response, next: NextFunction) =>{
+    try{
+        const isAdmin = checkAdmin(req);
+        const count = await userService.countUser(isAdmin);
+        res.status(200).json(count);
         return;
     } catch(error){
         next(error);
@@ -23,6 +37,9 @@ export const getGroupUsers = async(req: Request, res: Response, next: NextFuncti
             throw new MyError(FORBIDDEN_ERROR, 403);
         }
         const groupId = parseInt(req.params.groupId as string,10);
+        if(isNaN(groupId)){
+            throw new MyError(FORBIDDEN_ERROR, 403);
+        }
         const isAdmin = checkAdmin(req);
         const users = await userService.getGroupUsers(groupId, isAdmin);
         res.status(200).json(users);
@@ -132,24 +149,24 @@ export const updateAIConfig = async(req:Request, res:Response, next:NextFunction
     try{
         if(req.user){
             const userId = req.user.id;
-            const {FlowiseAPIKey, FlowiseUrl, GroqAPIKey, OpenRouterAPIKey} = req.body;
-            if(GroqAPIKey){
+            const {flowiseApiKey, flowiseUrl, groqApiKey, openRouterApiKey} = req.body;
+            if(groqApiKey){
                 try{
-                    await aiService.getGroqModels(GroqAPIKey);
+                    await aiService.getGroqModels(groqApiKey);
                 }
                 catch(error){
                     throw new MyError("Invalid Groq API Key", 400);
                 }
             }
-            else if(OpenRouterAPIKey){
+            else if(openRouterApiKey){
                 try{
-                    await aiService.getOpenRouterModels(OpenRouterAPIKey);
+                    await aiService.getOpenRouterModels(openRouterApiKey);
                 }
                 catch(error){
                     throw new MyError("Invalid OpenRouter API Key", 400);
                 }
             }
-            const response = await userService.updateAIConfig(userId, {FlowiseAPIKey, FlowiseUrl, GroqAPIKey, OpenRouterAPIKey});
+            const response = await userService.updateAIConfig(userId, {flowiseApiKey, flowiseUrl, groqApiKey, openRouterApiKey});
             res.status(201).json(response);
             return;
         }

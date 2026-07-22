@@ -84,7 +84,7 @@ export class AuthService{
                 groups: existingUser.groups.map((group: any) => ({ id: group.id, groupName: group.groupName }))
             };
             const refreshToken = generateRefreshToken(existingUser.id);
-            await redisClient.set(`refreshToken:${refreshToken}`, String(existingUser.id), {'EX': 7 * 24 * 60 * 60});
+            await redisClient.set(`refreshToken:${refreshToken}`, String(existingUser.id), 'EX', 7 * 24 * 60 * 60);
             return{
                 message: "Logged in!",
                 token: generateAccessToken(tokenPayload),
@@ -145,7 +145,7 @@ export class AuthService{
         }
         await redisClient.del(`refreshToken:${refreshToken}`);
         const newRefreshToken = generateRefreshToken(parseInt(userId));
-        await redisClient.set(`refreshToken:${newRefreshToken}`, userId, {'EX': 7 * 24 * 60 * 60});
+        await redisClient.set(`refreshToken:${newRefreshToken}`, userId, 'EX', 7 * 24 * 60 * 60);
         const newAccessTokenPayload = {
             id: parseInt(userId),
             email: decodedAccessToken.email,
@@ -183,7 +183,7 @@ export class AuthService{
             throw new MyError(lang==="vi"? "Một email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư đến hoặc đợi 5 phút trước khi yêu cầu lại." : "A reset password email has already been sent. Please check your inbox or wait for 5 minutes before requesting again.", 429);
         }
         const randomMagicLinkToken = createRandomMagicLink();
-        await redisClient.set(`resetPassword:${email}`, randomMagicLinkToken, {'EX': 300});
+        await redisClient.set(`resetPassword:${email}`, randomMagicLinkToken, 'EX', 300);
         const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
         const resetPasswordLink = `${frontendUrl}/resetPassword?token=${randomMagicLinkToken}&email=${encodeURIComponent(email)}`;
         await EmailService.sendResetPasswordEmail(email, resetPasswordLink, lang);
@@ -209,7 +209,7 @@ export class AuthService{
         const hashedPassword = await hashPassword(newPassword);
         await prisma.user.update({
             where: { email },
-            data: { userPassword: hashedPassword }
+            data: { userPassword: hashedPassword, active: true }
         });
         await redisClient.del(`resetPassword:${email}`);
         return { message: "Password has been reset successfully" };

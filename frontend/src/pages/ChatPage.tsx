@@ -514,7 +514,7 @@ const ChatPage = () => {
               )}
               {msg.type !== "prompt" && msg.type !== "error" && (
                 <div className={styles.modelMeta}>
-                  <span className={styles.modelMetaName}>{msg.AIModel}</span>
+                  <span className={styles.modelMetaName}>{msg.aiModel}</span>
                   <span className={styles.modelMetaDot}>•</span>
                   <span className={styles.modelMetaTime}>
                     {msg.createdAt ? formatMessageTime(msg.createdAt) : ""}

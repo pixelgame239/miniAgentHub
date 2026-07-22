@@ -6,7 +6,7 @@ type UpdateRequestType = {
     fullname: string,
     groups: Group[]
 }
-const getUserRequest = client.createRequest<{response:User[]}>()(
+const getUserRequest = client.createRequest<{queryParams: {pageNumber:number}, response:User[]}>()(
     {
         method:"GET",
         endpoint: "/users/",
@@ -15,7 +15,15 @@ const getUserRequest = client.createRequest<{response:User[]}>()(
         }
     }
 )
-
+const countUsersRequest = client.createRequest<{response:number}>()(
+    {
+        method:"GET",
+        endpoint: "/users/count",
+        options: {
+            credentials: "include"
+        }
+    }
+)
 const updateUserRequest = client.createRequest<{payload: UpdateRequestType, params: {userId: string|number}}>()({
     endpoint: "/users/updateUser/:userId",
     method:"PUT",
@@ -65,7 +73,7 @@ const updatePhoneNumberRequest = client.createRequest<{payload: {phoneNumber: st
         credentials: "include"
     }
 });
-const updateUserAIConfigRequest = client.createRequest<{payload: {FlowiseAPIKey?: string, FlowiseUrl?: string, GroqAPIKey?: string, OpenRouterAPIKey?: string}, params: {userId: string|number}}>()({
+const updateUserAIConfigRequest = client.createRequest<{payload: {FlowiseAPIKey?: string, flowiseUrl?: string, groqApiKey?: string, openRouterApiKey?: string}, params: {userId: string|number}}>()({
     endpoint: "/users/updateAIConfig/:userId",
     method:"PUT",
     options: {
@@ -79,9 +87,12 @@ const resendVerificationEmailRequest = client.createRequest<{payload: {userId: n
         credentials: "include"
     }
 });
-export const getUsers = async()=>{
-    return await getUserRequest.send();
+export const getUsers = async(pageNumber: number)=>{
+    return await getUserRequest.send({queryParams: {pageNumber}});
 } 
+export const countUsers = async()=>{
+    return await countUsersRequest.send();
+}
 export const findUsers = async(input:string)=>{
     return await findUsersRequest.send({queryParams:{input}});
 }
@@ -103,7 +114,7 @@ export const updateAddress = async(address:string, userId:any)=>{
 export const updatePhoneNumber = async(phoneNumber:string, userId:any)=>{
     return await updatePhoneNumberRequest.send({payload: {phoneNumber: phoneNumber}, params: {userId}});
 }
-export const updateUserAIConfig = async(aiConfig: {FlowiseAPIKey?: string, FlowiseUrl?: string, GroqAPIKey?: string, OpenRouterAPIKey?: string}, userId:any)=>{
+export const updateUserAIConfig = async(aiConfig: {flowiseApiKey?: string, flowiseUrl?: string, groqApiKey?: string, openRouterApiKey?: string}, userId:any)=>{
     return await updateUserAIConfigRequest.send({payload: aiConfig, params: {userId}});
 }
 export const resendVerificationEmail = async(userId:number, email:string, fullname:string, lang:string)=>{

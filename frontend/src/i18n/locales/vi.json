@@ -192,8 +192,11 @@
     "emailRequired": "Email là bắt buộc",
     "fullNameRequired": "Họ tên là bắt buộc",
     "resetPassword": "Đặt lại mật khẩu",
+    "resendEmail": "Gửi lại email xác thực",
     "resendEmailTitle": "Gửi lại email xác thực",
-    "resendEmailConfirmation": "Bạn có chắc chắn muốn gửi lại email xác thực cho"
+    "resendEmailConfirmation": "Bạn có chắc chắn muốn gửi lại email xác thực cho",
+    "previousPage": "Trang trước",
+    "nextPage": "Trang tiếp theo"
   },
 
   "password": {

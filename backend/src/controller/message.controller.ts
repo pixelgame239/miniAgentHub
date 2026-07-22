@@ -37,7 +37,7 @@ export const promptToAI = async (
       const errorMessage = (error as MyError).message || INTERNAL_SERVER_ERROR;
 
       // 🛠️ BẮN CHUỖI JSON ĐÃ ĐƯỢC ĐỊNH DẠNG ĐÚNG CHUẨN SSE (Bắt đầu bằng data:)
-      res.write(`data: ${JSON.stringify({ error: true, status: statusCode, message: errorMessage })}\n\n`);
+      res.write(`stream: ${JSON.stringify({ error: true, status: statusCode, message: errorMessage })}\n\n`);
       res.end();
     }
   }

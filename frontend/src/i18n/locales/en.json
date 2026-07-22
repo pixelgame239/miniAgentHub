@@ -189,9 +189,12 @@
     "groupRequired": "At least one group must be selected for the user.",
     "emailRequired": "Email is required",
     "fullNameRequired": "Full name is required",
+    "resendEmail": "Resend Email",
     "resetPassword": "Reset Password",
     "resendEmailTitle": "Resend Email Confirmation",
-    "resendEmailConfirmation": "Are you sure you want to resend the email confirmation to"
+    "resendEmailConfirmation": "Are you sure you want to resend the email confirmation to",
+    "previousPage": "Previous Page",
+    "nextPage": "Next Page"
   },
 
   "password": {

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx tsx watch server.ts"
+    "dev": "npm install && npx prisma migrate dev && npx prisma generate && npx tsx watch server.ts"
   },
   "keywords": [],
   "author": "",
@@ -36,12 +36,13 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "https-proxy-agent": "^9.0.0",
+    "ioredis": "^5.11.1",
+    "js-tiktoken": "^1.0.21",
     "jsonwebtoken": "^9.0.3",
     "mammoth": "^1.12.0",
     "nodemailer": "^8.0.10",
     "pdf-to-img": "^6.2.0",
     "pg": "^8.22.0",
-    "redis": "^6.1.0",
     "reflect-metadata": "^0.2.2",
     "sharp": "^0.35.2",
     "tesseract.js": "^7.0.0"

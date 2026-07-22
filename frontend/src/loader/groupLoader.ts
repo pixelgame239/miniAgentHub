@@ -11,7 +11,7 @@ export interface Group {
 export interface Conversation {
   id: number;
   title: string;
-  AIModel: string;
+  aiModel: string;
 }
 
 export const groupLoader:LoaderFunction = async():Promise<Group[]>=>{

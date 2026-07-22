@@ -11,14 +11,14 @@ export interface Message {
   conversationId: number;
   type: string;
   createdAt?: string | Date;
-  AIModel?: string;
+  aiModel?: string;
   isCompleted?: boolean;
 }
 
 export interface Conversation {
   id: number;
   title: string;
-  AIModel: string;
+  aiModel: string;
   messages?: Message[];
   totalPages?: number;
 }

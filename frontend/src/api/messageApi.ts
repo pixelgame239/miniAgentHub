@@ -61,7 +61,6 @@ export const streamPrompt = async (
       if (errBody.errorCode === "TOKEN_EXPIRED" || response.status === 401) {
         console.log("Access token expired. Attempting to refresh...");
         
-        // Gọi API refresh token (Trình duyệt tự đính kèm cookie Refresh Token)
         const refreshResponse = await fetch(`${apiURL}/auth/refreshAccessToken`, {
           method: "POST",
           credentials: "include",
@@ -69,7 +68,6 @@ export const streamPrompt = async (
 
         if (refreshResponse.ok) {
           console.log("Token refreshed successfully. Retrying the original request...");
-          // Đệ quy gọi lại chính hàm này để thực hiện lại request ban đầu
           return await streamPrompt(data, handlers, signal);
         } else {
           console.error("Refresh token expired or invalid. Redirection to login needed.");
@@ -110,11 +108,11 @@ export const streamPrompt = async (
           throw new DOMException("The user aborted a request.", "AbortError");
         }
         const trimmed = line.trim();
-        if (!trimmed.startsWith("data:")) continue;
+        if (!trimmed.startsWith("stream:")) continue;
 
-        const payload = trimmed.replace(/^data:\s?/, "");
+        const payload = trimmed.replace(/^stream:\s?/, "");
+
         if (payload === "") continue;
-
         try {
           const parsedPayload = JSON.parse(payload);
           if (parsedPayload.error) {
@@ -122,9 +120,14 @@ export const streamPrompt = async (
             handlers.onError?.(customError);
             return;
           }
-
+          if(parsedPayload.event === "error") {
+            const customError = new Error(parsedPayload.message || "Stream error") as any;
+            handlers.onError?.(customError);
+            return;
+          }
+          
           const resId = parsedPayload.responseId;
-          const token = parsedPayload.choices?.[0]?.delta?.content || "";
+          const token = parsedPayload.data|| "";
 
           if (token) {
             handlers.onChunk(token, resId);

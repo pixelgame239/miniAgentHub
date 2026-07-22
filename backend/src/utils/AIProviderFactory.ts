@@ -2,17 +2,16 @@ import type { IAIProviderStrategy } from "../service/interface/message.interface
 import { FlowiseStrategy } from "../service/flowise.service";
 import { OpenRouterStrategy } from "../service/openRouter.service";
 import { GroqStrategy } from "../service/groq.service";
-import { AIService } from "../service/ai.service";
 import { FLOWISE_RECOGNITION, OPENROUTER_RECOGNITION } from "../utils/generalKey";
 
 export class AIProviderFactory {
   private strategies: Map<string, IAIProviderStrategy> = new Map();
 
-  constructor(aiService: AIService) {
+  constructor() {
     // Đăng ký các provider ở đây
-    this.strategies.set("flowise", new FlowiseStrategy(aiService));
-    this.strategies.set("openrouter", new OpenRouterStrategy(aiService));
-    this.strategies.set("groq", new GroqStrategy(aiService));
+    this.strategies.set("flowise", new FlowiseStrategy());
+    this.strategies.set("openrouter", new OpenRouterStrategy());
+    this.strategies.set("groq", new GroqStrategy());
   }
 
   getStrategy(model: string): IAIProviderStrategy {

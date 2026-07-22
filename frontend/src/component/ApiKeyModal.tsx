@@ -22,7 +22,7 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
   const { user } = useAuth(); 
 
   const [apiKey, setApiKey] = useState("");
-  const [flowiseUrl, setFlowiseUrl] = useState(""); 
+  const [flowiseUrl, setflowiseUrl] = useState(""); 
   const [apiError, setApiError] = useState(false); // Lỗi từ phía backend/server
   const [errors, setErrors] = useState<FormErrors>({}); // Lỗi validate realtime từng ô
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,7 +35,7 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
   useEffect(() => {
     if (isOpen) {
       setApiKey("");
-      setFlowiseUrl("");
+      setflowiseUrl("");
       setApiError(false);
       setErrors({});
     }
@@ -112,10 +112,10 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
 
     try {
       const configPayload = {
-        FlowiseAPIKey: isFlowise ? apiKey.trim() : undefined,
-        FlowiseUrl: isFlowise ? flowiseUrl.trim() : undefined,
-        GroqAPIKey: isGroq ? apiKey.trim() : undefined,
-        OpenRouterAPIKey: isOpenRouter ? apiKey.trim() : undefined,
+        flowiseApiKey: isFlowise ? apiKey.trim() : undefined,
+        flowiseUrl: isFlowise ? flowiseUrl.trim() : undefined,
+        groqApiKey: isGroq ? apiKey.trim() : undefined,
+        openRouterApiKey: isOpenRouter ? apiKey.trim() : undefined,
       };
 
       const { error: insertAPIKeyError } = await updateUserAIConfig(configPayload, user?.id);
@@ -178,7 +178,7 @@ const ApiKeyModal = ({ isOpen, onClose, provider }: ApiKeyModalProps) => {
                 value={flowiseUrl}
                 onChange={(e) => {
                   const val = e.target.value;
-                  setFlowiseUrl(val);
+                  setflowiseUrl(val);
                   validateField("flowiseUrl", val);
                 }}
               />

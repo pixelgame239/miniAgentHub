@@ -6,12 +6,13 @@ import { register } from "../api/authApi";
 import type { User } from "../loader/userLoader";
 import { useLoaderData, useNavigate } from "react-router";
 import type { Group } from "../loader/groupLoader";
-import { deleteUser, resendVerificationEmail, updateUser } from "../api/userApi";
+import { deleteUser, getUsers, resendVerificationEmail, updateUser } from "../api/userApi";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/authHook";
 import { useNotificationPopup } from "../context/NotificationPopupContext";
 import { SettingsIcon, TrashIcon } from "./GroupsPage";
 import ResendEmailConfirmDialog from "../component/ResendEmailConfirmDialog";
+import { Pagination } from "../component/Pagination";
 
 const KeyIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -19,8 +20,8 @@ const KeyIcon = () => (
   </svg>
 );
 const UserPage = () => {
-  const usersLoaded = useLoaderData() as User[];
-  const [users, setUsers] = useState(usersLoaded);
+  const usersLoaded = useLoaderData() as { totalPages: number, users: User[] };
+  const [users, setUsers] = useState(usersLoaded.users);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -34,6 +35,8 @@ const UserPage = () => {
   const [resendEmailUser, setResendEmailUser] = useState<User | null>(null);
   const [resendDialogOpen, setResendDialogOpen] = useState(false);
   const [resendSubmitting, setResendSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = usersLoaded.totalPages;
   const nav = useNavigate();
   useEffect(()=>{
     document.documentElement.setAttribute("data-theme", localStorage.getItem("app-theme") || "dark");
@@ -43,7 +46,18 @@ const UserPage = () => {
       nav("/chat");
     }
   }, [user, nav]);
-
+  const handlePageChange = async (page: number) => {
+    const { data: users, error } = await getUsers(page - 1);
+    if (error) {
+      showError(t("common.failed"));
+      console.error(error);
+      return;
+    }
+    if (users) {
+      setUsers(users);
+    }
+    setCurrentPage(page);
+  };
   const openCreateDialog = async () => {
     const response = await getAllGroups();
     setGroups(response.data || []);
@@ -224,7 +238,7 @@ const UserPage = () => {
                     {user?.groups?.find((g) => g.groupName === "ADMIN") && !sing.active && (
                       <button
                         className={`${styles.actionBtn} ${styles.resetPwdBtn}`}
-                        title={t("users.resetPassword")}
+                        title={t("users.resendEmail")}
                         onClick={() => {
                           setResendEmailUser(sing);
                           setResendDialogOpen(true);
@@ -257,7 +271,11 @@ const UserPage = () => {
           </tbody>
         </table>
       </div>
-
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={async (page) => await handlePageChange(page)}
+      />
       {dialogMode && (
         <UserFormDialog
           mode={dialogMode}

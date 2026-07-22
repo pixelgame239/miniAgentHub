@@ -6,34 +6,32 @@ import { UNAUTHORIZED_ERROR } from "../utils/generalKey";
 import { FileHandlerService } from "./fileHandler.service";
 import { AIProviderFactory } from "../utils/AIProviderFactory";
 
-const aiService = new AIService();
-const providerFactory = new AIProviderFactory(aiService);
+const providerFactory = new AIProviderFactory();
 
 export class MessageService {
   private activeControllers = new Map<number, AbortController>();
-  private extractText(parsed: any): string {
-    // 1. Xử lý định dạng chuẩn của AI Provider (Groq / OpenRouter / OpenAI)
-    console.log(parsed);
+  private extractToken(parsed: any) {
+    if (!parsed) return null;
+
+    // 1. Dạng OpenAI / Groq / OpenRouter
     if (parsed.choices && Array.isArray(parsed.choices) && parsed.choices.length > 0) {
       const delta = parsed.choices[0].delta;
       if (delta && typeof delta.content === "string") {
-        return delta.content; 
+        return { event: "token", data: delta.content };
       }
-      if(delta && typeof delta.reasoning === "string" && !delta.channel) {
-        return delta.reasoning || "";
+      if (delta && typeof delta.reasoning === "string" && !delta.channel) {
+        return { event: "token", data: delta.reasoning };
       }
-      return "";
+      return null;
     }
 
-    // 2. Xử lý định dạng của Flowise dựa trên thuộc tính "event"
-    // CHỈ chấp nhận event là "token" để lấy dữ liệu chữ
-    if (parsed.event === "token") {
-      return typeof parsed.data === "string" ? parsed.data : "";
+    // 2. Dạng Flowise hoặc Custom SSE Payload (Có thuộc tính event)
+    if (parsed.event && parsed.data !== undefined) {
+      return { event: parsed.event, data: String(parsed.data) };
     }
 
-    return "";
+    return null;
   }
-
   public async sendPrompt(
     convId: number,
     content: string,
@@ -63,7 +61,7 @@ export class MessageService {
         conversationId: convId, 
         type: "prompt",
         fileUrl: dbFileUrl,   // Đã chuyển đúng vị trí về đây
-        AIModel: model,
+        aiModel: model,
         fileName: dbFileName,
         fileType: dbFileType,
         fileContent: currentFileContent // Lưu nội dung bóc tách vào cột fileContent
@@ -73,6 +71,7 @@ export class MessageService {
     const stream = await provider.executePrompt({
       userId,
       convId,
+      currentPromptId: newMessage.id,
       content,
       model,
       currentFileContent,
@@ -83,7 +82,7 @@ export class MessageService {
         content: "", 
         conversationId: convId,
         type: "response",
-        AIModel: model,
+        aiModel: model,
         isCompleted: false // Mặc định chưa hoàn thành
       },
     });
@@ -133,7 +132,7 @@ export class MessageService {
               content: savedText,
               conversationId: convId,
               type: isError ? "error" : "response",
-              AIModel: model,
+              aiModel: model,
               isCompleted: finalCompletedStatus,
             },
           });
@@ -211,17 +210,20 @@ export class MessageService {
             }
 
             if (!isAnalysisChannel) {
-              const textToken = this.extractText(parsed);
-              if (textToken) {
-                const cleanToken = textToken.replace(/\r/g, "").replace(/\u0000/g, "");
+              const token = this.extractToken(parsed);
+              console.log("Return this:", JSON.stringify(token));
+              if (token) {
+                const cleanToken = token.data.replace(/\r/g, "").replace(/\u0000/g, "");
                 cleanAccumulatedContent += cleanToken;
-                if (!res.writableEnded) {
-                  res.write(
-                    `data: ${JSON.stringify({
-                      choices: [{ delta: { content: cleanToken } }],
-                      responseId: placeholderId,
-                    })}\n\n`
-                  );
+                if(token.event === "token") {
+                  if (!res.writableEnded) {
+                    res.write(`stream: ${JSON.stringify({ event: "token", data: cleanToken, responseId: placeholderId })}\n\n`);
+                  }
+                }
+                if(token.event === "error"){
+                  if (!res.writableEnded) {
+                    res.write(`stream: ${JSON.stringify({ event: "error", data: cleanToken, responseId: placeholderId })}\n\n`);
+                  }
                 }
               }
             }
@@ -250,7 +252,7 @@ export class MessageService {
         if (!isCanceled) {
           console.error("[REAL ERROR]", err);
           if (!res.writableEnded) {
-            res.write(`data: [ERROR] ${err.message}\n\n`);
+            res.write(`stream: ${JSON.stringify({ event: "error", data: err.message, responseId: placeholderId })}\n\n`);
             res.end();
           }
         }

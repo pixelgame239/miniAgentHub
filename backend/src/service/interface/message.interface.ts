@@ -3,6 +3,7 @@ import { Stream } from "stream";
 export interface AIProviderContext {
   userId: number;
   convId: number;
+  currentPromptId: number;
   content: string;
   model: string;
   currentFileContent: string | null;
